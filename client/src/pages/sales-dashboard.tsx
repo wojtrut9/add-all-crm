@@ -74,7 +74,7 @@ export default function SalesDashboard() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-sm text-muted-foreground">Plan roczny</p>
-                <p className="text-xl font-bold">{(totalPlan / 1000).toFixed(0)} tys.</p>
+                <p className="text-xl font-bold" data-testid="text-annual-plan">{totalPlan.toLocaleString("pl-PL")} PLN</p>
               </div>
               <Target className="w-5 h-5 text-primary" />
             </div>
@@ -85,7 +85,7 @@ export default function SalesDashboard() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-sm text-muted-foreground">Wykonanie</p>
-                <p className="text-xl font-bold">{(totalExec / 1000).toFixed(0)} tys.</p>
+                <p className="text-xl font-bold" data-testid="text-annual-exec">{totalExec.toLocaleString("pl-PL")} PLN</p>
               </div>
               <DollarSign className="w-5 h-5 text-chart-4" />
             </div>
@@ -95,9 +95,9 @@ export default function SalesDashboard() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Roznica</p>
-                <p className={`text-xl font-bold ${totalExec - totalPlan >= 0 ? '' : 'text-destructive'}`}>
-                  {((totalExec - totalPlan) / 1000).toFixed(0)} tys.
+                <p className="text-sm text-muted-foreground">R\u00f3\u017cnica</p>
+                <p className={`text-xl font-bold ${totalExec - totalPlan >= 0 ? '' : 'text-destructive'}`} data-testid="text-annual-diff">
+                  {(totalExec - totalPlan).toLocaleString("pl-PL")} PLN
                 </p>
               </div>
               {totalExec >= totalPlan ? <TrendingUp className="w-5 h-5 text-chart-4" /> : <TrendingDown className="w-5 h-5 text-destructive" />}
