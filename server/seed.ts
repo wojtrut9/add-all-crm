@@ -2,17 +2,45 @@ import { db } from "./db";
 import { hashPassword } from "./auth";
 import {
   users, drivers, vehicles, salaries, costs, fleet,
-  salesTargets, salesHistory,
+  salesTargets, salesHistory, clients,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import clientsData from "./clients-data.json";
 
 export async function seedDatabase() {
   const existingUsers = await db.select().from(users);
-  if (existingUsers.length > 0) {
+  const existingClients = await db.select().from(clients).limit(1);
+
+  if (existingUsers.length > 0 && existingClients.length > 0) {
     console.log("Database already seeded, skipping...");
     return;
   }
 
+  if (existingUsers.length === 0) {
+    await seedCoreData();
+  }
+
+  if (existingClients.length === 0) {
+    await seedClients();
+  }
+
+  console.log("Database seeded successfully!");
+}
+
+async function seedClients() {
+  try {
+    const batchSize = 20;
+    for (let i = 0; i < clientsData.length; i += batchSize) {
+      const batch = clientsData.slice(i, i + batchSize);
+      await db.insert(clients).values(batch).onConflictDoNothing();
+    }
+    console.log(`Seeded ${clientsData.length} clients`);
+  } catch (e: any) {
+    console.log("Could not seed clients:", e.message);
+  }
+}
+
+async function seedCoreData() {
   console.log("Seeding database...");
 
   const adminPass = await hashPassword("admin123");
@@ -113,5 +141,5 @@ export async function seedDatabase() {
     );
   }
 
-  console.log("Database seeded successfully!");
+  console.log("Core data seeded!");
 }

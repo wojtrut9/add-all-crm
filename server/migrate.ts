@@ -25,25 +25,34 @@ export async function migrateDatabase() {
       telefon_dodatkowy TEXT,
       email TEXT,
       email_dodatkowe TEXT,
-      adres TEXT,
-      nip TEXT,
-      rytm_kontaktu TEXT,
+      preferowana_forma_kontaktu TEXT,
+      zamowienia_gdzie TEXT,
       dni_zamowien TEXT,
-      braki_zamowien INTEGER NOT NULL DEFAULT 0,
-      data_dodania TEXT,
+      rytm_kontaktu TEXT,
+      miasto TEXT,
+      kraj TEXT,
       notatki TEXT,
-      priorytet TEXT DEFAULT 'Normalny'
+      rabat_procent DECIMAL,
+      warunki_platnosci TEXT,
+      termin_platnosci_dni INTEGER,
+      limit_kredytowy DECIMAL,
+      ubezpieczenie_status TEXT,
+      osoba_kontaktowa TEXT,
+      braki_zamowien INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS contacts (
       id SERIAL PRIMARY KEY,
       client_id INTEGER NOT NULL,
+      opiekun TEXT,
       data TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'Do zrobienia',
       kwota DECIMAL DEFAULT 0,
-      notatka TEXT,
-      handlowiec TEXT NOT NULL,
+      typ TEXT DEFAULT 'Cykliczny',
       priorytet TEXT DEFAULT 'Normalny',
+      forma_kontaktu TEXT,
+      notatka TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
 
