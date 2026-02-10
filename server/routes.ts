@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { authMiddleware, adminOnly, generateToken, comparePassword } from "./auth";
 import { seedDatabase } from "./seed";
+import { migrateDatabase } from "./migrate";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -12,6 +13,7 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  await migrateDatabase();
   await seedDatabase();
 
   app.post("/api/auth/login", async (req, res) => {
