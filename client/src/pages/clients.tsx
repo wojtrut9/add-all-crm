@@ -34,7 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Filter, Download, Upload, Plus, AlertTriangle, Phone, Mail,
-  MapPin, User, X, ChevronRight,
+  MapPin, User, Users, X, ChevronRight,
 } from "lucide-react";
 import type { Client } from "@shared/schema";
 
