@@ -2,16 +2,20 @@ import { db } from "./db";
 import { hashPassword } from "./auth";
 import {
   users, drivers, vehicles, salaries, costs, fleet,
-  salesTargets, salesHistory, clients,
+  salesTargets, salesHistory, clients, contacts, deliveries, notes,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import clientsData from "./clients-data.json";
+import contactsData from "./contacts-data.json";
+import deliveriesData from "./deliveries-data.json";
+import notesData from "./notes-data.json";
 
 export async function seedDatabase() {
-  const existingUsers = await db.select().from(users);
+  const existingUsers = await db.select().from(users).limit(1);
   const existingClients = await db.select().from(clients).limit(1);
+  const existingContacts = await db.select().from(contacts).limit(1);
 
-  if (existingUsers.length > 0 && existingClients.length > 0) {
+  if (existingUsers.length > 0 && existingClients.length > 0 && existingContacts.length > 0) {
     console.log("Database already seeded, skipping...");
     return;
   }
@@ -21,22 +25,29 @@ export async function seedDatabase() {
   }
 
   if (existingClients.length === 0) {
-    await seedClients();
+    await seedTableData("clients", clients, clientsData);
+  }
+
+  if (existingContacts.length === 0) {
+    await seedTableData("contacts", contacts, contactsData);
+    await seedTableData("deliveries", deliveries, deliveriesData);
+    await seedTableData("notes", notes, notesData);
   }
 
   console.log("Database seeded successfully!");
 }
 
-async function seedClients() {
+async function seedTableData(name: string, table: any, data: any[]) {
   try {
+    if (data.length === 0) return;
     const batchSize = 20;
-    for (let i = 0; i < clientsData.length; i += batchSize) {
-      const batch = clientsData.slice(i, i + batchSize);
-      await db.insert(clients).values(batch).onConflictDoNothing();
+    for (let i = 0; i < data.length; i += batchSize) {
+      const batch = data.slice(i, i + batchSize);
+      await db.insert(table).values(batch).onConflictDoNothing();
     }
-    console.log(`Seeded ${clientsData.length} clients`);
+    console.log(`Seeded ${data.length} ${name}`);
   } catch (e: any) {
-    console.log("Could not seed clients:", e.message);
+    console.log(`Could not seed ${name}:`, e.message);
   }
 }
 

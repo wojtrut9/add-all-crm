@@ -1,0 +1,30 @@
+[
+  {
+    "dataDostawy": "2026-02-10",
+    "lp": null,
+    "clientId": 62,
+    "kierowca": null,
+    "opiekun": "Magda",
+    "auto": null,
+    "platnosc": "przelew",
+    "uwagi": null,
+    "kilometry": null,
+    "wartoscNettoWz": "5000",
+    "winaSkalo": false,
+    "akcjaWindykacja": "brak"
+  },
+  {
+    "dataDostawy": "2026-02-10",
+    "lp": null,
+    "clientId": 75,
+    "kierowca": null,
+    "opiekun": "Magda",
+    "auto": null,
+    "platnosc": "Przelew skonto za płatność w terminie",
+    "uwagi": null,
+    "kilometry": null,
+    "wartoscNettoWz": "2000",
+    "winaSkalo": false,
+    "akcjaWindykacja": "brak"
+  }
+]

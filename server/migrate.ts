@@ -45,12 +45,12 @@ export async function migrateDatabase() {
     CREATE TABLE IF NOT EXISTS contacts (
       id SERIAL PRIMARY KEY,
       client_id INTEGER NOT NULL,
-      opiekun TEXT,
+      opiekun TEXT NOT NULL,
       data TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'Do zrobienia',
-      kwota DECIMAL DEFAULT 0,
-      typ TEXT DEFAULT 'Cykliczny',
-      priorytet TEXT DEFAULT 'Normalny',
+      kwota DECIMAL,
+      typ TEXT NOT NULL DEFAULT 'Cykliczny',
+      priorytet TEXT NOT NULL DEFAULT 'Normalny',
       forma_kontaktu TEXT,
       notatka TEXT,
       created_at TIMESTAMP DEFAULT NOW()
@@ -58,14 +58,18 @@ export async function migrateDatabase() {
 
     CREATE TABLE IF NOT EXISTS deliveries (
       id SERIAL PRIMARY KEY,
-      contact_id INTEGER,
-      client_id INTEGER NOT NULL,
       data_dostawy TEXT NOT NULL,
-      kwota DECIMAL DEFAULT 0,
+      lp INTEGER,
+      client_id INTEGER NOT NULL,
       kierowca TEXT,
-      pojazd TEXT,
-      status TEXT NOT NULL DEFAULT 'Zaplanowana',
-      notatka TEXT,
+      opiekun TEXT,
+      auto TEXT,
+      platnosc TEXT,
+      uwagi TEXT,
+      kilometry DECIMAL,
+      wartosc_netto_wz DECIMAL,
+      wina_skalo BOOLEAN DEFAULT false,
+      akcja_windykacja TEXT DEFAULT 'brak',
       created_at TIMESTAMP DEFAULT NOW()
     );
 
@@ -121,20 +125,16 @@ export async function migrateDatabase() {
     CREATE TABLE IF NOT EXISTS costs (
       id SERIAL PRIMARY KEY,
       nazwa TEXT NOT NULL,
-      kategoria TEXT,
-      kwota TEXT,
-      miesiac TEXT,
-      cykliczny BOOLEAN DEFAULT false,
+      dzial TEXT,
+      koszt TEXT,
       aktywny_miesiace JSONB
     );
 
     CREATE TABLE IF NOT EXISTS fleet (
       id SERIAL PRIMARY KEY,
-      pojazd TEXT NOT NULL,
-      typ_kosztu TEXT,
-      kwota TEXT,
-      miesiac TEXT,
-      cykliczny BOOLEAN DEFAULT false,
+      opis TEXT NOT NULL,
+      rodzaj TEXT,
+      koszt TEXT,
       aktywny_miesiace JSONB
     );
 
