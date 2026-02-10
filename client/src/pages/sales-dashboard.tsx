@@ -61,20 +61,26 @@ export default function SalesDashboard() {
   const years = (history || []).map((h: any) => h.rok);
   const lineColors = ["hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)", "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 50%)"];
 
-  const totalPlan = plan2026.reduce((s: number, p: any) => s + Number(p.planObrotu || 0), 0);
-  const totalExec = plan2026.reduce((s: number, p: any) => s + Number(p.wykonanieObrotu || 0), 0);
+  const currentMonth = new Date().getMonth();
+  const currentMonthData = plan2026[currentMonth];
+  const monthPlan = Number(currentMonthData?.planObrotu || 0);
+  const monthExec = Number(currentMonthData?.wykonanieObrotu || 0);
+  const monthDiff = monthExec - monthPlan;
+  const monthPct = monthPlan > 0 ? (monthExec / monthPlan * 100) : 0;
+
+  const MONTHS_FULL = ["Stycze\u0144", "Luty", "Marzec", "Kwiecie\u0144", "Maj", "Czerwiec", "Lipiec", "Sierpie\u0144", "Wrzesie\u0144", "Pa\u017adziernik", "Listopad", "Grudzie\u0144"];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold">Panel sprzedazowy 2026</h1>
+      <h1 className="text-2xl font-bold">Panel sprzeda\u017cowy 2026</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Plan roczny</p>
-                <p className="text-xl font-bold" data-testid="text-annual-plan">{totalPlan.toLocaleString("pl-PL")} PLN</p>
+                <p className="text-sm text-muted-foreground">Plan \u2013 {MONTHS_FULL[currentMonth]}</p>
+                <p className="text-xl font-bold" data-testid="text-month-plan">{monthPlan.toLocaleString("pl-PL")} PLN</p>
               </div>
               <Target className="w-5 h-5 text-primary" />
             </div>
@@ -84,8 +90,8 @@ export default function SalesDashboard() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Wykonanie</p>
-                <p className="text-xl font-bold" data-testid="text-annual-exec">{totalExec.toLocaleString("pl-PL")} PLN</p>
+                <p className="text-sm text-muted-foreground">Wykonanie \u2013 {MONTHS_FULL[currentMonth]}</p>
+                <p className="text-xl font-bold" data-testid="text-month-exec">{monthExec.toLocaleString("pl-PL")} PLN</p>
               </div>
               <DollarSign className="w-5 h-5 text-chart-4" />
             </div>
@@ -95,12 +101,12 @@ export default function SalesDashboard() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">R\u00f3\u017cnica</p>
-                <p className={`text-xl font-bold ${totalExec - totalPlan >= 0 ? '' : 'text-destructive'}`} data-testid="text-annual-diff">
-                  {(totalExec - totalPlan).toLocaleString("pl-PL")} PLN
+                <p className="text-sm text-muted-foreground">R\u00f3\u017cnica \u2013 {MONTHS_FULL[currentMonth]}</p>
+                <p className={`text-xl font-bold ${monthDiff >= 0 ? '' : 'text-destructive'}`} data-testid="text-month-diff">
+                  {monthDiff.toLocaleString("pl-PL")} PLN
                 </p>
               </div>
-              {totalExec >= totalPlan ? <TrendingUp className="w-5 h-5 text-chart-4" /> : <TrendingDown className="w-5 h-5 text-destructive" />}
+              {monthDiff >= 0 ? <TrendingUp className="w-5 h-5 text-chart-4" /> : <TrendingDown className="w-5 h-5 text-destructive" />}
             </div>
           </CardContent>
         </Card>
@@ -108,8 +114,8 @@ export default function SalesDashboard() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Realizacja %</p>
-                <p className="text-xl font-bold">{totalPlan > 0 ? ((totalExec / totalPlan) * 100).toFixed(1) : 0}%</p>
+                <p className="text-sm text-muted-foreground">Realizacja \u2013 {MONTHS_FULL[currentMonth]}</p>
+                <p className="text-xl font-bold">{monthPct.toFixed(1)}%</p>
               </div>
             </div>
           </CardContent>
