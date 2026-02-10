@@ -387,6 +387,26 @@ export class DatabaseStorage implements IStorage {
     const monthPlan = currentTargets.length > 0 ? Number(currentTargets[0].planObrotu || 0) : 0;
     const monthSales = currentTargets.length > 0 ? Number(currentTargets[0].wykonanieObrotu || 0) : 0;
 
+    let handlowcy: any[] | undefined;
+    if (rola === "admin") {
+      const handlers = ["Gosia", "Magda"];
+      handlowcy = handlers.map(name => {
+        const hClients = allClients.filter(c => c.opiekun === name);
+        const hActive = hClients.filter(c => c.aktywny);
+        const hAlerts = hClients.filter(c => (c.brakiZamowien || 0) >= 2);
+        const premiumCount = hClients.filter(c => c.segment === "Premium").length;
+        const standardCount = hClients.filter(c => c.segment === "Standard").length;
+        return {
+          name,
+          totalClients: hClients.length,
+          activeClients: hActive.length,
+          alertClients: hAlerts.length,
+          premiumClients: premiumCount,
+          standardClients: standardCount,
+        };
+      });
+    }
+
     return {
       totalClients: filteredClients.length,
       activeClients,
@@ -395,6 +415,7 @@ export class DatabaseStorage implements IStorage {
       tomorrowDeliveries: tomorrowDeliveriesCount,
       monthPlan,
       monthSales,
+      handlowcy,
     };
   }
 }

@@ -18,6 +18,9 @@ import {
   ArrowRight,
   TrendingUp,
   Target,
+  Crown,
+  Star,
+  UserCheck,
 } from "lucide-react";
 
 function StatCard({ title, value, icon: Icon, subtitle, color }: {
@@ -142,6 +145,58 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {isAdmin && stats?.handlowcy && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {stats.handlowcy.map((h: any) => (
+            <Card key={h.name} data-testid={`card-handler-${h.name.toLowerCase()}`}>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <UserCheck className="w-4 h-4 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">{h.name}</CardTitle>
+                </div>
+                <Link href={`/klienci?opiekun=${h.name}`}>
+                  <Button variant="ghost" size="sm" data-testid={`button-view-clients-${h.name.toLowerCase()}`}>
+                    Klienci <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Aktywni klienci</p>
+                    <p className="text-xl font-bold" data-testid={`text-active-${h.name.toLowerCase()}`}>{h.activeClients}</p>
+                    <p className="text-xs text-muted-foreground">z {h.totalClients} wszystkich</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      <Crown className="w-3 h-3 text-amber-500" />
+                      <p className="text-xs text-muted-foreground">Premium</p>
+                    </div>
+                    <p className="text-xl font-bold" data-testid={`text-premium-${h.name.toLowerCase()}`}>{h.premiumClients}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-blue-500" />
+                      <p className="text-xs text-muted-foreground">Standard</p>
+                    </div>
+                    <p className="text-xl font-bold" data-testid={`text-standard-${h.name.toLowerCase()}`}>{h.standardClients}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 text-destructive" />
+                      <p className="text-xs text-muted-foreground">Alerty</p>
+                    </div>
+                    <p className="text-xl font-bold" data-testid={`text-alerts-${h.name.toLowerCase()}`}>{h.alertClients}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {(isHandlowiec || isAdmin) && todayContacts && todayContacts.length > 0 && (
         <Card>
