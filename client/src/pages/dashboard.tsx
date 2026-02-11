@@ -35,7 +35,7 @@ function StatCard({ title, value, icon: Icon, subtitle, color }: {
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
           <div className={`w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 ${color || 'bg-primary/10'}`}>
-            <Icon className={`w-5 h-5 ${color ? 'text-white' : 'text-primary'}`} />
+            <Icon className={`w-5 h-5 ${color === 'bg-muted' ? 'text-muted-foreground' : color ? 'text-white' : 'text-primary'}`} />
           </div>
         </div>
       </CardContent>
@@ -131,9 +131,9 @@ function MonthlySalesWidget({ stats }: { stats: any }) {
   );
 }
 
-function WeeklyOrderWidget({ data }: { data: { name: string; total: number; ordered: number } }) {
-  const { name, total, ordered } = data;
-  const ratio = total > 0 ? ordered / total : 0;
+function WeeklyOrderWidget({ data }: { data: { name: string; totalClients: number; totalContacts: number; contacted: number; ordered: number } }) {
+  const { name, totalClients, totalContacts, contacted, ordered } = data;
+  const ratio = totalClients > 0 ? ordered / totalClients : 0;
 
   let bgColor: string;
   let borderColor: string;
@@ -163,7 +163,7 @@ function WeeklyOrderWidget({ data }: { data: { name: string; total: number; orde
       style={{ backgroundColor: bgColor, borderColor }}
       data-testid={`card-weekly-orders-${name.toLowerCase()}`}
     >
-      <CardContent className="p-4 space-y-2">
+      <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-4 h-4" style={{ color: accentColor }} />
@@ -174,15 +174,19 @@ function WeeklyOrderWidget({ data }: { data: { name: string; total: number; orde
             className="no-default-hover-elevate no-default-active-elevate"
             style={{ backgroundColor: accentColor, color: "#fff", border: "none" }}
           >
-            {total > 0 ? (ratio * 100).toFixed(0) : 0}%
+            {totalClients > 0 ? (ratio * 100).toFixed(0) : 0}%
           </Badge>
         </div>
         <p className="text-sm" style={{ color: textColor }}>
           Zamówienia ten tydzień
         </p>
         <p className="text-3xl font-bold" style={{ color: textColor }} data-testid={`text-weekly-orders-${name.toLowerCase()}`}>
-          {ordered} / {total}
+          {ordered} / {totalClients}
         </p>
+        <div className="text-xs space-y-0.5" style={{ color: textColor, opacity: 0.75 }}>
+          <p>Kontakty w kalendarzu: {totalContacts}</p>
+          <p>Obdzwonionych: {contacted}</p>
+        </div>
       </CardContent>
     </Card>
   );
@@ -289,15 +293,13 @@ export default function Dashboard() {
             subtitle="do realizacji"
           />
         )}
-        {stats?.alertClients > 0 && (
-          <StatCard
-            title="Alerty klientów"
-            value={stats?.alertClients || 0}
-            icon={AlertTriangle}
-            subtitle="brak zamówień >= 2"
-            color="bg-destructive"
-          />
-        )}
+        <StatCard
+          title="Alerty klientów"
+          value={stats?.alertClients || 0}
+          icon={AlertTriangle}
+          subtitle="brak zamówień >= 2"
+          color={stats?.alertClients > 0 ? "bg-destructive" : "bg-muted"}
+        />
       </div>
 
       {isAdmin && stats?.handlowcy && (
