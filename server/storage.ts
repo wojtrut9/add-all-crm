@@ -44,6 +44,8 @@ export interface IStorage {
   getFinanceData(): Promise<any>;
   getMySales(opiekun: string): Promise<any>;
   getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any>;
+  updateWeeklyPlan(id: number, realizacja: number): Promise<void>;
+  updateWeeklyNotatki(clientId: number, rok: number, miesiac: number, notatki: string): Promise<void>;
 
   getNotes(autor?: string): Promise<Note[]>;
   createNote(note: InsertNote): Promise<Note>;
@@ -425,30 +427,129 @@ export class DatabaseStorage implements IStorage {
     const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
     const prevYear = miesiac === 1 ? rok - 1 : rok;
 
-    let clientsList = await db.select().from(clients).where(eq(clients.aktywny, true));
+    const weeklyData = await db.select().from(clientSalesWeekly)
+      .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+
+    const clientIds = [...new Set(weeklyData.map(w => w.clientId))];
+    if (clientIds.length === 0) return { groups: [] };
+
+    let allClients = await db.select().from(clients);
     if (opiekun) {
-      clientsList = clientsList.filter(c => c.opiekun === opiekun);
+      allClients = allClients.filter(c => c.opiekun === opiekun);
     }
+    const clientMap = new Map(allClients.map(c => [c.id, c]));
 
     const prevSales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, prevYear), eq(clientSales.miesiac, prevMonth)));
+    const prevSalesMap = new Map(prevSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
     const currentSales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const currentSalesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
-    const plan = clientsList.map(c => {
-      const prev = prevSales.find(s => s.clientId === c.id);
-      const current = currentSales.find(s => s.clientId === c.id);
-      return {
-        clientId: c.id,
-        clientName: c.klient,
-        grupaMvp: c.grupaMvp,
-        prevSales: Number(prev?.sprzedaz || 0),
-        currentSales: Number(current?.sprzedaz || 0),
-      };
-    }).sort((a, b) => b.prevSales - a.prevSales);
+    const sty26Sales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, 2026), eq(clientSales.miesiac, 1)));
+    const sty26Map = new Map(sty26Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
-    return { plan };
+    const gru25Sales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, 2025), eq(clientSales.miesiac, 12)));
+    const gru25Map = new Map(gru25Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    function matchGrupa(grupaMvp: string | null): string {
+      const g = grupaMvp || "Inne";
+      if (g.includes("Gosia") && g.includes("Premium")) return "Gosia Premium";
+      if (g.includes("Magda") && g.includes("Premium")) return "Magda Premium";
+      if (g.includes("Magda") && g.includes("Standard")) return "Magda Standard";
+      if (g.includes("Zostaną") || g.includes("zostana") || g.includes("zostan")) return "Weryfikacja Zostaną";
+      if (g.includes("Odejdą") || g.includes("odejda") || g.includes("odejd")) return "Weryfikacja Odejdą";
+      return "Inne";
+    }
+
+    type ClientPlan = {
+      clientId: number;
+      klient: string;
+      rabat: number | null;
+      sty26: number;
+      cel: number;
+      tydz1: number;
+      tydz2: number;
+      tydz3: number;
+      tydz4: number;
+      weeklyIds: number[];
+      srTyg: number;
+      gru25: number;
+      notatki: string | null;
+      status: string | null;
+    };
+
+    const grupyMap: Record<string, ClientPlan[]> = {};
+    const grupyOrder = ["Gosia Premium", "Magda Premium", "Magda Standard", "Weryfikacja Zostaną", "Weryfikacja Odejdą", "Inne"];
+
+    const weeklyByClient = new Map<number, typeof weeklyData>();
+    for (const w of weeklyData) {
+      if (!weeklyByClient.has(w.clientId)) weeklyByClient.set(w.clientId, []);
+      weeklyByClient.get(w.clientId)!.push(w);
+    }
+
+    for (const [cid, weeks] of weeklyByClient) {
+      const client = clientMap.get(cid);
+      if (!client) continue;
+
+      const grupa = matchGrupa(client.grupaMvp);
+      if (!grupyMap[grupa]) grupyMap[grupa] = [];
+
+      const cel = Number(weeks[0]?.plan || 0);
+      const sty26 = sty26Map.get(cid) || 0;
+      const gru25 = gru25Map.get(cid) || 0;
+      const srTyg = sty26 > 0 ? sty26 / 4.3 : 0;
+
+      const weekVals: Record<number, { realizacja: number; id: number }> = {};
+      for (const w of weeks) {
+        weekVals[w.tydzien] = { realizacja: Number(w.realizacja || 0), id: w.id };
+      }
+
+      grupyMap[grupa].push({
+        clientId: cid,
+        klient: client.klient,
+        rabat: client.rabatProcent ? Number(client.rabatProcent) : null,
+        sty26,
+        cel,
+        tydz1: weekVals[1]?.realizacja || 0,
+        tydz2: weekVals[2]?.realizacja || 0,
+        tydz3: weekVals[3]?.realizacja || 0,
+        tydz4: weekVals[4]?.realizacja || 0,
+        weeklyIds: [weekVals[1]?.id || 0, weekVals[2]?.id || 0, weekVals[3]?.id || 0, weekVals[4]?.id || 0],
+        srTyg: Math.round(srTyg * 100) / 100,
+        gru25,
+        notatki: weeks[0]?.notatki || null,
+        status: weeks[0]?.status || null,
+      });
+    }
+
+    const groups = grupyOrder
+      .filter(name => grupyMap[name] && grupyMap[name].length > 0)
+      .map(name => ({
+        grupa: name,
+        klienci: grupyMap[name].sort((a, b) => b.sty26 - a.sty26),
+      }));
+
+    return { groups };
+  }
+
+  async updateWeeklyPlan(id: number, realizacja: number): Promise<void> {
+    await db.update(clientSalesWeekly)
+      .set({ realizacja: String(realizacja) })
+      .where(eq(clientSalesWeekly.id, id));
+  }
+
+  async updateWeeklyNotatki(clientId: number, rok: number, miesiac: number, notatki: string): Promise<void> {
+    await db.update(clientSalesWeekly)
+      .set({ notatki })
+      .where(and(
+        eq(clientSalesWeekly.clientId, clientId),
+        eq(clientSalesWeekly.rok, rok),
+        eq(clientSalesWeekly.miesiac, miesiac)
+      ));
   }
 
   async getNotes(autor?: string): Promise<Note[]> {

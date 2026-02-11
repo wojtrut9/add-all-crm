@@ -427,6 +427,17 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/plan/weekly/:id", authMiddleware, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { realizacja } = req.body;
+      await storage.updateWeeklyPlan(id, Number(realizacja));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/notes", authMiddleware, async (req, res) => {
     try {
       const notes = await storage.getNotes();
