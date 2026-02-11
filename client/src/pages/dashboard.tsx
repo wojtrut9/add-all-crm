@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+
 import { Link } from "wouter";
 import { authFetch } from "@/lib/auth";
 import {
@@ -12,15 +13,13 @@ import {
   Truck,
   AlertTriangle,
   Phone,
-  CheckCircle2,
-  XCircle,
-  Clock,
   ArrowRight,
   TrendingUp,
   Target,
   Crown,
   Star,
   UserCheck,
+  ShoppingCart,
 } from "lucide-react";
 
 function StatCard({ title, value, icon: Icon, subtitle, color }: {
@@ -39,6 +38,151 @@ function StatCard({ title, value, icon: Icon, subtitle, color }: {
             <Icon className={`w-5 h-5 ${color ? 'text-white' : 'text-primary'}`} />
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function formatPLN(val: number) {
+  return val.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) + " PLN";
+}
+
+const POLISH_MONTHS = [
+  "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+  "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+];
+
+function MonthlySalesWidget({ stats }: { stats: any }) {
+  const monthSales = Number(stats?.monthSales || 0);
+  const monthPlan = Number(stats?.monthPlan || 0);
+  const workingDaysPassed = Number(stats?.workingDaysPassed || 0);
+  const expectedSales = Number(stats?.expectedSales || 0);
+
+  const onTrack = monthPlan === 0 || monthSales >= expectedSales;
+  const progressPercent = monthPlan > 0 ? Math.min((monthSales / monthPlan) * 100, 100) : 0;
+  const currentMonth = POLISH_MONTHS[new Date().getMonth()];
+
+  return (
+    <Card
+      className="border-2"
+      style={{
+        backgroundColor: onTrack ? "hsl(142 76% 96%)" : "hsl(0 84% 96%)",
+        borderColor: onTrack ? "hsl(142 76% 80%)" : "hsl(0 84% 80%)",
+      }}
+      data-testid="card-monthly-sales"
+    >
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+        <CardTitle
+          className="text-base"
+          style={{ color: onTrack ? "hsl(142 76% 25%)" : "hsl(0 84% 30%)" }}
+        >
+          Sprzedaż miesiąca — {currentMonth}
+        </CardTitle>
+        <Target
+          className="w-5 h-5"
+          style={{ color: onTrack ? "hsl(142 76% 35%)" : "hsl(0 84% 35%)" }}
+        />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="text-center space-y-1">
+          <p
+            className="text-4xl font-bold tracking-tight"
+            style={{ color: onTrack ? "hsl(142 76% 20%)" : "hsl(0 84% 25%)" }}
+            data-testid="text-monthly-sales-value"
+          >
+            {formatPLN(monthSales)}
+          </p>
+          <p
+            className="text-lg font-medium"
+            style={{ color: onTrack ? "hsl(142 76% 30%)" : "hsl(0 84% 35%)" }}
+          >
+            / {formatPLN(monthPlan)}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs" style={{ color: onTrack ? "hsl(142 76% 30%)" : "hsl(0 84% 35%)" }}>
+            <span>{progressPercent.toFixed(1)}%</span>
+            <span>100%</span>
+          </div>
+          <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: onTrack ? "hsl(142 76% 85%)" : "hsl(0 84% 85%)" }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${progressPercent}%`,
+                backgroundColor: onTrack ? "hsl(142 76% 40%)" : "hsl(0 84% 45%)",
+              }}
+            />
+          </div>
+        </div>
+
+        <div
+          className="text-sm text-center p-2 rounded-md"
+          style={{
+            backgroundColor: onTrack ? "hsl(142 76% 90%)" : "hsl(0 84% 90%)",
+            color: onTrack ? "hsl(142 76% 25%)" : "hsl(0 84% 30%)",
+          }}
+          data-testid="text-daily-indicator"
+        >
+          Dzień {workingDaysPassed}/20 — powinno być: {formatPLN(expectedSales)}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function WeeklyOrderWidget({ data }: { data: { name: string; total: number; ordered: number } }) {
+  const { name, total, ordered } = data;
+  const ratio = total > 0 ? ordered / total : 0;
+
+  let bgColor: string;
+  let borderColor: string;
+  let textColor: string;
+  let accentColor: string;
+
+  if (ratio > 0.5) {
+    bgColor = "hsl(142 76% 96%)";
+    borderColor = "hsl(142 76% 80%)";
+    textColor = "hsl(142 76% 25%)";
+    accentColor = "hsl(142 76% 40%)";
+  } else if (ratio >= 0.25) {
+    bgColor = "hsl(45 93% 95%)";
+    borderColor = "hsl(45 93% 70%)";
+    textColor = "hsl(45 93% 25%)";
+    accentColor = "hsl(45 93% 40%)";
+  } else {
+    bgColor = "hsl(0 84% 96%)";
+    borderColor = "hsl(0 84% 80%)";
+    textColor = "hsl(0 84% 30%)";
+    accentColor = "hsl(0 84% 45%)";
+  }
+
+  return (
+    <Card
+      className="border-2"
+      style={{ backgroundColor: bgColor, borderColor }}
+      data-testid={`card-weekly-orders-${name.toLowerCase()}`}
+    >
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4" style={{ color: accentColor }} />
+            <p className="text-sm font-medium" style={{ color: textColor }}>{name}</p>
+          </div>
+          <Badge
+            variant="secondary"
+            className="no-default-hover-elevate no-default-active-elevate"
+            style={{ backgroundColor: accentColor, color: "#fff", border: "none" }}
+          >
+            {total > 0 ? (ratio * 100).toFixed(0) : 0}%
+          </Badge>
+        </div>
+        <p className="text-sm" style={{ color: textColor }}>
+          Zamówienia ten tydzień
+        </p>
+        <p className="text-3xl font-bold" style={{ color: textColor }} data-testid={`text-weekly-orders-${name.toLowerCase()}`}>
+          {ordered} / {total}
+        </p>
       </CardContent>
     </Card>
   );
@@ -82,9 +226,9 @@ export default function Dashboard() {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Dzien dobry";
-    if (hour < 18) return "Dzien dobry";
-    return "Dobry wieczor";
+    if (hour < 12) return "Dzień dobry";
+    if (hour < 18) return "Dzień dobry";
+    return "Dobry wieczór";
   };
 
   return (
@@ -100,11 +244,29 @@ export default function Dashboard() {
           <Link href="/kalendarz">
             <Button data-testid="button-generate-week">
               <Calendar className="w-4 h-4 mr-2" />
-              Kalendarz kontaktow
+              Kalendarz kontaktów
             </Button>
           </Link>
         )}
       </div>
+
+      {(isAdmin || isHandlowiec) && stats && (() => {
+        const filteredOrders = isHandlowiec
+          ? (stats.weeklyOrders || []).filter((wo: any) => wo.name === user?.imie)
+          : (stats.weeklyOrders || []);
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-1">
+              <MonthlySalesWidget stats={stats} />
+            </div>
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredOrders.map((wo: any) => (
+                <WeeklyOrderWidget key={wo.name} data={wo} />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -129,19 +291,11 @@ export default function Dashboard() {
         )}
         {stats?.alertClients > 0 && (
           <StatCard
-            title="Alerty klientow"
+            title="Alerty klientów"
             value={stats?.alertClients || 0}
             icon={AlertTriangle}
-            subtitle="brak zamowien >= 2"
+            subtitle="brak zamówień >= 2"
             color="bg-destructive"
-          />
-        )}
-        {isAdmin && (
-          <StatCard
-            title="Sprzedaz miesiaca"
-            value={`${((stats?.monthSales || 0) / 1000).toFixed(0)} tys. PLN`}
-            icon={TrendingUp}
-            subtitle={`Plan: ${((stats?.monthPlan || 0) / 1000).toFixed(0)} tys. PLN`}
           />
         )}
       </div>
@@ -215,8 +369,8 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{
                       backgroundColor:
-                        c.status === "Zamowil" ? "hsl(var(--chart-4))" :
-                        c.status === "Nie zamowil" ? "hsl(var(--destructive))" :
+                        c.status === "Zamówił" || c.status === "Zamowil" ? "hsl(var(--chart-4))" :
+                        c.status === "Nie zamówił" || c.status === "Nie zamowil" ? "hsl(var(--destructive))" :
                         c.status === "W trakcie" ? "hsl(var(--chart-2))" :
                         c.status === "Zrobione" ? "hsl(var(--chart-5))" :
                         "hsl(var(--muted-foreground))"
@@ -256,7 +410,7 @@ export default function Dashboard() {
                   <Link href="/analiza">
                     <Button variant="outline">
                       <Target className="w-4 h-4 mr-2" />
-                      Analiza sprzedazy
+                      Analiza sprzedaży
                     </Button>
                   </Link>
                   <Link href="/finanse">

@@ -385,7 +385,56 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(salesTargets.rok, now.getFullYear()), eq(salesTargets.miesiac, now.getMonth() + 1)));
 
     const monthPlan = currentTargets.length > 0 ? Number(currentTargets[0].planObrotu || 0) : 0;
-    const monthSales = currentTargets.length > 0 ? Number(currentTargets[0].wykonanieObrotu || 0) : 0;
+
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+    const monthEnd = `${year}-${String(month + 1).padStart(2, "0")}-${String(new Date(year, month + 1, 0).getDate()).padStart(2, "0")}`;
+
+    const allMonthContacts = await db.select().from(contacts)
+      .where(and(gte(contacts.data, monthStart), lte(contacts.data, monthEnd)));
+
+    const monthSales = allMonthContacts
+      .filter(c => c.status === "Zamówił" || c.status === "Zamowil")
+      .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+
+    const getWorkingDaysPassed = () => {
+      let count = 0;
+      const d = new Date(year, month, 1);
+      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      while (d <= todayDate) {
+        const day = d.getDay();
+        if (day >= 1 && day <= 5) count++;
+        d.setDate(d.getDate() + 1);
+      }
+      return count;
+    };
+    const workingDaysPassed = getWorkingDaysPassed();
+    const dailyTarget = monthPlan / 20;
+    const expectedSales = dailyTarget * workingDaysPassed;
+
+    const mondayOfWeek = new Date(now);
+    const dayOfWeek = mondayOfWeek.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    mondayOfWeek.setDate(mondayOfWeek.getDate() + diff);
+    const fridayOfWeek = new Date(mondayOfWeek);
+    fridayOfWeek.setDate(fridayOfWeek.getDate() + 4);
+
+    const weekStart = mondayOfWeek.toISOString().split("T")[0];
+    const weekEnd = fridayOfWeek.toISOString().split("T")[0];
+
+    const weekContacts = await db.select().from(contacts)
+      .where(and(gte(contacts.data, weekStart), lte(contacts.data, weekEnd)));
+
+    const weeklyOrders = ["Gosia", "Magda"].map(name => {
+      const hContacts = weekContacts.filter(c => c.opiekun === name);
+      const ordered = hContacts.filter(c => c.status === "Zamówił" || c.status === "Zamowil").length;
+      return {
+        name,
+        total: hContacts.length,
+        ordered,
+      };
+    });
 
     let handlowcy: any[] | undefined;
     if (rola === "admin") {
@@ -415,6 +464,10 @@ export class DatabaseStorage implements IStorage {
       tomorrowDeliveries: tomorrowDeliveriesCount,
       monthPlan,
       monthSales,
+      workingDaysPassed,
+      expectedSales,
+      dailyTarget,
+      weeklyOrders,
       handlowcy,
     };
   }
