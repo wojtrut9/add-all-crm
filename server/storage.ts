@@ -640,8 +640,10 @@ export class DatabaseStorage implements IStorage {
         const hClients = allClients.filter(c => c.opiekun === name);
         const hActive = hClients.filter(c => c.aktywny);
         const hAlerts = hClients.filter(c => (c.brakiZamowien || 0) >= 2);
-        const premiumCount = hClients.filter(c => c.segment === "Premium").length;
-        const standardCount = hClients.filter(c => c.segment === "Standard").length;
+        const premiumCount = hClients.filter(c => c.grupaMvp?.includes("Premium")).length;
+        const standardCount = hClients.filter(c => c.grupaMvp?.includes("Standard")).length;
+        const weryfikacjaCount = hClients.filter(c => c.grupaMvp?.includes("Weryfikacja")).length;
+        const inneCount = hClients.filter(c => c.grupaMvp === "Inne").length;
         return {
           name,
           totalClients: hClients.length,
@@ -649,6 +651,8 @@ export class DatabaseStorage implements IStorage {
           alertClients: hAlerts.length,
           premiumClients: premiumCount,
           standardClients: standardCount,
+          weryfikacjaClients: weryfikacjaCount,
+          inneClients: inneCount,
         };
       });
     }

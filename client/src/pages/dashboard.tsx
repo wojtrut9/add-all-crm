@@ -318,9 +318,9 @@ export default function Dashboard() {
                 </Link>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Aktywni klienci</p>
+                    <p className="text-xs text-muted-foreground">Klienci</p>
                     <p className="text-xl font-bold" data-testid={`text-active-${h.name.toLowerCase()}`}>{h.activeClients}</p>
                     <p className="text-xs text-muted-foreground">z {h.totalClients} wszystkich</p>
                   </div>
@@ -331,20 +331,33 @@ export default function Dashboard() {
                     </div>
                     <p className="text-xl font-bold" data-testid={`text-premium-${h.name.toLowerCase()}`}>{h.premiumClients}</p>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-blue-500" />
-                      <p className="text-xs text-muted-foreground">Standard</p>
+                  {h.standardClients > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-blue-500" />
+                        <p className="text-xs text-muted-foreground">Standard</p>
+                      </div>
+                      <p className="text-xl font-bold" data-testid={`text-standard-${h.name.toLowerCase()}`}>{h.standardClients}</p>
                     </div>
-                    <p className="text-xl font-bold" data-testid={`text-standard-${h.name.toLowerCase()}`}>{h.standardClients}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3 text-destructive" />
-                      <p className="text-xs text-muted-foreground">Alerty</p>
+                  )}
+                  {h.weryfikacjaClients > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <ShoppingCart className="w-3 h-3 text-orange-500" />
+                        <p className="text-xs text-muted-foreground">Weryfikacja</p>
+                      </div>
+                      <p className="text-xl font-bold" data-testid={`text-weryfikacja-${h.name.toLowerCase()}`}>{h.weryfikacjaClients}</p>
                     </div>
-                    <p className="text-xl font-bold" data-testid={`text-alerts-${h.name.toLowerCase()}`}>{h.alertClients}</p>
-                  </div>
+                  )}
+                  {h.alertClients > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-destructive" />
+                        <p className="text-xs text-muted-foreground">Alerty</p>
+                      </div>
+                      <p className="text-xl font-bold" data-testid={`text-alerts-${h.name.toLowerCase()}`}>{h.alertClients}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
