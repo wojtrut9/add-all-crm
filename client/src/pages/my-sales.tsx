@@ -6,6 +6,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Target, DollarSign, Calendar } from "lucide-react";
 
+const dayNames = ["Niedziela", "Poniedzialek", "Wtorek", "Sroda", "Czwartek", "Piatek", "Sobota"];
+const workDayNames = ["Poniedzialek", "Wtorek", "Sroda", "Czwartek", "Piatek"];
+
 export default function MySalesPage() {
   const { user } = useAuth();
 
@@ -33,11 +36,54 @@ export default function MySalesPage() {
   const prevMonthSales = data?.prevMonthSales || 0;
   const brakuje = Math.max(0, monthTarget - monthSales);
   const realizacja = monthTarget > 0 ? (monthSales / monthTarget) * 100 : 0;
-  const recentOrders = data?.recentOrders || [];
+
+  const now = new Date();
+  const currentDayIndex = now.getDay();
+  const currentDayName = dayNames[currentDayIndex];
+  const dayOfMonth = now.getDate();
+  const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const workdaysPassed = Math.floor((dayOfMonth / totalDaysInMonth) * 20);
+  const workdaysLeft = 20 - workdaysPassed;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold">Moja sprzedaz - {user?.imie}</h1>
+      <h1 className="text-2xl font-bold" data-testid="text-page-title">Moja sprzedaz - {user?.imie}</h1>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <p className="text-sm font-medium" data-testid="text-current-day">{currentDayName}, {dayOfMonth} dzien miesiaca</p>
+              </div>
+              <p className="text-xs text-muted-foreground" data-testid="text-workdays-left">Pozostalo ok. {workdaysLeft} dni roboczych</p>
+            </div>
+            <div className="flex gap-1" data-testid="weekday-indicator">
+              {workDayNames.map((name, i) => {
+                const jsDay = i + 1;
+                const isCurrentDay = jsDay === currentDayIndex;
+                const isPast = jsDay < currentDayIndex;
+                return (
+                  <div
+                    key={name}
+                    className={`flex-1 py-2 px-1 rounded-md text-center text-xs font-medium transition-colors ${
+                      isCurrentDay
+                        ? "bg-primary text-primary-foreground"
+                        : isPast
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-muted/30 text-muted-foreground/60"
+                    }`}
+                    data-testid={`weekday-${name.toLowerCase()}`}
+                  >
+                    {name.slice(0, 3)}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-6">
@@ -45,21 +91,21 @@ export default function MySalesPage() {
             <p className="text-sm text-muted-foreground">Realizacja celu miesiecznego</p>
             <div className="flex items-center justify-center gap-3">
               <Target className="w-8 h-8 text-primary" />
-              <p className="text-4xl font-bold">{realizacja.toFixed(1)}%</p>
+              <p className="text-4xl font-bold" data-testid="text-realizacja">{realizacja.toFixed(1)}%</p>
             </div>
             <Progress value={Math.min(100, realizacja)} className="h-3 max-w-md mx-auto" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mt-4">
               <div>
                 <p className="text-xs text-muted-foreground">Sprzedaz</p>
-                <p className="font-bold">{monthSales.toLocaleString("pl-PL")} PLN</p>
+                <p className="font-bold" data-testid="text-month-sales">{monthSales.toLocaleString("pl-PL")} PLN</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Cel</p>
-                <p className="font-bold">{monthTarget.toLocaleString("pl-PL")} PLN</p>
+                <p className="font-bold" data-testid="text-month-target">{monthTarget.toLocaleString("pl-PL")} PLN</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Brakuje</p>
-                <p className="font-bold text-destructive">{brakuje.toLocaleString("pl-PL")} PLN</p>
+                <p className="font-bold text-destructive" data-testid="text-brakuje">{brakuje.toLocaleString("pl-PL")} PLN</p>
               </div>
             </div>
           </div>
@@ -72,7 +118,7 @@ export default function MySalesPage() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-sm text-muted-foreground">Poprzedni miesiac</p>
-                <p className="text-xl font-bold">{prevMonthSales.toLocaleString("pl-PL")} PLN</p>
+                <p className="text-xl font-bold" data-testid="text-prev-month">{prevMonthSales.toLocaleString("pl-PL")} PLN</p>
               </div>
               <TrendingUp className="w-5 h-5 text-primary" />
             </div>
@@ -88,34 +134,13 @@ export default function MySalesPage() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-sm text-muted-foreground">Zamowien w tym miesiacu</p>
-                <p className="text-xl font-bold">{recentOrders.length}</p>
+                <p className="text-xl font-bold" data-testid="text-orders-count">0</p>
               </div>
               <DollarSign className="w-5 h-5 text-chart-4" />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {recentOrders.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Ostatnie zamowienia</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {recentOrders.map((o: any, i: number) => (
-                <div key={i} className="flex items-center justify-between gap-3 p-3 rounded-md bg-muted/50">
-                  <div>
-                    <p className="text-sm font-medium">{o.clientName}</p>
-                    <p className="text-xs text-muted-foreground">{o.data}</p>
-                  </div>
-                  <p className="font-medium text-sm">{Number(o.kwota || 0).toLocaleString("pl-PL")} PLN</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
