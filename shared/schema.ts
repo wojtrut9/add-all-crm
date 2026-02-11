@@ -165,8 +165,10 @@ export const costs = pgTable("costs", {
   firma: text("firma"),
   dzial: text("dzial"),
   rodzaj: text("rodzaj"),
+  kategoria: text("kategoria"),
   netto: decimal("netto"),
   koszt: decimal("koszt"),
+  notatka: text("notatka"),
   aktywnyMiesiace: jsonb("aktywny_miesiace"),
 });
 

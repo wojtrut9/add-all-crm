@@ -10,6 +10,7 @@ import {
   type InsertDelivery, type Delivery,
   type InsertNote, type Note,
   type InsertSalary, type InsertCost, type InsertFleet,
+  type Cost,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -41,7 +42,10 @@ export interface IStorage {
 
   getSalesAnalysis(rok: number, miesiac: number): Promise<any>;
   getSalesDashboard(): Promise<any>;
-  getFinanceData(): Promise<any>;
+  getFinanceData(miesiac?: number): Promise<any>;
+  createCost(data: InsertCost): Promise<Cost>;
+  updateCost(id: number, data: Partial<InsertCost>): Promise<Cost>;
+  deleteCost(id: number): Promise<void>;
   getMySales(opiekun: string): Promise<any>;
   getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any>;
   updateWeeklyPlan(id: number, realizacja: number): Promise<void>;
@@ -369,11 +373,42 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getFinanceData(): Promise<any> {
+  async getFinanceData(miesiac?: number): Promise<any> {
+    const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+    const mKey = miesiac ? MONTH_KEYS[miesiac - 1] : null;
+
     const salariesData = await db.select().from(salaries);
     const costsData = await db.select().from(costs);
     const fleetData = await db.select().from(fleet);
-    return { salaries: salariesData, costs: costsData, fleet: fleetData };
+
+    const filterByMonth = (items: any[]) => {
+      if (!mKey) return items;
+      return items.filter((item) => {
+        const am = item.aktywnyMiesiace as Record<string, boolean> | null;
+        if (!am) return true;
+        return am[mKey] !== false;
+      });
+    };
+
+    return {
+      salaries: filterByMonth(salariesData),
+      costs: filterByMonth(costsData),
+      fleet: filterByMonth(fleetData),
+    };
+  }
+
+  async createCost(data: InsertCost): Promise<Cost> {
+    const [cost] = await db.insert(costs).values(data).returning();
+    return cost;
+  }
+
+  async updateCost(id: number, data: Partial<InsertCost>): Promise<Cost> {
+    const [cost] = await db.update(costs).set(data).where(eq(costs.id, id)).returning();
+    return cost;
+  }
+
+  async deleteCost(id: number): Promise<void> {
+    await db.delete(costs).where(eq(costs.id, id));
   }
 
   async getMySales(opiekun: string): Promise<any> {

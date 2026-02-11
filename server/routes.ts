@@ -397,8 +397,36 @@ export async function registerRoutes(
 
   app.get("/api/finance", authMiddleware, adminOnly, async (req, res) => {
     try {
-      const data = await storage.getFinanceData();
+      const miesiac = req.query.miesiac ? Number(req.query.miesiac) : undefined;
+      const data = await storage.getFinanceData(miesiac);
       res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/finance/costs", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const cost = await storage.createCost(req.body);
+      res.json(cost);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/finance/costs/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const cost = await storage.updateCost(Number(req.params.id), req.body);
+      res.json(cost);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/finance/costs/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      await storage.deleteCost(Number(req.params.id));
+      res.json({ ok: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
