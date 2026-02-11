@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Target, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, DollarSign, Calendar, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const dayNames = ["Niedziela", "Poniedzialek", "Wtorek", "Sroda", "Czwartek", "Piatek", "Sobota"];
 const workDayNames = ["Poniedzialek", "Wtorek", "Sroda", "Czwartek", "Piatek"];
@@ -42,8 +42,25 @@ export default function MySalesPage() {
   const currentDayName = dayNames[currentDayIndex];
   const dayOfMonth = now.getDate();
   const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const workdaysPassed = Math.floor((dayOfMonth / totalDaysInMonth) * 20);
-  const workdaysLeft = 20 - workdaysPassed;
+
+  const countWorkdays = (year: number, month: number, upToDay: number) => {
+    let count = 0;
+    for (let d = 1; d <= upToDay; d++) {
+      const dow = new Date(year, month, d).getDay();
+      if (dow >= 1 && dow <= 5) count++;
+    }
+    return count;
+  };
+
+  const totalWorkdays = countWorkdays(now.getFullYear(), now.getMonth(), totalDaysInMonth);
+  const workdaysPassed = countWorkdays(now.getFullYear(), now.getMonth(), dayOfMonth);
+  const workdaysLeft = totalWorkdays - workdaysPassed;
+
+  const dailyTarget = totalWorkdays > 0 ? monthTarget / totalWorkdays : 0;
+  const expectedByNow = dailyTarget * workdaysPassed;
+  const difference = monthSales - expectedByNow;
+  const pacePercent = expectedByNow > 0 ? (monthSales / expectedByNow) * 100 : 0;
+  const isOnTrack = monthSales >= expectedByNow;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -107,6 +124,34 @@ export default function MySalesPage() {
                 <p className="text-xs text-muted-foreground">Brakuje</p>
                 <p className="font-bold text-destructive" data-testid="text-brakuje">{brakuje.toLocaleString("pl-PL")} PLN</p>
               </div>
+            </div>
+
+            <div className={`mt-4 p-4 rounded-md max-w-lg mx-auto ${isOnTrack ? "bg-chart-4/10" : "bg-destructive/10"}`} data-testid="pace-indicator">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {isOnTrack ? (
+                  <CheckCircle2 className="w-5 h-5 text-chart-4" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                )}
+                <p className={`text-sm font-bold ${isOnTrack ? "text-chart-4" : "text-destructive"}`}>
+                  {isOnTrack ? "Na dobrej drodze" : "Ponizej tempa"}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div>
+                  <p className="text-xs text-muted-foreground">Powinno byc na dzis</p>
+                  <p className="text-sm font-bold" data-testid="text-expected">{Math.round(expectedByNow).toLocaleString("pl-PL")} PLN</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{isOnTrack ? "Nadwyzka" : "Do nadrobienia"}</p>
+                  <p className={`text-sm font-bold ${isOnTrack ? "text-chart-4" : "text-destructive"}`} data-testid="text-difference">
+                    {Math.abs(Math.round(difference)).toLocaleString("pl-PL")} PLN
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2" data-testid="text-daily-target">
+                Cel dzienny: {Math.round(dailyTarget).toLocaleString("pl-PL")} PLN ({workdaysPassed}/{totalWorkdays} dni roboczych)
+              </p>
             </div>
           </div>
         </CardContent>
