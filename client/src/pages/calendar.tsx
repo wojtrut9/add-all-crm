@@ -50,10 +50,9 @@ const statusDotColors: Record<string, string> = {
 function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange: (id: number, status: string, kwota?: string) => void }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState(contact.status);
-  const [kwota, setKwota] = useState(contact.kwota || "");
 
   const handleSave = () => {
-    onStatusChange(contact.id, newStatus, kwota);
+    onStatusChange(contact.id, newStatus);
     setDialogOpen(false);
   };
 
@@ -71,9 +70,6 @@ function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange
           </div>
           <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${statusDotColors[contact.status] || 'bg-muted-foreground'}`} />
         </div>
-        {contact.kwota && (
-          <p className="text-xs font-medium mt-1">{Number(contact.kwota).toLocaleString("pl-PL")} PLN</p>
-        )}
         {contact.priorytet !== "Normalny" && (
           <Badge variant="destructive" className="text-xs mt-1">{contact.priorytet}</Badge>
         )}
@@ -85,32 +81,20 @@ function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange
             <DialogTitle>{contact.clientName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Status</Label>
-                <Select value={newStatus} onValueChange={setNewStatus}>
-                  <SelectTrigger data-testid="select-contact-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Do zrobienia">Do zrobienia</SelectItem>
-                    <SelectItem value="W trakcie">W trakcie</SelectItem>
-                    <SelectItem value="Zamowil">Zamowil</SelectItem>
-                    <SelectItem value="Nie zamowil">Nie zamowil</SelectItem>
-                    <SelectItem value="Zrobione">Zrobione</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Kwota (PLN)</Label>
-                <Input
-                  type="number"
-                  value={kwota}
-                  onChange={(e) => setKwota(e.target.value)}
-                  placeholder="0.00"
-                  data-testid="input-contact-kwota"
-                />
-              </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger data-testid="select-contact-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Do zrobienia">Do zrobienia</SelectItem>
+                  <SelectItem value="W trakcie">W trakcie</SelectItem>
+                  <SelectItem value="Zamowil">Zamowil</SelectItem>
+                  <SelectItem value="Nie zamowil">Nie zamowil</SelectItem>
+                  <SelectItem value="Zrobione">Zrobione</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Data</Label>
