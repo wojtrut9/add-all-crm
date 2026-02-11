@@ -18,7 +18,7 @@ A comprehensive business CRM application for a HoReCa distribution company. Buil
 | logistyka | logi123 | logistyka | Logistyka |
 
 ## Role-Based Access
-- **admin**: Full access to all modules (dashboard, clients, calendar, deliveries, drivers, sales analysis, sales dashboard, plan, finance, notes)
+- **admin**: Full access to all modules (dashboard, clients, calendar, deliveries, drivers, sales analysis, sales dashboard, plan, daily analysis, finance, notes)
 - **handlowiec** (Gosia/Magda): Dashboard, their clients, calendar, my sales, notes
 - **logistyka**: Dashboard, deliveries, drivers/vehicles
 
@@ -29,12 +29,13 @@ A comprehensive business CRM application for a HoReCa distribution company. Buil
 4. **Deliveries** - Daily table view, auto-created when contact status = "Zamowil", driver/vehicle assignment, export to CSV
 5. **Sales Analysis** - Charts (pie, bar) by client groups, monthly breakdown with margins
 6. **Sales Dashboard** - Plan vs execution for 2026, historical trends (2021-2025)
-7. **Finance Panel** - Salaries, operational costs, fleet costs with pie chart breakdowns
-8. **Notes** - Create/filter notes by category
-9. **Drivers/Vehicles** - CRUD management
+7. **Finance Panel** - Salaries, operational costs, fleet costs with pie chart breakdowns, month filtering, CRUD for costs with categories
+8. **Daily Analysis** - Daily sales tracking with KPI cards (fixed costs, daily cost, break-even), editable daily table with auto-calculations (margin 35.4%), cumulative P&L, month summary, auto-import from contacts
+9. **Notes** - Create/filter notes by category
+10. **Drivers/Vehicles** - CRUD management
 
-## Database Schema (13 tables)
-users, clients, contacts, deliveries, drivers, vehicles, client_sales, client_sales_weekly, sales_targets, salaries, costs, fleet, notes, sales_history
+## Database Schema (14 tables)
+users, clients, contacts, deliveries, drivers, vehicles, client_sales, client_sales_weekly, sales_targets, salaries, costs, fleet, notes, sales_history, daily_analysis
 
 ## Key Business Logic
 - Contact generation uses client `rytmKontaktu` (1x/tydz, 2x/mies, etc.) and `dniZamowien` (day preferences)

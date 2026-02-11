@@ -3,14 +3,14 @@ import { eq, and, gte, lte, sql, like, ilike, or, desc, asc } from "drizzle-orm"
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
-  fleet, notes, salesHistory,
+  fleet, notes, salesHistory, dailyAnalysis,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
   type InsertDelivery, type Delivery,
   type InsertNote, type Note,
   type InsertSalary, type InsertCost, type InsertFleet,
-  type Cost,
+  type Cost, type DailyAnalysis,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -55,6 +55,13 @@ export interface IStorage {
   createNote(note: InsertNote): Promise<Note>;
 
   getDashboardStats(opiekun?: string, rola?: string): Promise<any>;
+
+  getDailyAnalysis(rok: number, miesiac: number): Promise<DailyAnalysis[]>;
+  getDniRobocze(rok: number, miesiac: number): Promise<number>;
+  upsertDailyAnalysis(rok: number, miesiac: number, dzien: number, sprzedaz: string | null): Promise<DailyAnalysis>;
+  updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void>;
+  getMonthlyFixedCosts(miesiac: number): Promise<number>;
+  importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -711,6 +718,115 @@ export class DatabaseStorage implements IStorage {
       weeklyOrders,
       handlowcy,
     };
+  }
+  async getDailyAnalysis(rok: number, miesiac: number): Promise<DailyAnalysis[]> {
+    const rows = await db.select().from(dailyAnalysis)
+      .where(and(
+        eq(dailyAnalysis.rok, rok),
+        eq(dailyAnalysis.miesiac, miesiac),
+        gte(dailyAnalysis.dzien, 1),
+      ))
+      .orderBy(asc(dailyAnalysis.dzien));
+    return rows;
+  }
+
+  async getDniRobocze(rok: number, miesiac: number): Promise<number> {
+    const [settingsRow] = await db.select().from(dailyAnalysis)
+      .where(and(
+        eq(dailyAnalysis.rok, rok),
+        eq(dailyAnalysis.miesiac, miesiac),
+        eq(dailyAnalysis.dzien, 0),
+      ));
+    return settingsRow ? settingsRow.dniRobocze : 21;
+  }
+
+  async upsertDailyAnalysis(rok: number, miesiac: number, dzien: number, sprzedaz: string | null): Promise<DailyAnalysis> {
+    const existing = await db.select().from(dailyAnalysis)
+      .where(and(
+        eq(dailyAnalysis.rok, rok),
+        eq(dailyAnalysis.miesiac, miesiac),
+        eq(dailyAnalysis.dzien, dzien),
+      ));
+    if (existing.length > 0) {
+      const [updated] = await db.update(dailyAnalysis)
+        .set({ sprzedaz })
+        .where(eq(dailyAnalysis.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(dailyAnalysis)
+      .values({ rok, miesiac, dzien, sprzedaz })
+      .returning();
+    return created;
+  }
+
+  async updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void> {
+    const [existing] = await db.select().from(dailyAnalysis)
+      .where(and(
+        eq(dailyAnalysis.rok, rok),
+        eq(dailyAnalysis.miesiac, miesiac),
+        eq(dailyAnalysis.dzien, 0),
+      ));
+    if (existing) {
+      await db.update(dailyAnalysis)
+        .set({ dniRobocze })
+        .where(eq(dailyAnalysis.id, existing.id));
+    } else {
+      await db.insert(dailyAnalysis).values({ rok, miesiac, dzien: 0, dniRobocze });
+    }
+  }
+
+  async getMonthlyFixedCosts(miesiac: number): Promise<number> {
+    const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+    const mKey = MONTH_KEYS[miesiac - 1];
+
+    const salariesData = await db.select().from(salaries);
+    const costsData = await db.select().from(costs);
+    const fleetData = await db.select().from(fleet);
+
+    const filterActive = (items: any[], costField: string) => {
+      return items.reduce((sum: number, item: any) => {
+        const am = item.aktywnyMiesiace as Record<string, boolean> | null;
+        if (am && am[mKey] === false) return sum;
+        return sum + Number(item[costField] || 0);
+      }, 0);
+    };
+
+    const totalSalaries = filterActive(salariesData, "kosztPracodawcy");
+    const totalCosts = filterActive(costsData, "koszt");
+    const totalFleet = filterActive(fleetData, "koszt");
+
+    return totalSalaries + totalCosts + totalFleet;
+  }
+
+  async importDailySalesFromContacts(rok: number, miesiac: number): Promise<number> {
+    const monthStr = String(miesiac).padStart(2, "0");
+    const prefix = `${rok}-${monthStr}-`;
+
+    const contactsData = await db.select().from(contacts)
+      .where(
+        and(
+          like(contacts.data, `${prefix}%`),
+          eq(contacts.status, "Zamówił"),
+        )
+      );
+
+    const byDay: Record<number, number> = {};
+    for (const c of contactsData) {
+      const day = parseInt(c.data.split("-")[2], 10);
+      if (!byDay[day]) byDay[day] = 0;
+      byDay[day] += Number(c.kwota || 0);
+    }
+
+    let daysImported = 0;
+    for (const [dayStr, total] of Object.entries(byDay)) {
+      if (total > 0) {
+        await this.upsertDailyAnalysis(rok, miesiac, parseInt(dayStr, 10), String(total));
+        daysImported++;
+      }
+    }
+
+    return daysImported;
   }
 }
 

@@ -27,6 +27,7 @@ import {
   Car,
   TrendingUp,
   Target,
+  Calculator,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -60,6 +61,7 @@ export function AppSidebar() {
     { title: "Analiza sprzeda\u017cy", url: "/analiza", icon: BarChart3 },
     { title: "Plan miesi\u0119czny", url: "/plan", icon: Target },
     { title: "Panel sprzeda\u017cowy", url: "/sprzedaz", icon: TrendingUp },
+    { title: "Analiza dzienna", url: "/analiza-dzienna", icon: Calculator },
     { title: "Panel finansowy", url: "/finanse", icon: DollarSign },
     { title: "Notatki", url: "/notatki", icon: StickyNote },
   ];

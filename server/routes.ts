@@ -432,6 +432,49 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/daily-analysis", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok) || new Date().getFullYear();
+      const miesiac = Number(req.query.miesiac) || (new Date().getMonth() + 1);
+      const entries = await storage.getDailyAnalysis(rok, miesiac);
+      const fixedCosts = await storage.getMonthlyFixedCosts(miesiac);
+      const dniRobocze = await storage.getDniRobocze(rok, miesiac);
+      res.json({ entries, fixedCosts, dniRobocze });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/daily-analysis", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, dzien, sprzedaz } = req.body;
+      const entry = await storage.upsertDailyAnalysis(rok, miesiac, dzien, sprzedaz);
+      res.json(entry);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/daily-analysis/dni-robocze", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, dniRobocze } = req.body;
+      await storage.updateDniRobocze(rok, miesiac, dniRobocze);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/daily-analysis/import", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac } = req.body;
+      const daysImported = await storage.importDailySalesFromContacts(rok, miesiac);
+      res.json({ daysImported });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/my-sales", authMiddleware, async (req, res) => {
     try {
       const user = (req as any).user;

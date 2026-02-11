@@ -20,6 +20,7 @@ import FinancePage from "@/pages/finance";
 import NotesPage from "@/pages/notes";
 import MySalesPage from "@/pages/my-sales";
 import PlanPage from "@/pages/plan";
+import DailyAnalysisPage from "@/pages/daily-analysis";
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ function AppRoutes() {
       {isAdmin && <Route path="/analiza" component={SalesAnalysisPage} />}
       {isAdmin && <Route path="/plan" component={PlanPage} />}
       {isAdmin && <Route path="/sprzedaz" component={SalesDashboard} />}
+      {isAdmin && <Route path="/analiza-dzienna" component={DailyAnalysisPage} />}
       {isAdmin && <Route path="/finanse" component={FinancePage} />}
       {(isAdmin || isHandlowiec) && <Route path="/notatki" component={NotesPage} />}
       {isHandlowiec && <Route path="/moja-sprzedaz" component={MySalesPage} />}

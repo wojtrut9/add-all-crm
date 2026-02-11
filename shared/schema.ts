@@ -206,6 +206,19 @@ export const insertNoteSchema = createInsertSchema(notes).omit({ id: true, creat
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
 
+export const dailyAnalysis = pgTable("daily_analysis", {
+  id: serial("id").primaryKey(),
+  rok: integer("rok").notNull(),
+  miesiac: integer("miesiac").notNull(),
+  dzien: integer("dzien").notNull(),
+  sprzedaz: decimal("sprzedaz"),
+  dniRobocze: integer("dni_robocze").notNull().default(21),
+});
+
+export const insertDailyAnalysisSchema = createInsertSchema(dailyAnalysis).omit({ id: true });
+export type InsertDailyAnalysis = z.infer<typeof insertDailyAnalysisSchema>;
+export type DailyAnalysis = typeof dailyAnalysis.$inferSelect;
+
 export const salesHistory = pgTable("sales_history", {
   id: serial("id").primaryKey(),
   rok: integer("rok").notNull(),
