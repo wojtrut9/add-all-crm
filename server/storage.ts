@@ -19,8 +19,10 @@ export interface IStorage {
 
   getClients(opiekun?: string): Promise<Client[]>;
   getClient(id: number): Promise<Client | undefined>;
+  getClientByNameOrClientId(name: string, clientId?: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: number, data: Partial<Client>): Promise<void>;
+  getNextClientId(): Promise<string>;
 
   getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]>;
   getContactsForToday(opiekun?: string): Promise<any[]>;
@@ -77,6 +79,17 @@ export class DatabaseStorage implements IStorage {
     return client;
   }
 
+  async getClientByNameOrClientId(name: string, clientId?: string): Promise<Client | undefined> {
+    let conditions: any[] = [];
+    if (clientId) {
+      conditions.push(or(eq(clients.klient, name), eq(clients.clientId, clientId)));
+    } else {
+      conditions.push(eq(clients.klient, name));
+    }
+    const [client] = await db.select().from(clients).where(conditions[0]);
+    return client;
+  }
+
   async createClient(client: InsertClient): Promise<Client> {
     const [created] = await db.insert(clients).values(client).returning();
     return created;
@@ -84,6 +97,20 @@ export class DatabaseStorage implements IStorage {
 
   async updateClient(id: number, data: Partial<Client>): Promise<void> {
     await db.update(clients).set(data).where(eq(clients.id, id));
+  }
+
+  async getNextClientId(): Promise<string> {
+    const allClients = await db.select({ clientId: clients.clientId }).from(clients);
+    let maxNum = 0;
+    for (const c of allClients) {
+      const match = c.clientId?.match(/^C(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    const next = maxNum + 1;
+    return `C${String(next).padStart(3, "0")}`;
   }
 
   async getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]> {

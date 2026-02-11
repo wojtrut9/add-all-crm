@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -19,24 +21,23 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Search, Filter, Download, Upload, Plus, AlertTriangle, Phone, Mail,
-  MapPin, User, Users, X, ChevronRight,
+  Search, Download, Upload, Plus, AlertTriangle, Phone,
+  MapPin, Users, Pencil, Save, X,
 } from "lucide-react";
 import type { Client } from "@shared/schema";
+
+const OPIEKUN_OPTIONS = ["Gosia", "Magda", "Weryfikacja"];
+const SEGMENT_OPTIONS = ["Premium", "Standard", "Weryfikacja"];
+const STATUS_OPTIONS = ["Aktywny", "Nieaktywny", "Weryfikacja", "Zawieszony"];
+const GRUPA_OPTIONS = ["Gosia Premium", "Magda Premium", "Magda Standard", "Weryfikacja - zostana", "Weryfikacja - odejda"];
+const RYTM_OPTIONS = ["1x/tydz", "2x/mies", "1x/mies", "1x/2tyg", "Na zamowienie"];
+const FORMA_KONTAKTU_OPTIONS = ["Telefon", "Sms", "Email", "WhatsApp"];
 
 function ClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
   const hasAlert = (client.brakiZamowien || 0) >= 2;
@@ -79,14 +80,176 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
   );
 }
 
+function InfoRow({ label, value, alert }: { label: string; value: string; alert?: boolean }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-sm font-medium ${alert ? 'text-destructive' : ''}`}>{value}</p>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange, type = "text" }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        data-testid={`input-edit-${label.toLowerCase().replace(/\s/g, '-')}`}
+      />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options }: {
+  label: string; value: string; onChange: (v: string) => void; options: string[];
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Select value={value || ""} onValueChange={onChange}>
+        <SelectTrigger data-testid={`select-edit-${label.toLowerCase().replace(/\s/g, '-')}`}>
+          <SelectValue placeholder={`Wybierz ${label.toLowerCase()}`} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function ClientDetail({ client, onClose }: { client: Client; onClose: () => void }) {
+  const { toast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    klient: client.klient,
+    opiekun: client.opiekun,
+    segment: client.segment,
+    grupaMvp: client.grupaMvp || "",
+    status: client.status,
+    telefon: client.telefon || "",
+    telefonDodatkowy: client.telefonDodatkowy || "",
+    email: client.email || "",
+    emailDodatkowe: client.emailDodatkowe || "",
+    dniZamowien: client.dniZamowien || "",
+    rytmKontaktu: client.rytmKontaktu || "",
+    miasto: client.miasto || "",
+    rabatProcent: client.rabatProcent ? String(client.rabatProcent) : "",
+    warunkiPlatnosci: client.warunkiPlatnosci || "",
+    terminPlatnosciDni: client.terminPlatnosciDni ? String(client.terminPlatnosciDni) : "",
+    limitKredytowy: client.limitKredytowy ? String(client.limitKredytowy) : "",
+    osobaKontaktowa: client.osobaKontaktowa || "",
+    notatki: client.notatki || "",
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("PATCH", `/api/clients/${client.id}`, data);
+    },
+    onSuccess: () => {
+      toast({ title: "Zapisano zmiany" });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setEditing(false);
+      onClose();
+    },
+    onError: () => {
+      toast({ title: "Błąd zapisu", variant: "destructive" });
+    },
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      klient: form.klient,
+      opiekun: form.opiekun,
+      segment: form.segment,
+      grupaMvp: form.grupaMvp || null,
+      status: form.status,
+      telefon: form.telefon || null,
+      telefonDodatkowy: form.telefonDodatkowy || null,
+      email: form.email || null,
+      emailDodatkowe: form.emailDodatkowe || null,
+      dniZamowien: form.dniZamowien || null,
+      rytmKontaktu: form.rytmKontaktu || null,
+      miasto: form.miasto || null,
+      rabatProcent: form.rabatProcent ? Number(form.rabatProcent) : null,
+      warunkiPlatnosci: form.warunkiPlatnosci || null,
+      terminPlatnosciDni: form.terminPlatnosciDni ? Number(form.terminPlatnosciDni) : null,
+      limitKredytowy: form.limitKredytowy ? Number(form.limitKredytowy) : null,
+      osobaKontaktowa: form.osobaKontaktowa || null,
+      notatki: form.notatki || null,
+    });
+  };
+
+  const setField = (key: string, value: string) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  if (editing) {
+    return (
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edytuj klienta</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <EditField label="Nazwa" value={form.klient} onChange={(v) => setField("klient", v)} />
+            <SelectField label="Opiekun" value={form.opiekun} onChange={(v) => setField("opiekun", v)} options={OPIEKUN_OPTIONS} />
+            <SelectField label="Segment" value={form.segment} onChange={(v) => setField("segment", v)} options={SEGMENT_OPTIONS} />
+            <SelectField label="Grupa MVP" value={form.grupaMvp} onChange={(v) => setField("grupaMvp", v)} options={GRUPA_OPTIONS} />
+            <SelectField label="Status" value={form.status} onChange={(v) => setField("status", v)} options={STATUS_OPTIONS} />
+            <EditField label="Telefon" value={form.telefon} onChange={(v) => setField("telefon", v)} />
+            <EditField label="Telefon dodatkowy" value={form.telefonDodatkowy} onChange={(v) => setField("telefonDodatkowy", v)} />
+            <EditField label="Email" value={form.email} onChange={(v) => setField("email", v)} />
+            <EditField label="Email dodatkowe" value={form.emailDodatkowe} onChange={(v) => setField("emailDodatkowe", v)} />
+            <EditField label="Dni zamówień" value={form.dniZamowien} onChange={(v) => setField("dniZamowien", v)} />
+            <SelectField label="Rytm kontaktu" value={form.rytmKontaktu} onChange={(v) => setField("rytmKontaktu", v)} options={RYTM_OPTIONS} />
+            <EditField label="Miasto" value={form.miasto} onChange={(v) => setField("miasto", v)} />
+            <EditField label="Rabat %" value={form.rabatProcent} onChange={(v) => setField("rabatProcent", v)} type="number" />
+            <EditField label="Warunki płatności" value={form.warunkiPlatnosci} onChange={(v) => setField("warunkiPlatnosci", v)} />
+            <EditField label="Termin płatności (dni)" value={form.terminPlatnosciDni} onChange={(v) => setField("terminPlatnosciDni", v)} type="number" />
+            <EditField label="Limit kredytowy" value={form.limitKredytowy} onChange={(v) => setField("limitKredytowy", v)} type="number" />
+            <EditField label="Osoba kontaktowa" value={form.osobaKontaktowa} onChange={(v) => setField("osobaKontaktowa", v)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Notatki</Label>
+            <Textarea
+              value={form.notatki}
+              onChange={(e) => setField("notatki", e.target.value)}
+              className="resize-none"
+              rows={3}
+              data-testid="textarea-edit-notatki"
+            />
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => setEditing(false)} data-testid="button-cancel-edit">
+            <X className="w-4 h-4 mr-1" /> Anuluj
+          </Button>
+          <Button onClick={handleSave} disabled={updateMutation.isPending} data-testid="button-save-edit">
+            <Save className="w-4 h-4 mr-1" /> {updateMutation.isPending ? "Zapisuję..." : "Zapisz"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    );
+  }
+
   return (
     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          {client.klient}
-          <Badge variant={client.segment === "Premium" ? "default" : "secondary"}>{client.segment}</Badge>
-        </DialogTitle>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <DialogTitle className="flex items-center gap-2">
+            {client.klient}
+            <Badge variant={client.segment === "Premium" ? "default" : "secondary"}>{client.segment}</Badge>
+          </DialogTitle>
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)} data-testid="button-edit-client">
+            <Pencil className="w-4 h-4 mr-1" /> Edytuj
+          </Button>
+        </div>
       </DialogHeader>
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -101,15 +264,15 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
           <InfoRow label="Email" value={client.email || "-"} />
           <InfoRow label="Email dodatkowe" value={client.emailDodatkowe || "-"} />
           <InfoRow label="Forma kontaktu" value={client.preferowanaFormaKontaktu || "-"} />
-          <InfoRow label="Zamowienia gdzie" value={client.zamowieniaGdzie || "-"} />
-          <InfoRow label="Dni zamowien" value={client.dniZamowien || "-"} />
+          <InfoRow label="Zamówienia gdzie" value={client.zamowieniaGdzie || "-"} />
+          <InfoRow label="Dni zamówień" value={client.dniZamowien || "-"} />
           <InfoRow label="Rytm kontaktu" value={client.rytmKontaktu || "-"} />
           <InfoRow label="Rabat %" value={client.rabatProcent ? `${client.rabatProcent}%` : "-"} />
-          <InfoRow label="Warunki platnosci" value={client.warunkiPlatnosci || "-"} />
-          <InfoRow label="Termin platnosci" value={client.terminPlatnosciDni ? `${client.terminPlatnosciDni} dni` : "-"} />
+          <InfoRow label="Warunki płatności" value={client.warunkiPlatnosci || "-"} />
+          <InfoRow label="Termin płatności" value={client.terminPlatnosciDni ? `${client.terminPlatnosciDni} dni` : "-"} />
           <InfoRow label="Limit kredytowy" value={client.limitKredytowy ? `${Number(client.limitKredytowy).toLocaleString("pl-PL")} PLN` : "-"} />
           <InfoRow label="Osoba kontaktowa" value={client.osobaKontaktowa || "-"} />
-          <InfoRow label="Braki zamowien" value={String(client.brakiZamowien || 0)} alert={(client.brakiZamowien || 0) >= 2} />
+          <InfoRow label="Braki zamówień" value={String(client.brakiZamowien || 0)} alert={(client.brakiZamowien || 0) >= 2} />
         </div>
         {client.notatki && (
           <div>
@@ -124,12 +287,134 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
   );
 }
 
-function InfoRow({ label, value, alert }: { label: string; value: string; alert?: boolean }) {
+function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { toast } = useToast();
+  const [form, setForm] = useState({
+    klient: "",
+    opiekun: "Weryfikacja",
+    segment: "Weryfikacja",
+    grupaMvp: "",
+    status: "Aktywny",
+    telefon: "",
+    telefonDodatkowy: "",
+    email: "",
+    emailDodatkowe: "",
+    dniZamowien: "",
+    rytmKontaktu: "",
+    miasto: "",
+    rabatProcent: "",
+    warunkiPlatnosci: "",
+    terminPlatnosciDni: "",
+    limitKredytowy: "",
+    osobaKontaktowa: "",
+    notatki: "",
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", "/api/clients", data);
+    },
+    onSuccess: async (res) => {
+      const created = await res.json();
+      toast({ title: `Dodano klienta ${created.klient}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      onOpenChange(false);
+      resetForm();
+    },
+    onError: () => {
+      toast({ title: "Błąd tworzenia klienta", variant: "destructive" });
+    },
+  });
+
+  const resetForm = () => {
+    setForm({
+      klient: "", opiekun: "Weryfikacja", segment: "Weryfikacja", grupaMvp: "",
+      status: "Aktywny", telefon: "", telefonDodatkowy: "", email: "", emailDodatkowe: "",
+      dniZamowien: "", rytmKontaktu: "", miasto: "", rabatProcent: "",
+      warunkiPlatnosci: "", terminPlatnosciDni: "", limitKredytowy: "",
+      osobaKontaktowa: "", notatki: "",
+    });
+  };
+
+  const handleSave = () => {
+    if (!form.klient.trim()) {
+      toast({ title: "Nazwa klienta jest wymagana", variant: "destructive" });
+      return;
+    }
+    createMutation.mutate({
+      klient: form.klient.trim(),
+      opiekun: form.opiekun,
+      segment: form.segment,
+      grupaMvp: form.grupaMvp || null,
+      status: form.status,
+      aktywny: form.status === "Aktywny",
+      telefon: form.telefon || null,
+      telefonDodatkowy: form.telefonDodatkowy || null,
+      email: form.email || null,
+      emailDodatkowe: form.emailDodatkowe || null,
+      dniZamowien: form.dniZamowien || null,
+      rytmKontaktu: form.rytmKontaktu || null,
+      miasto: form.miasto || null,
+      rabatProcent: form.rabatProcent ? Number(form.rabatProcent) : null,
+      warunkiPlatnosci: form.warunkiPlatnosci || null,
+      terminPlatnosciDni: form.terminPlatnosciDni ? Number(form.terminPlatnosciDni) : null,
+      limitKredytowy: form.limitKredytowy ? Number(form.limitKredytowy) : null,
+      osobaKontaktowa: form.osobaKontaktowa || null,
+      notatki: form.notatki || null,
+    });
+  };
+
+  const setField = (key: string, value: string) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
   return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-sm font-medium ${alert ? 'text-destructive' : ''}`}>{value}</p>
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Dodaj klienta</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <EditField label="Nazwa klienta *" value={form.klient} onChange={(v) => setField("klient", v)} />
+            <SelectField label="Opiekun *" value={form.opiekun} onChange={(v) => setField("opiekun", v)} options={OPIEKUN_OPTIONS} />
+            <SelectField label="Segment *" value={form.segment} onChange={(v) => setField("segment", v)} options={SEGMENT_OPTIONS} />
+            <SelectField label="Grupa MVP" value={form.grupaMvp} onChange={(v) => setField("grupaMvp", v)} options={GRUPA_OPTIONS} />
+            <SelectField label="Status" value={form.status} onChange={(v) => setField("status", v)} options={STATUS_OPTIONS} />
+            <EditField label="Telefon" value={form.telefon} onChange={(v) => setField("telefon", v)} />
+            <EditField label="Telefon dodatkowy" value={form.telefonDodatkowy} onChange={(v) => setField("telefonDodatkowy", v)} />
+            <EditField label="Email" value={form.email} onChange={(v) => setField("email", v)} />
+            <EditField label="Email dodatkowe" value={form.emailDodatkowe} onChange={(v) => setField("emailDodatkowe", v)} />
+            <EditField label="Dni zamówień" value={form.dniZamowien} onChange={(v) => setField("dniZamowien", v)} />
+            <SelectField label="Rytm kontaktu" value={form.rytmKontaktu} onChange={(v) => setField("rytmKontaktu", v)} options={RYTM_OPTIONS} />
+            <EditField label="Miasto" value={form.miasto} onChange={(v) => setField("miasto", v)} />
+            <EditField label="Rabat %" value={form.rabatProcent} onChange={(v) => setField("rabatProcent", v)} type="number" />
+            <EditField label="Warunki płatności" value={form.warunkiPlatnosci} onChange={(v) => setField("warunkiPlatnosci", v)} />
+            <EditField label="Termin płatności (dni)" value={form.terminPlatnosciDni} onChange={(v) => setField("terminPlatnosciDni", v)} type="number" />
+            <EditField label="Limit kredytowy" value={form.limitKredytowy} onChange={(v) => setField("limitKredytowy", v)} type="number" />
+            <EditField label="Osoba kontaktowa" value={form.osobaKontaktowa} onChange={(v) => setField("osobaKontaktowa", v)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Notatki</Label>
+            <Textarea
+              value={form.notatki}
+              onChange={(e) => setField("notatki", e.target.value)}
+              className="resize-none"
+              rows={3}
+              data-testid="textarea-add-notatki"
+            />
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-cancel-add">
+            Anuluj
+          </Button>
+          <Button onClick={handleSave} disabled={createMutation.isPending} data-testid="button-save-add">
+            <Plus className="w-4 h-4 mr-1" /> {createMutation.isPending ? "Dodaję..." : "Dodaj klienta"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -143,6 +428,7 @@ export default function ClientsPage() {
   const [filterGrupa, setFilterGrupa] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const { data: clientsData, isLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
@@ -209,10 +495,13 @@ export default function ClientsPage() {
         });
         if (!res.ok) throw new Error("Import failed");
         const data = await res.json();
-        toast({ title: "Import zakonczony", description: `Zaimportowano ${data.count} klientow` });
+        toast({
+          title: "Import zakończony",
+          description: `Zaimportowano ${data.created} nowych klientów. Pominięto ${data.skipped} istniejących.`,
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       } catch {
-        toast({ title: "Blad importu", variant: "destructive" });
+        toast({ title: "Błąd importu", variant: "destructive" });
       }
     };
     input.click();
@@ -236,16 +525,21 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Klienci</h1>
-          <p className="text-sm text-muted-foreground">{filteredClients.length} z {clients.length} klientow</p>
+          <p className="text-sm text-muted-foreground">{filteredClients.length} z {clients.length} klientów</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={handleExportCSV} data-testid="button-export-csv">
             <Download className="w-4 h-4 mr-1" /> CSV
           </Button>
           {isAdmin && (
-            <Button variant="outline" size="sm" onClick={handleImportCSV} data-testid="button-import-csv">
-              <Upload className="w-4 h-4 mr-1" /> Importuj CSV
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={handleImportCSV} data-testid="button-import-csv">
+                <Upload className="w-4 h-4 mr-1" /> Importuj CSV
+              </Button>
+              <Button size="sm" onClick={() => setAddDialogOpen(true)} data-testid="button-add-client">
+                <Plus className="w-4 h-4 mr-1" /> Dodaj klienta
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -310,6 +604,8 @@ export default function ClientsPage() {
         {selectedClient && <ClientDetail client={selectedClient} onClose={() => setSelectedClient(null)} />}
       </Dialog>
 
+      <AddClientDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredClients.map((client) => (
           <ClientCard
@@ -323,8 +619,8 @@ export default function ClientsPage() {
       {filteredClients.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p className="text-lg font-medium">Brak klientow</p>
-          <p className="text-sm">Zmien filtry lub zaimportuj dane</p>
+          <p className="text-lg font-medium">Brak klientów</p>
+          <p className="text-sm">Zmień filtry lub zaimportuj dane</p>
         </div>
       )}
     </div>

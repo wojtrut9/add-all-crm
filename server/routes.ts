@@ -92,24 +92,54 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/clients", authMiddleware, async (req, res) => {
+    try {
+      const nextId = await storage.getNextClientId();
+      const clientData = { ...req.body, clientId: req.body.clientId || nextId, brakiZamowien: 0 };
+      const created = await storage.createClient(clientData);
+      res.json(created);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/clients/:id", authMiddleware, async (req, res) => {
+    try {
+      await storage.updateClient(Number(req.params.id), req.body);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/clients/import", authMiddleware, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "Brak pliku" });
 
       const content = req.file.buffer.toString("utf-8");
       const lines = parseCSV(content);
-      let count = 0;
+      let created = 0;
+      let skipped = 0;
 
       for (const row of lines) {
         if (!row.Klient && !row.klient) continue;
+
+        const klientName = row.Klient || row.klient || "";
+        const csvClientId = row.Client_ID || row.client_id || "";
+
+        const existing = await storage.getClientByNameOrClientId(klientName, csvClientId || undefined);
+        if (existing) {
+          skipped++;
+          continue;
+        }
 
         const notatki = row.Notatki || row.notatki || "";
         const parsed = parseNotatkiFields(notatki);
 
         try {
           await storage.createClient({
-            klient: row.Klient || row.klient || "",
-            clientId: row.Client_ID || row.client_id || `C${Date.now()}`,
+            klient: klientName,
+            clientId: csvClientId || `C${Date.now()}`,
             opiekun: row.Opiekun || row.opiekun || "Weryfikacja",
             segment: row.Segment || row.segment || "Weryfikacja",
             grupaMvp: row.Grupa_MVP || row.grupa_mvp || null,
@@ -133,13 +163,13 @@ export async function registerRoutes(
             osobaKontaktowa: parsed.osobaKontaktowa || null,
             brakiZamowien: 0,
           });
-          count++;
+          created++;
         } catch (e: any) {
-          // skip duplicates
+          skipped++;
         }
       }
 
-      res.json({ count });
+      res.json({ created, skipped });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
