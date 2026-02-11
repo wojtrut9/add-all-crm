@@ -3,12 +3,21 @@ import { hashPassword } from "./auth";
 import {
   users, drivers, vehicles, salaries, costs, fleet,
   salesTargets, salesHistory, clients, contacts, deliveries, notes,
+  clientSales, clientSalesWeekly,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import clientsData from "./clients-data.json";
 import contactsData from "./contacts-data.json";
 import deliveriesData from "./deliveries-data.json";
 import notesData from "./notes-data.json";
+import clientSalesData from "./client-sales-data.json";
+import clientSalesWeeklyData from "./client-sales-weekly-data.json";
+import clientSalesGru2025Data from "./client-sales-gru2025-data.json";
+
+const ALL_MONTHS_ACTIVE = {
+  sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true,
+  lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true,
+};
 
 export async function seedDatabase() {
   const existingUsers = await db.select().from(users).limit(1);
@@ -26,6 +35,23 @@ export async function seedDatabase() {
 
   if (existingClients.length === 0) {
     await seedTableData("clients", clients, clientsData);
+  }
+
+  // Seed client sales (December 2025 + January 2026) — match by clientId string to DB id
+  const existingSales = await db.select().from(clientSales).limit(1);
+  if (existingSales.length === 0) {
+    if (clientSalesGru2025Data.length > 0) {
+      await seedClientSalesForMonth(clientSalesGru2025Data as any[], 2025, 12);
+    }
+    if (clientSalesData.length > 0) {
+      await seedClientSalesForMonth(clientSalesData as any[], 2026, 1);
+    }
+  }
+
+  // Seed weekly plan (February 2026)
+  const existingWeekly = await db.select().from(clientSalesWeekly).limit(1);
+  if (existingWeekly.length === 0 && clientSalesWeeklyData.length > 0) {
+    await seedClientSalesWeekly();
   }
 
   if (existingContacts.length === 0) {
@@ -48,6 +74,82 @@ async function seedTableData(name: string, table: any, data: any[]) {
     console.log(`Seeded ${data.length} ${name}`);
   } catch (e: any) {
     console.log(`Could not seed ${name}:`, e.message);
+  }
+}
+
+async function seedClientSalesForMonth(salesData: any[], rok: number, miesiac: number) {
+  try {
+    // Build map: clientId string (C001) -> DB id
+    const allClients = await db.select().from(clients);
+    const clientIdMap = new Map<string, number>();
+    for (const c of allClients) {
+      clientIdMap.set(c.clientId, c.id);
+    }
+
+    const batchSize = 20;
+    const records: any[] = [];
+
+    for (const sale of salesData) {
+      const dbId = clientIdMap.get(sale.clientId);
+      if (!dbId) continue;
+
+      records.push({
+        clientId: dbId,
+        rok,
+        miesiac,
+        sprzedaz: String(sale.sprzedaz),
+        koszt: String(sale.koszt),
+        zysk: String(sale.zysk),
+        marza: String(sale.marza),
+      });
+    }
+
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      await db.insert(clientSales).values(batch).onConflictDoNothing();
+    }
+
+    const monthNames = ["", "Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paz", "Lis", "Gru"];
+    console.log(`Seeded ${records.length} client sales (${monthNames[miesiac]} ${rok})`);
+  } catch (e: any) {
+    console.log(`Could not seed client sales (${rok}-${miesiac}):`, e.message);
+  }
+}
+
+async function seedClientSalesWeekly() {
+  try {
+    const allClients = await db.select().from(clients);
+    const clientIdMap = new Map<string, number>();
+    for (const c of allClients) {
+      clientIdMap.set(c.clientId, c.id);
+    }
+
+    let count = 0;
+    const batchSize = 20;
+    const records: any[] = [];
+
+    for (const plan of clientSalesWeeklyData as any[]) {
+      const dbId = clientIdMap.get(plan.clientId);
+      if (!dbId) continue;
+
+      records.push({
+        clientId: dbId,
+        rok: plan.rok,
+        miesiac: plan.miesiac,
+        tydzien: plan.tydzien,
+        plan: plan.plan,
+        realizacja: plan.realizacja || "0",
+      });
+    }
+
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      await db.insert(clientSalesWeekly).values(batch).onConflictDoNothing();
+    }
+
+    console.log(`Seeded ${records.length} weekly plan records (February 2026)`);
+  } catch (e: any) {
+    console.log("Could not seed weekly plan:", e.message);
   }
 }
 
@@ -85,43 +187,53 @@ async function seedCoreData() {
   ]);
 
   await db.insert(salaries).values([
-    { osoba: "Malgorzata Rojek", firma: "Sp. z o.o.", dzial: "SPRZEDAZ", formaZatrudnienia: "UoP", netto: "8000", brutto: "0", kosztPracodawcy: "14500", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Piotr Radzynski", firma: "Sp. z o.o.", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "6000", brutto: "0", kosztPracodawcy: "10400", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Paulina Zielinska", firma: "Sp. z o.o.", dzial: "OPERACJE", formaZatrudnienia: "UoP", netto: "4300", brutto: "6002", kosztPracodawcy: "5654", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Firma zewnetrzna", firma: "Sp. z o.o.", dzial: "LOGISTYKA", formaZatrudnienia: "FV", netto: "7800", brutto: "0", kosztPracodawcy: "7800", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Magdalena Grzelak", firma: "Sp. z o.o.", dzial: "SPRZEDAZ", formaZatrudnienia: "UoP", netto: "5000", brutto: "6850", kosztPracodawcy: "8400", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Dysponowanie pracownikami JDG", firma: "Sp. z o.o.", dzial: "ZARZADZANIE", formaZatrudnienia: "FV", netto: "21000", brutto: "0", kosztPracodawcy: "22674.54", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Zarzad p. Ania i p. Adam", firma: "Sp. z o.o.", dzial: "ZARZADZANIE", formaZatrudnienia: "FV", netto: "11000", brutto: "0", kosztPracodawcy: "7400", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Czeki nowe", firma: "Sp. z o.o.", dzial: "SPRZEDAZ", formaZatrudnienia: null, netto: "0", brutto: "0", kosztPracodawcy: "8640", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Anita Sklodowska", firma: "JDG", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "3511", brutto: "4666", kosztPracodawcy: "5621.59", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Dominik Zmudzki", firma: "JDG", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "3511", brutto: "4666", kosztPracodawcy: "5621.59", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Marek Zielinski", firma: "JDG", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "3511", brutto: "4666", kosztPracodawcy: "5621.59", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
-    { osoba: "Teresa Kochman", firma: "JDG", dzial: "OPERACJE", formaZatrudnienia: "UoP", netto: "4000", brutto: "2547", kosztPracodawcy: "3320", aktywnyMiesiace: { sty: true, lut: true, mar: true, kwi: true, maj: true, cze: true, lip: true, sie: true, wrz: true, paz: true, lis: true, gru: true } },
+    { osoba: "Malgorzata Rojek", firma: "Sp. z o.o.", dzial: "SPRZEDAZ", formaZatrudnienia: "UoP", netto: "8000", brutto: "0", kosztPracodawcy: "14500", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Piotr Radzynski", firma: "Sp. z o.o.", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "6000", brutto: "0", kosztPracodawcy: "10400", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Paulina Zielinska", firma: "Sp. z o.o.", dzial: "OPERACJE", formaZatrudnienia: "UoP", netto: "4300", brutto: "6002", kosztPracodawcy: "5654", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Firma zewnetrzna", firma: "Sp. z o.o.", dzial: "LOGISTYKA", formaZatrudnienia: "FV", netto: "7800", brutto: "6116.61", kosztPracodawcy: "7800", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Magdalena Grzelak", firma: "Sp. z o.o.", dzial: "SPRZEDAZ", formaZatrudnienia: "UoP", netto: "5000", brutto: "6850", kosztPracodawcy: "8400", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Dysponowanie pracownikami JDG", firma: "Sp. z o.o.", dzial: "ZARZADZANIE", formaZatrudnienia: "FV", netto: "21000", brutto: "0", kosztPracodawcy: "22674.54", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Zarzad p. Ania i p. Adam", firma: "Sp. z o.o.", dzial: "ZARZADZANIE", formaZatrudnienia: "FV", netto: "11000", brutto: "0", kosztPracodawcy: "7400", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Czeki nowe", firma: "Sp. z o.o.", dzial: "SPRZEDAZ", formaZatrudnienia: null, netto: "0", brutto: "0", kosztPracodawcy: "8640", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Anita Sklodowska", firma: "JDG", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "3511", brutto: "4666", kosztPracodawcy: "5621.59", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Dominik Zmudzki", firma: "JDG", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "3511", brutto: "4666", kosztPracodawcy: "5621.59", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Marek Zielinski", firma: "JDG", dzial: "LOGISTYKA", formaZatrudnienia: "UoP", netto: "3511", brutto: "4666", kosztPracodawcy: "5621.59", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { osoba: "Teresa Kochman", firma: "JDG", dzial: "OPERACJE", formaZatrudnienia: "UoP", netto: "4000", brutto: "2547", kosztPracodawcy: "3320", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
   ]);
 
   await db.insert(costs).values([
-    { nazwa: "Ksiegowosc", dzial: "ZARZADZANIE", koszt: "5845", aktywnyMiesiace: {} },
-    { nazwa: "Najem magazyn", dzial: "ZARZADZANIE", koszt: "10000", aktywnyMiesiace: {} },
-    { nazwa: "Artykuly biurowe/spozywcze", dzial: "ZARZADZANIE", koszt: "930", aktywnyMiesiace: {} },
-    { nazwa: "Media (prad, woda, smieci)", dzial: "ZARZADZANIE", koszt: "1301", aktywnyMiesiace: {} },
-    { nazwa: "Paliwo", dzial: "LOGISTYKA", koszt: "5000", aktywnyMiesiace: {} },
-    { nazwa: "Marketing", dzial: "SPRZEDAZ", koszt: "470", aktywnyMiesiace: {} },
-    { nazwa: "Budzet handlowy", dzial: "SPRZEDAZ", koszt: "100", aktywnyMiesiace: {} },
-    { nazwa: "Dodatkowe (transport, poczta)", dzial: "INNY", koszt: "940", aktywnyMiesiace: {} },
-    { nazwa: "Naprawy/przeglady", dzial: "LOGISTYKA", koszt: "1700", aktywnyMiesiace: {} },
-    { nazwa: "Fundusz nieprzewidziany", dzial: "ZARZADZANIE", koszt: "700", aktywnyMiesiace: {} },
-    { nazwa: "Finansowanie/raty", dzial: "DORADZTWO", koszt: "1824", aktywnyMiesiace: {} },
-    { nazwa: "Zarzadzanie Operacyjne od JDG", dzial: "ZARZADZANIE", koszt: "5000", aktywnyMiesiace: {} },
+    { nazwa: "Ksiegowosc", dzial: "DORADZTWO", koszt: "5845", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Najem magazyn", dzial: "MAGAZYN", koszt: "10000", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Artykuly biurowe", dzial: "INNY", koszt: "380", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Artykuly spozywcze", dzial: "INNY", koszt: "550", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Media (prad, woda, smieci)", dzial: "ZARZADZANIE", koszt: "1301", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Paliwo", dzial: "LOGISTYKA", koszt: "5000", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Marketing", dzial: "SPRZEDAZ", koszt: "470", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Budzet handlowy", dzial: "SPRZEDAZ", koszt: "100", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Dodatkowe (transport, poczta)", dzial: "INNY", koszt: "940", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Naprawy/przeglady", dzial: "LOGISTYKA", koszt: "1700", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Fundusz nieprzewidziany", dzial: "ZARZADZANIE", koszt: "700", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Finansowanie/raty", dzial: "DORADZTWO", koszt: "1824", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Zarzadzanie Operacyjne od JDG", dzial: "ZARZADZANIE", koszt: "5000", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Artykuly budowlane/wyposazenie", dzial: "INNY", koszt: "5", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { nazwa: "Budzet na prezenty klienci", dzial: "SPRZEDAZ", koszt: "6000", aktywnyMiesiace: {
+      sty: false, lut: false, mar: false, kwi: false, maj: false, cze: false,
+      lip: false, sie: false, wrz: false, paz: false, lis: true, gru: false,
+    }},
+    { nazwa: "Budzet na prezenty pracownicy", dzial: "ZARZADZANIE", koszt: "10000", aktywnyMiesiace: {
+      sty: false, lut: false, mar: false, kwi: false, maj: false, cze: false,
+      lip: false, sie: false, wrz: false, paz: false, lis: false, gru: true,
+    }},
   ]);
 
   await db.insert(fleet).values([
-    { opis: "Dzierzawa z AddAll JDG", rodzaj: "Dzierzawa", koszt: "3900", aktywnyMiesiace: {} },
-    { opis: "Opel Movano LEASING", rodzaj: "Leasing", koszt: "2475", aktywnyMiesiace: {} },
-    { opis: "Ford Custom leasing", rodzaj: "Leasing", koszt: "1687", aktywnyMiesiace: {} },
-    { opis: "2xBMW rata leasingowa", rodzaj: "Leasing", koszt: "3298", aktywnyMiesiace: {} },
-    { opis: "GPS Widziszwszystko", rodzaj: "Usluga", koszt: "300", aktywnyMiesiace: {} },
-    { opis: "Paliwo flota", rodzaj: "Eksploatacja", koszt: "2714", aktywnyMiesiace: {} },
-    { opis: "Naprawy przeglady opony", rodzaj: "Eksploatacja", koszt: "1204", aktywnyMiesiace: {} },
+    { opis: "Dzierzawa z AddAll JDG", rodzaj: "Dzierzawa", koszt: "3900", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { opis: "Opel Movano LEASING", rodzaj: "Leasing", koszt: "2475", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { opis: "Ford Custom leasing", rodzaj: "Leasing", koszt: "1687", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { opis: "2xBMW rata leasingowa", rodzaj: "Leasing", koszt: "3298", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { opis: "GPS Widziszwszystko", rodzaj: "Usluga", koszt: "300", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { opis: "Paliwo flota", rodzaj: "Eksploatacja", koszt: "2714", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
+    { opis: "Naprawy przeglady opony", rodzaj: "Eksploatacja", koszt: "1204", aktywnyMiesiace: ALL_MONTHS_ACTIVE },
   ]);
 
   const plan2026 = [450000, 450000, 480000, 500000, 480000, 480000, 480000, 480000, 500000, 520000, 520000, 520000];

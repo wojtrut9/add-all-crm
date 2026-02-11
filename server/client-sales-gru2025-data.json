@@ -1,0 +1,1034 @@
+[
+  {
+    "clientId": "C002",
+    "klient": "Amar Beirut",
+    "sprzedaz": 25365.58,
+    "koszt": 16386.16,
+    "zysk": 8979.42,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C007",
+    "klient": "Lupo",
+    "sprzedaz": 22488.31,
+    "koszt": 14527.45,
+    "zysk": 7960.86,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C010",
+    "klient": "Sakana Wilanów",
+    "sprzedaz": 12206.6,
+    "koszt": 7885.46,
+    "zysk": 4321.14,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C008",
+    "klient": "Sakana Sushi - Burakowska P",
+    "sprzedaz": 11086.17,
+    "koszt": 7161.67,
+    "zysk": 3924.5,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C011",
+    "klient": "SOUND GARDEN HOTEL",
+    "sprzedaz": 13641.08,
+    "koszt": 8812.14,
+    "zysk": 4828.94,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C009",
+    "klient": "Sakana Sushi Molieria",
+    "sprzedaz": 5743.48,
+    "koszt": 3710.29,
+    "zysk": 2033.19,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C001",
+    "klient": "Abruzzo",
+    "sprzedaz": 4950.06,
+    "koszt": 3197.74,
+    "zysk": 1752.32,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C003",
+    "klient": "Belvedere",
+    "sprzedaz": 400.96,
+    "koszt": 259.02,
+    "zysk": 141.94,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C004",
+    "klient": "DOM PRACOWNIKA SŁUŻBY ZDROWIA",
+    "sprzedaz": 34247.56,
+    "koszt": 22123.92,
+    "zysk": 12123.64,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C076",
+    "klient": "Sushi Soul",
+    "sprzedaz": 11939.04,
+    "koszt": 7712.62,
+    "zysk": 4226.42,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C069",
+    "klient": "Solivoda - Szkoła Amerykańska",
+    "sprzedaz": 4038.69,
+    "koszt": 2608.99,
+    "zysk": 1429.7,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C023",
+    "klient": "Culture Cafe - Wola",
+    "sprzedaz": 10446.66,
+    "koszt": 6748.54,
+    "zysk": 3698.12,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C070",
+    "klient": "Solivoda Konstancin PSE",
+    "sprzedaz": 12788.3,
+    "koszt": 8261.24,
+    "zysk": 4527.06,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C026",
+    "klient": "GAN BEI",
+    "sprzedaz": 9100.17,
+    "koszt": 5878.71,
+    "zysk": 3221.46,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C044",
+    "klient": "Lunch - Kuba 2",
+    "sprzedaz": 3333.02,
+    "koszt": 2153.13,
+    "zysk": 1179.89,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C059",
+    "klient": "Seafood Station",
+    "sprzedaz": 7431.03,
+    "koszt": 4800.45,
+    "zysk": 2630.58,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C021",
+    "klient": "Culture Cafe",
+    "sprzedaz": 3760.64,
+    "koszt": 2429.37,
+    "zysk": 1331.27,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C027",
+    "klient": "GAN BEI CHMIELNA",
+    "sprzedaz": 7314.76,
+    "koszt": 4725.33,
+    "zysk": 2589.43,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C073",
+    "klient": "Street Daszyńskiego",
+    "sprzedaz": 5676.86,
+    "koszt": 3667.25,
+    "zysk": 2009.61,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C084",
+    "klient": "Voda",
+    "sprzedaz": 5564.42,
+    "koszt": 3594.62,
+    "zysk": 1969.8,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C060",
+    "klient": "SEAGULL",
+    "sprzedaz": 6257.34,
+    "koszt": 4042.24,
+    "zysk": 2215.1,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C039",
+    "klient": "KUMPLE",
+    "sprzedaz": 6625.66,
+    "koszt": 4280.18,
+    "zysk": 2345.48,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C085",
+    "klient": "Wozownia",
+    "sprzedaz": 4936.72,
+    "koszt": 3189.12,
+    "zysk": 1747.6,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C048",
+    "klient": "Pałac Rozalin",
+    "sprzedaz": 2894.7,
+    "koszt": 1869.98,
+    "zysk": 1024.72,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C080",
+    "klient": "SZPITAL OTWOCK",
+    "sprzedaz": 4974.88,
+    "koszt": 3213.77,
+    "zysk": 1761.11,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C079",
+    "klient": "SZPITAL NA MADALIŃSKIEGO",
+    "sprzedaz": 4515.07,
+    "koszt": 2916.74,
+    "zysk": 1598.33,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C036",
+    "klient": "Kontakt Wine",
+    "sprzedaz": 5892.27,
+    "koszt": 3806.41,
+    "zysk": 2085.86,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C056",
+    "klient": "Restauracja Nolita",
+    "sprzedaz": 3924.09,
+    "koszt": 2534.96,
+    "zysk": 1389.13,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C029",
+    "klient": "Grupa Cateringowa",
+    "sprzedaz": 6883.69,
+    "koszt": 4446.86,
+    "zysk": 2436.83,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C013",
+    "klient": "ARCHE HOTEL PUŁAWSKA",
+    "sprzedaz": 5992.73,
+    "koszt": 3871.3,
+    "zysk": 2121.43,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C086",
+    "klient": "Zoli Pizzeria",
+    "sprzedaz": 5247.17,
+    "koszt": 3389.67,
+    "zysk": 1857.5,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C051",
+    "klient": "PASTA FINIESTRA",
+    "sprzedaz": 2237.18,
+    "koszt": 1445.22,
+    "zysk": 791.96,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C075",
+    "klient": "Street Polska 2 KASPRZAKA",
+    "sprzedaz": 8145.52,
+    "koszt": 5262.01,
+    "zysk": 2883.51,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C071",
+    "klient": "Stary Dom",
+    "sprzedaz": 4534.96,
+    "koszt": 2929.58,
+    "zysk": 1605.38,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C077",
+    "klient": "Sushi Today by Sakana",
+    "sprzedaz": 2640.51,
+    "koszt": 1705.77,
+    "zysk": 934.74,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C030",
+    "klient": "Hamra",
+    "sprzedaz": 2009.89,
+    "koszt": 1298.39,
+    "zysk": 711.5,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C012",
+    "klient": "Alegloria",
+    "sprzedaz": 8533.33,
+    "koszt": 5512.53,
+    "zysk": 3020.8,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C057",
+    "klient": "Restauracja Wilanów",
+    "sprzedaz": 6974.48,
+    "koszt": 4505.51,
+    "zysk": 2468.97,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C022",
+    "klient": "Culture Cafe - Grzybowska",
+    "sprzedaz": 1084.92,
+    "koszt": 700.86,
+    "zysk": 384.06,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C055",
+    "klient": "Przedszkole nr.2 `Tęczowe Przedszkole`",
+    "sprzedaz": 3210.01,
+    "koszt": 2073.67,
+    "zysk": 1136.34,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C034",
+    "klient": "Japoński Sąsiad 2 CZAPELSKA",
+    "sprzedaz": 2120.92,
+    "koszt": 1370.11,
+    "zysk": 750.81,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C014",
+    "klient": "Babcia Włoszka",
+    "sprzedaz": 6181.85,
+    "koszt": 3993.48,
+    "zysk": 2188.37,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C040",
+    "klient": "La Casa Bistro & Cafe",
+    "sprzedaz": 4013.25,
+    "koszt": 2592.56,
+    "zysk": 1420.69,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C050",
+    "klient": "Park Cafe 2",
+    "sprzedaz": 10904.74,
+    "koszt": 7044.46,
+    "zysk": 3860.28,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C037",
+    "klient": "Krzysztof Cieślak",
+    "sprzedaz": 3379.68,
+    "koszt": 2183.27,
+    "zysk": 1196.41,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C047",
+    "klient": "PADRON",
+    "sprzedaz": 5018.19,
+    "koszt": 3241.75,
+    "zysk": 1776.44,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C054",
+    "klient": "PROSUSHI BROWARY",
+    "sprzedaz": 4524.99,
+    "koszt": 2923.14,
+    "zysk": 1601.85,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C062",
+    "klient": "Shiso Sushi",
+    "sprzedaz": 4003.32,
+    "koszt": 2586.14,
+    "zysk": 1417.18,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C032",
+    "klient": "Hoshi Sushi Mszczonów",
+    "sprzedaz": 1920.52,
+    "koszt": 1240.66,
+    "zysk": 679.86,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C045",
+    "klient": "Mazurkas",
+    "sprzedaz": 1153.85,
+    "koszt": 745.39,
+    "zysk": 408.46,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C058",
+    "klient": "Seafood House - SEABREEZE",
+    "sprzedaz": 5454.82,
+    "koszt": 3523.81,
+    "zysk": 1931.01,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C083",
+    "klient": "VIVA TANGO",
+    "sprzedaz": 5148.28,
+    "koszt": 3325.79,
+    "zysk": 1822.49,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C053",
+    "klient": "PROSUSHI",
+    "sprzedaz": 3870.17,
+    "koszt": 2500.13,
+    "zysk": 1370.04,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C082",
+    "klient": "U Barssa",
+    "sprzedaz": 4422.94,
+    "koszt": 2857.22,
+    "zysk": 1565.72,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C035",
+    "klient": "Japoński Sąsiad BANDERII",
+    "sprzedaz": 2612.24,
+    "koszt": 1687.51,
+    "zysk": 924.73,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C072",
+    "klient": "Steak Dolna 41",
+    "sprzedaz": 1868.44,
+    "koszt": 1207.01,
+    "zysk": 661.43,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C127",
+    "klient": "Negroni Centrale",
+    "sprzedaz": 3470.54,
+    "koszt": 2241.97,
+    "zysk": 1228.57,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C087",
+    "klient": "ZPR Casino 2",
+    "sprzedaz": 2619.99,
+    "koszt": 1692.51,
+    "zysk": 927.48,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C025",
+    "klient": "EL PATIO",
+    "sprzedaz": 2660.62,
+    "koszt": 1718.76,
+    "zysk": 941.86,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C020",
+    "klient": "Chocobon - CATERING",
+    "sprzedaz": 2386.96,
+    "koszt": 1541.98,
+    "zysk": 844.98,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C043",
+    "klient": "LIMBA",
+    "sprzedaz": 880.54,
+    "koszt": 568.83,
+    "zysk": 311.71,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C033",
+    "klient": "IKI Izakaya",
+    "sprzedaz": 1467.55,
+    "koszt": 948.04,
+    "zysk": 519.51,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C038",
+    "klient": "Kuchnia Warszawska",
+    "sprzedaz": 2944.82,
+    "koszt": 1902.35,
+    "zysk": 1042.47,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C049",
+    "klient": "Panattoni Cafe",
+    "sprzedaz": 1580.82,
+    "koszt": 1021.21,
+    "zysk": 559.61,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C078",
+    "klient": "Sushi Zushi Żurawia",
+    "sprzedaz": 3698.7,
+    "koszt": 2389.36,
+    "zysk": 1309.34,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C024",
+    "klient": "DOM OPIEKI `ANNA`",
+    "sprzedaz": 609.14,
+    "koszt": 393.5,
+    "zysk": 215.64,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C117",
+    "klient": "Kuma no teburu",
+    "sprzedaz": 822.29,
+    "koszt": 531.2,
+    "zysk": 291.09,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C019",
+    "klient": "Chocobon",
+    "sprzedaz": 2348.69,
+    "koszt": 1517.25,
+    "zysk": 831.44,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C016",
+    "klient": "Buns and bottles bar",
+    "sprzedaz": 912.59,
+    "koszt": 589.53,
+    "zysk": 323.06,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C041",
+    "klient": "La Ros 2",
+    "sprzedaz": 596.06,
+    "koszt": 385.05,
+    "zysk": 211.01,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C100",
+    "klient": "Drukarnia GC",
+    "sprzedaz": 499.2,
+    "koszt": 322.48,
+    "zysk": 176.72,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C017",
+    "klient": "BURGERLAB",
+    "sprzedaz": 542.76,
+    "koszt": 350.62,
+    "zysk": 192.14,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C042",
+    "klient": "Liban w Szklance",
+    "sprzedaz": 246.15,
+    "koszt": 159.01,
+    "zysk": 87.14,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C061",
+    "klient": "SHIN SUSHI  2",
+    "sprzedaz": 1158.41,
+    "koszt": 748.33,
+    "zysk": 410.08,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C046",
+    "klient": "MOSiR Poranki i Wieczory",
+    "sprzedaz": 849.94,
+    "koszt": 549.06,
+    "zysk": 300.88,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C064",
+    "klient": "SKALO - Oni Izakaya",
+    "sprzedaz": 1080.05,
+    "koszt": 697.71,
+    "zysk": 382.34,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C065",
+    "klient": "SKALO - Park Cafe",
+    "sprzedaz": 1373.46,
+    "koszt": 887.26,
+    "zysk": 486.2,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C111",
+    "klient": "Just like you",
+    "sprzedaz": 2076.1,
+    "koszt": 1341.16,
+    "zysk": 734.94,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C156",
+    "klient": "Ti Amo Tratoria",
+    "sprzedaz": 2634.96,
+    "koszt": 1702.18,
+    "zysk": 932.78,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C147",
+    "klient": "Sushi Mango 2",
+    "sprzedaz": 1526.14,
+    "koszt": 985.89,
+    "zysk": 540.25,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C088",
+    "klient": "Ach Cafe",
+    "sprzedaz": 1830.96,
+    "koszt": 1182.8,
+    "zysk": 648.16,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C151",
+    "klient": "Śledzie z Bornholmu",
+    "sprzedaz": 2392.99,
+    "koszt": 1545.87,
+    "zysk": 847.12,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C142",
+    "klient": "Sklep Medyczny",
+    "sprzedaz": 638.11,
+    "koszt": 412.22,
+    "zysk": 225.89,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C124",
+    "klient": "Manna",
+    "sprzedaz": 2470.49,
+    "koszt": 1595.94,
+    "zysk": 874.55,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C149",
+    "klient": "Szaurmafia",
+    "sprzedaz": 1229.26,
+    "koszt": 794.1,
+    "zysk": 435.16,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C138",
+    "klient": "SKALO - Prime WALICÓW",
+    "sprzedaz": 3671.19,
+    "koszt": 2371.59,
+    "zysk": 1299.6,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C093",
+    "klient": "Atelier Stylissimo",
+    "sprzedaz": 1587.42,
+    "koszt": 1025.47,
+    "zysk": 561.95,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C118",
+    "klient": "LANS SIENNA",
+    "sprzedaz": 512.68,
+    "koszt": 331.19,
+    "zysk": 181.49,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C128",
+    "klient": "No Tu Olideli",
+    "sprzedaz": 1821.77,
+    "koszt": 1176.86,
+    "zysk": 644.91,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C137",
+    "klient": "SKALO - Prime MOKOTÓW",
+    "sprzedaz": 747.74,
+    "koszt": 483.04,
+    "zysk": 264.7,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C162",
+    "klient": "W Kropki Bordo",
+    "sprzedaz": 1309.37,
+    "koszt": 845.85,
+    "zysk": 463.52,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C134",
+    "klient": "SERDECZNY BAR MLECZNY",
+    "sprzedaz": 1738.96,
+    "koszt": 1123.37,
+    "zysk": 615.59,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C098",
+    "klient": "Cafe Jagiel",
+    "sprzedaz": 1119.88,
+    "koszt": 723.44,
+    "zysk": 396.44,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C121",
+    "klient": "LOsteria",
+    "sprzedaz": 2276.53,
+    "koszt": 1470.64,
+    "zysk": 805.89,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C099",
+    "klient": "DIFFERENT",
+    "sprzedaz": 1123.03,
+    "koszt": 725.48,
+    "zysk": 397.55,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C090",
+    "klient": "AGLI AMICI 2",
+    "sprzedaz": 2557.29,
+    "koszt": 1652.01,
+    "zysk": 905.28,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C116",
+    "klient": "Kubicz Salon fryzjerski",
+    "sprzedaz": 736.96,
+    "koszt": 476.08,
+    "zysk": 260.88,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C157",
+    "klient": "Tomasz Łagowski",
+    "sprzedaz": 796.32,
+    "koszt": 514.42,
+    "zysk": 281.9,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C102",
+    "klient": "GAMAGYM",
+    "sprzedaz": 535.17,
+    "koszt": 345.72,
+    "zysk": 189.45,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C114",
+    "klient": "Kardamon",
+    "sprzedaz": 470.51,
+    "koszt": 303.95,
+    "zysk": 166.56,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C101",
+    "klient": "EWNS",
+    "sprzedaz": 415.72,
+    "koszt": 268.56,
+    "zysk": 147.16,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C141",
+    "klient": "SKALO - Tsuma Sushi",
+    "sprzedaz": 396.77,
+    "koszt": 256.31,
+    "zysk": 140.46,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C160",
+    "klient": "Tsuma Sushi",
+    "sprzedaz": 391.38,
+    "koszt": 252.83,
+    "zysk": 138.55,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C094",
+    "klient": "Bishops Bistro",
+    "sprzedaz": 2902.05,
+    "koszt": 1874.72,
+    "zysk": 1027.33,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C091",
+    "klient": "Akashia Sushi",
+    "sprzedaz": 3267.43,
+    "koszt": 2110.76,
+    "zysk": 1156.67,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C126",
+    "klient": "Nakama Izakaya",
+    "sprzedaz": 1360.94,
+    "koszt": 879.17,
+    "zysk": 481.77,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C152",
+    "klient": "Świetlica",
+    "sprzedaz": 986.91,
+    "koszt": 637.54,
+    "zysk": 349.37,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C148",
+    "klient": "Sushi Point 2",
+    "sprzedaz": 1323.1,
+    "koszt": 854.72,
+    "zysk": 468.38,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C106",
+    "klient": "IGUANA Cigarro",
+    "sprzedaz": 536.93,
+    "koszt": 346.86,
+    "zysk": 190.07,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C146",
+    "klient": "Sushi Flow",
+    "sprzedaz": 654.92,
+    "koszt": 423.08,
+    "zysk": 231.84,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C107",
+    "klient": "IGUANA Gdańsk",
+    "sprzedaz": 1024.21,
+    "koszt": 661.64,
+    "zysk": 362.57,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C133",
+    "klient": "Sake Izakaya",
+    "sprzedaz": 663.86,
+    "koszt": 428.85,
+    "zysk": 235.01,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C131",
+    "klient": "PrimeCut",
+    "sprzedaz": 960.6,
+    "koszt": 620.55,
+    "zysk": 340.05,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C145",
+    "klient": "SUSHI 101",
+    "sprzedaz": 528.89,
+    "koszt": 341.66,
+    "zysk": 187.23,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C104",
+    "klient": "HOŻA Argentine",
+    "sprzedaz": 1021.56,
+    "koszt": 659.93,
+    "zysk": 361.63,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C132",
+    "klient": "Przedszkole Ciekawi Świata",
+    "sprzedaz": 2361.92,
+    "koszt": 1525.8,
+    "zysk": 836.12,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C120",
+    "klient": "Łochów",
+    "sprzedaz": 1077.7,
+    "koszt": 696.19,
+    "zysk": 381.51,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C115",
+    "klient": "Królewska Kawa",
+    "sprzedaz": 716.32,
+    "koszt": 462.74,
+    "zysk": 253.58,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C125",
+    "klient": "Margariter Ros",
+    "sprzedaz": 391.8,
+    "koszt": 253.1,
+    "zysk": 138.7,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C129",
+    "klient": "Palermo Pruszków",
+    "sprzedaz": 683.89,
+    "koszt": 441.79,
+    "zysk": 242.1,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C139",
+    "klient": "SKALO - Prime WROCŁAW",
+    "sprzedaz": 653.77,
+    "koszt": 422.34,
+    "zysk": 231.43,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C168",
+    "klient": "YUMMY FOOD",
+    "sprzedaz": 787.68,
+    "koszt": 508.84,
+    "zysk": 278.84,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C052",
+    "klient": "Polka",
+    "sprzedaz": 3543.62,
+    "koszt": 2289.18,
+    "zysk": 1254.44,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C169",
+    "klient": "TO SUSHI LESZNOWOLA",
+    "sprzedaz": 320.0,
+    "koszt": 206.72,
+    "zysk": 113.28,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C170",
+    "klient": "TO SUSHI DAWIDY BANKOWE",
+    "sprzedaz": 210.0,
+    "koszt": 135.66,
+    "zysk": 74.34,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C171",
+    "klient": "SKALO",
+    "sprzedaz": 181.3,
+    "koszt": 117.12,
+    "zysk": 64.18,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C172",
+    "klient": "Przystań Aloha - Basen Wodnik",
+    "sprzedaz": 1147.91,
+    "koszt": 741.55,
+    "zysk": 406.36,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C173",
+    "klient": "Małgosia",
+    "sprzedaz": 422.47,
+    "koszt": 272.92,
+    "zysk": 149.55,
+    "marza": 35.4
+  },
+  {
+    "clientId": "C174",
+    "klient": "Anna Żmudzka",
+    "sprzedaz": 48.35,
+    "koszt": 31.23,
+    "zysk": 17.12,
+    "marza": 35.4
+  }
+]

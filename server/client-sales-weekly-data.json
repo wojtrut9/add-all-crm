@@ -1,1 +1,6338 @@
-[{"clientId":2,"rok":2026,"miesiac":2,"tydzien":1,"plan":"38036.85","realizacja":"0","notatki":null,"status":null},{"clientId":2,"rok":2026,"miesiac":2,"tydzien":2,"plan":"38036.85","realizacja":"0","notatki":null,"status":null},{"clientId":2,"rok":2026,"miesiac":2,"tydzien":3,"plan":"38036.85","realizacja":"0","notatki":null,"status":null},{"clientId":2,"rok":2026,"miesiac":2,"tydzien":4,"plan":"38036.85","realizacja":"0","notatki":null,"status":null},{"clientId":7,"rok":2026,"miesiac":2,"tydzien":1,"plan":"23738.62","realizacja":"0","notatki":null,"status":null},{"clientId":7,"rok":2026,"miesiac":2,"tydzien":2,"plan":"23738.62","realizacja":"0","notatki":null,"status":null},{"clientId":7,"rok":2026,"miesiac":2,"tydzien":3,"plan":"23738.62","realizacja":"0","notatki":null,"status":null},{"clientId":7,"rok":2026,"miesiac":2,"tydzien":4,"plan":"23738.62","realizacja":"0","notatki":null,"status":null},{"clientId":10,"rok":2026,"miesiac":2,"tydzien":1,"plan":"11487.79","realizacja":"0","notatki":null,"status":null},{"clientId":10,"rok":2026,"miesiac":2,"tydzien":2,"plan":"11487.79","realizacja":"0","notatki":null,"status":null},{"clientId":10,"rok":2026,"miesiac":2,"tydzien":3,"plan":"11487.79","realizacja":"0","notatki":null,"status":null},{"clientId":10,"rok":2026,"miesiac":2,"tydzien":4,"plan":"11487.79","realizacja":"0","notatki":null,"status":null},{"clientId":8,"rok":2026,"miesiac":2,"tydzien":1,"plan":"6980.97","realizacja":"0","notatki":null,"status":null},{"clientId":8,"rok":2026,"miesiac":2,"tydzien":2,"plan":"6980.97","realizacja":"0","notatki":null,"status":null},{"clientId":8,"rok":2026,"miesiac":2,"tydzien":3,"plan":"6980.97","realizacja":"0","notatki":null,"status":null},{"clientId":8,"rok":2026,"miesiac":2,"tydzien":4,"plan":"6980.97","realizacja":"0","notatki":null,"status":null},{"clientId":11,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5938.97","realizacja":"0","notatki":null,"status":null},{"clientId":11,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5938.97","realizacja":"0","notatki":null,"status":null},{"clientId":11,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5938.97","realizacja":"0","notatki":null,"status":null},{"clientId":11,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5938.97","realizacja":"0","notatki":null,"status":null},{"clientId":9,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4809.32","realizacja":"0","notatki":null,"status":null},{"clientId":9,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4809.32","realizacja":"0","notatki":null,"status":null},{"clientId":9,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4809.32","realizacja":"0","notatki":null,"status":null},{"clientId":9,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4809.32","realizacja":"0","notatki":null,"status":null},{"clientId":1,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4249.98","realizacja":"0","notatki":null,"status":null},{"clientId":1,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4249.98","realizacja":"0","notatki":null,"status":null},{"clientId":1,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4249.98","realizacja":"0","notatki":null,"status":null},{"clientId":1,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4249.98","realizacja":"0","notatki":null,"status":null},{"clientId":3,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":3,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":3,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":3,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":5,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":5,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":5,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":5,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":4,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":4,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":4,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":4,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":6,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":6,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":6,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":6,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":76,"rok":2026,"miesiac":2,"tydzien":1,"plan":"9444.3","realizacja":"0","notatki":null,"status":null},{"clientId":76,"rok":2026,"miesiac":2,"tydzien":2,"plan":"9444.3","realizacja":"0","notatki":null,"status":null},{"clientId":76,"rok":2026,"miesiac":2,"tydzien":3,"plan":"9444.3","realizacja":"0","notatki":null,"status":null},{"clientId":76,"rok":2026,"miesiac":2,"tydzien":4,"plan":"9444.3","realizacja":"0","notatki":null,"status":null},{"clientId":69,"rok":2026,"miesiac":2,"tydzien":1,"plan":"9321.74","realizacja":"0","notatki":null,"status":null},{"clientId":69,"rok":2026,"miesiac":2,"tydzien":2,"plan":"9321.74","realizacja":"0","notatki":null,"status":null},{"clientId":69,"rok":2026,"miesiac":2,"tydzien":3,"plan":"9321.74","realizacja":"0","notatki":null,"status":null},{"clientId":69,"rok":2026,"miesiac":2,"tydzien":4,"plan":"9321.74","realizacja":"0","notatki":null,"status":null},{"clientId":23,"rok":2026,"miesiac":2,"tydzien":1,"plan":"8897.94","realizacja":"0","notatki":null,"status":null},{"clientId":23,"rok":2026,"miesiac":2,"tydzien":2,"plan":"8897.94","realizacja":"0","notatki":null,"status":null},{"clientId":23,"rok":2026,"miesiac":2,"tydzien":3,"plan":"8897.94","realizacja":"0","notatki":null,"status":null},{"clientId":23,"rok":2026,"miesiac":2,"tydzien":4,"plan":"8897.94","realizacja":"0","notatki":null,"status":null},{"clientId":70,"rok":2026,"miesiac":2,"tydzien":1,"plan":"7763.09","realizacja":"0","notatki":null,"status":null},{"clientId":70,"rok":2026,"miesiac":2,"tydzien":2,"plan":"7763.09","realizacja":"0","notatki":null,"status":null},{"clientId":70,"rok":2026,"miesiac":2,"tydzien":3,"plan":"7763.09","realizacja":"0","notatki":null,"status":null},{"clientId":70,"rok":2026,"miesiac":2,"tydzien":4,"plan":"7763.09","realizacja":"0","notatki":null,"status":null},{"clientId":26,"rok":2026,"miesiac":2,"tydzien":1,"plan":"7485.93","realizacja":"0","notatki":null,"status":null},{"clientId":26,"rok":2026,"miesiac":2,"tydzien":2,"plan":"7485.93","realizacja":"0","notatki":null,"status":null},{"clientId":26,"rok":2026,"miesiac":2,"tydzien":3,"plan":"7485.93","realizacja":"0","notatki":null,"status":null},{"clientId":26,"rok":2026,"miesiac":2,"tydzien":4,"plan":"7485.93","realizacja":"0","notatki":null,"status":null},{"clientId":44,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5537.6","realizacja":"0","notatki":null,"status":null},{"clientId":44,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5537.6","realizacja":"0","notatki":null,"status":null},{"clientId":44,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5537.6","realizacja":"0","notatki":null,"status":null},{"clientId":44,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5537.6","realizacja":"0","notatki":null,"status":null},{"clientId":59,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5470.32","realizacja":"0","notatki":null,"status":null},{"clientId":59,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5470.32","realizacja":"0","notatki":null,"status":null},{"clientId":59,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5470.32","realizacja":"0","notatki":null,"status":null},{"clientId":59,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5470.32","realizacja":"0","notatki":null,"status":null},{"clientId":21,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5320.5","realizacja":"0","notatki":null,"status":null},{"clientId":21,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5320.5","realizacja":"0","notatki":null,"status":null},{"clientId":21,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5320.5","realizacja":"0","notatki":null,"status":null},{"clientId":21,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5320.5","realizacja":"0","notatki":null,"status":null},{"clientId":27,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5276.74","realizacja":"0","notatki":null,"status":null},{"clientId":27,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5276.74","realizacja":"0","notatki":null,"status":null},{"clientId":27,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5276.74","realizacja":"0","notatki":null,"status":null},{"clientId":27,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5276.74","realizacja":"0","notatki":null,"status":null},{"clientId":73,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5270.53","realizacja":"0","notatki":null,"status":null},{"clientId":73,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5270.53","realizacja":"0","notatki":null,"status":null},{"clientId":73,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5270.53","realizacja":"0","notatki":null,"status":null},{"clientId":73,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5270.53","realizacja":"0","notatki":null,"status":null},{"clientId":84,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5234.92","realizacja":"0","notatki":null,"status":null},{"clientId":84,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5234.92","realizacja":"0","notatki":null,"status":null},{"clientId":84,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5234.92","realizacja":"0","notatki":null,"status":null},{"clientId":84,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5234.92","realizacja":"0","notatki":null,"status":null},{"clientId":60,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5144.51","realizacja":"0","notatki":null,"status":null},{"clientId":60,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5144.51","realizacja":"0","notatki":null,"status":null},{"clientId":60,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5144.51","realizacja":"0","notatki":null,"status":null},{"clientId":60,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5144.51","realizacja":"0","notatki":null,"status":null},{"clientId":39,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4978.26","realizacja":"0","notatki":null,"status":null},{"clientId":39,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4978.26","realizacja":"0","notatki":null,"status":null},{"clientId":39,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4978.26","realizacja":"0","notatki":null,"status":null},{"clientId":39,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4978.26","realizacja":"0","notatki":null,"status":null},{"clientId":85,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4713.47","realizacja":"0","notatki":null,"status":null},{"clientId":85,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4713.47","realizacja":"0","notatki":null,"status":null},{"clientId":85,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4713.47","realizacja":"0","notatki":null,"status":null},{"clientId":85,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4713.47","realizacja":"0","notatki":null,"status":null},{"clientId":48,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4242.95","realizacja":"0","notatki":null,"status":null},{"clientId":48,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4242.95","realizacja":"0","notatki":null,"status":null},{"clientId":48,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4242.95","realizacja":"0","notatki":null,"status":null},{"clientId":48,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4242.95","realizacja":"0","notatki":null,"status":null},{"clientId":18,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4231.42","realizacja":"0","notatki":null,"status":null},{"clientId":18,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4231.42","realizacja":"0","notatki":null,"status":null},{"clientId":18,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4231.42","realizacja":"0","notatki":null,"status":null},{"clientId":18,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4231.42","realizacja":"0","notatki":null,"status":null},{"clientId":80,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4037.89","realizacja":"0","notatki":null,"status":null},{"clientId":80,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4037.89","realizacja":"0","notatki":null,"status":null},{"clientId":80,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4037.89","realizacja":"0","notatki":null,"status":null},{"clientId":80,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4037.89","realizacja":"0","notatki":null,"status":null},{"clientId":79,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3965.33","realizacja":"0","notatki":null,"status":null},{"clientId":79,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3965.33","realizacja":"0","notatki":null,"status":null},{"clientId":79,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3965.33","realizacja":"0","notatki":null,"status":null},{"clientId":79,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3965.33","realizacja":"0","notatki":null,"status":null},{"clientId":36,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3681.22","realizacja":"0","notatki":null,"status":null},{"clientId":36,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3681.22","realizacja":"0","notatki":null,"status":null},{"clientId":36,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3681.22","realizacja":"0","notatki":null,"status":null},{"clientId":36,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3681.22","realizacja":"0","notatki":null,"status":null},{"clientId":56,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3236","realizacja":"0","notatki":null,"status":null},{"clientId":56,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3236","realizacja":"0","notatki":null,"status":null},{"clientId":56,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3236","realizacja":"0","notatki":null,"status":null},{"clientId":56,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3236","realizacja":"0","notatki":null,"status":null},{"clientId":29,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2756.07","realizacja":"0","notatki":null,"status":null},{"clientId":29,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2756.07","realizacja":"0","notatki":null,"status":null},{"clientId":29,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2756.07","realizacja":"0","notatki":null,"status":null},{"clientId":29,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2756.07","realizacja":"0","notatki":null,"status":null},{"clientId":13,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2707.46","realizacja":"0","notatki":null,"status":null},{"clientId":13,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2707.46","realizacja":"0","notatki":null,"status":null},{"clientId":13,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2707.46","realizacja":"0","notatki":null,"status":null},{"clientId":13,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2707.46","realizacja":"0","notatki":null,"status":null},{"clientId":86,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2481.65","realizacja":"0","notatki":null,"status":null},{"clientId":86,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2481.65","realizacja":"0","notatki":null,"status":null},{"clientId":86,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2481.65","realizacja":"0","notatki":null,"status":null},{"clientId":86,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2481.65","realizacja":"0","notatki":null,"status":null},{"clientId":51,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2330.09","realizacja":"0","notatki":null,"status":null},{"clientId":51,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2330.09","realizacja":"0","notatki":null,"status":null},{"clientId":51,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2330.09","realizacja":"0","notatki":null,"status":null},{"clientId":51,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2330.09","realizacja":"0","notatki":null,"status":null},{"clientId":75,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2282.1","realizacja":"0","notatki":null,"status":null},{"clientId":75,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2282.1","realizacja":"0","notatki":null,"status":null},{"clientId":75,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2282.1","realizacja":"0","notatki":null,"status":null},{"clientId":75,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2282.1","realizacja":"0","notatki":null,"status":null},{"clientId":71,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1895.92","realizacja":"0","notatki":null,"status":null},{"clientId":71,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1895.92","realizacja":"0","notatki":null,"status":null},{"clientId":71,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1895.92","realizacja":"0","notatki":null,"status":null},{"clientId":71,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1895.92","realizacja":"0","notatki":null,"status":null},{"clientId":77,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1493.9","realizacja":"0","notatki":null,"status":null},{"clientId":77,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1493.9","realizacja":"0","notatki":null,"status":null},{"clientId":77,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1493.9","realizacja":"0","notatki":null,"status":null},{"clientId":77,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1493.9","realizacja":"0","notatki":null,"status":null},{"clientId":30,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1127.22","realizacja":"0","notatki":null,"status":null},{"clientId":30,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1127.22","realizacja":"0","notatki":null,"status":null},{"clientId":30,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1127.22","realizacja":"0","notatki":null,"status":null},{"clientId":30,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1127.22","realizacja":"0","notatki":null,"status":null},{"clientId":12,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1087.03","realizacja":"0","notatki":null,"status":null},{"clientId":12,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1087.03","realizacja":"0","notatki":null,"status":null},{"clientId":12,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1087.03","realizacja":"0","notatki":null,"status":null},{"clientId":12,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1087.03","realizacja":"0","notatki":null,"status":null},{"clientId":31,"rok":2026,"miesiac":2,"tydzien":1,"plan":"832.99","realizacja":"0","notatki":null,"status":null},{"clientId":31,"rok":2026,"miesiac":2,"tydzien":2,"plan":"832.99","realizacja":"0","notatki":null,"status":null},{"clientId":31,"rok":2026,"miesiac":2,"tydzien":3,"plan":"832.99","realizacja":"0","notatki":null,"status":null},{"clientId":31,"rok":2026,"miesiac":2,"tydzien":4,"plan":"832.99","realizacja":"0","notatki":null,"status":null},{"clientId":74,"rok":2026,"miesiac":2,"tydzien":1,"plan":"576.31","realizacja":"0","notatki":null,"status":null},{"clientId":74,"rok":2026,"miesiac":2,"tydzien":2,"plan":"576.31","realizacja":"0","notatki":null,"status":null},{"clientId":74,"rok":2026,"miesiac":2,"tydzien":3,"plan":"576.31","realizacja":"0","notatki":null,"status":null},{"clientId":74,"rok":2026,"miesiac":2,"tydzien":4,"plan":"576.31","realizacja":"0","notatki":null,"status":null},{"clientId":57,"rok":2026,"miesiac":2,"tydzien":1,"plan":"434.54","realizacja":"0","notatki":null,"status":null},{"clientId":57,"rok":2026,"miesiac":2,"tydzien":2,"plan":"434.54","realizacja":"0","notatki":null,"status":null},{"clientId":57,"rok":2026,"miesiac":2,"tydzien":3,"plan":"434.54","realizacja":"0","notatki":null,"status":null},{"clientId":57,"rok":2026,"miesiac":2,"tydzien":4,"plan":"434.54","realizacja":"0","notatki":null,"status":null},{"clientId":22,"rok":2026,"miesiac":2,"tydzien":1,"plan":"424.01","realizacja":"0","notatki":null,"status":null},{"clientId":22,"rok":2026,"miesiac":2,"tydzien":2,"plan":"424.01","realizacja":"0","notatki":null,"status":null},{"clientId":22,"rok":2026,"miesiac":2,"tydzien":3,"plan":"424.01","realizacja":"0","notatki":null,"status":null},{"clientId":22,"rok":2026,"miesiac":2,"tydzien":4,"plan":"424.01","realizacja":"0","notatki":null,"status":null},{"clientId":68,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":68,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":68,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":68,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":55,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":55,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":55,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":55,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":34,"rok":2026,"miesiac":2,"tydzien":1,"plan":"20084.36","realizacja":"0","notatki":null,"status":null},{"clientId":34,"rok":2026,"miesiac":2,"tydzien":2,"plan":"20084.36","realizacja":"0","notatki":null,"status":null},{"clientId":34,"rok":2026,"miesiac":2,"tydzien":3,"plan":"20084.36","realizacja":"0","notatki":null,"status":null},{"clientId":34,"rok":2026,"miesiac":2,"tydzien":4,"plan":"20084.36","realizacja":"0","notatki":null,"status":null},{"clientId":14,"rok":2026,"miesiac":2,"tydzien":1,"plan":"7095.03","realizacja":"0","notatki":null,"status":null},{"clientId":14,"rok":2026,"miesiac":2,"tydzien":2,"plan":"7095.03","realizacja":"0","notatki":null,"status":null},{"clientId":14,"rok":2026,"miesiac":2,"tydzien":3,"plan":"7095.03","realizacja":"0","notatki":null,"status":null},{"clientId":14,"rok":2026,"miesiac":2,"tydzien":4,"plan":"7095.03","realizacja":"0","notatki":null,"status":null},{"clientId":40,"rok":2026,"miesiac":2,"tydzien":1,"plan":"5677.1","realizacja":"0","notatki":null,"status":null},{"clientId":40,"rok":2026,"miesiac":2,"tydzien":2,"plan":"5677.1","realizacja":"0","notatki":null,"status":null},{"clientId":40,"rok":2026,"miesiac":2,"tydzien":3,"plan":"5677.1","realizacja":"0","notatki":null,"status":null},{"clientId":40,"rok":2026,"miesiac":2,"tydzien":4,"plan":"5677.1","realizacja":"0","notatki":null,"status":null},{"clientId":50,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4166.37","realizacja":"0","notatki":null,"status":null},{"clientId":50,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4166.37","realizacja":"0","notatki":null,"status":null},{"clientId":50,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4166.37","realizacja":"0","notatki":null,"status":null},{"clientId":50,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4166.37","realizacja":"0","notatki":null,"status":null},{"clientId":37,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4140.11","realizacja":"0","notatki":null,"status":null},{"clientId":37,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4140.11","realizacja":"0","notatki":null,"status":null},{"clientId":37,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4140.11","realizacja":"0","notatki":null,"status":null},{"clientId":37,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4140.11","realizacja":"0","notatki":null,"status":null},{"clientId":28,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3792.19","realizacja":"0","notatki":null,"status":null},{"clientId":28,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3792.19","realizacja":"0","notatki":null,"status":null},{"clientId":28,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3792.19","realizacja":"0","notatki":null,"status":null},{"clientId":28,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3792.19","realizacja":"0","notatki":null,"status":null},{"clientId":47,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3358.26","realizacja":"0","notatki":null,"status":null},{"clientId":47,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3358.26","realizacja":"0","notatki":null,"status":null},{"clientId":47,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3358.26","realizacja":"0","notatki":null,"status":null},{"clientId":47,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3358.26","realizacja":"0","notatki":null,"status":null},{"clientId":54,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3214.88","realizacja":"0","notatki":null,"status":null},{"clientId":54,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3214.88","realizacja":"0","notatki":null,"status":null},{"clientId":54,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3214.88","realizacja":"0","notatki":null,"status":null},{"clientId":54,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3214.88","realizacja":"0","notatki":null,"status":null},{"clientId":62,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3033.9","realizacja":"0","notatki":null,"status":null},{"clientId":62,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3033.9","realizacja":"0","notatki":null,"status":null},{"clientId":62,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3033.9","realizacja":"0","notatki":null,"status":null},{"clientId":62,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3033.9","realizacja":"0","notatki":null,"status":null},{"clientId":32,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2630.17","realizacja":"0","notatki":null,"status":null},{"clientId":32,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2630.17","realizacja":"0","notatki":null,"status":null},{"clientId":32,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2630.17","realizacja":"0","notatki":null,"status":null},{"clientId":32,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2630.17","realizacja":"0","notatki":null,"status":null},{"clientId":45,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2622.35","realizacja":"0","notatki":null,"status":null},{"clientId":45,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2622.35","realizacja":"0","notatki":null,"status":null},{"clientId":45,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2622.35","realizacja":"0","notatki":null,"status":null},{"clientId":45,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2622.35","realizacja":"0","notatki":null,"status":null},{"clientId":58,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2608.99","realizacja":"0","notatki":null,"status":null},{"clientId":58,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2608.99","realizacja":"0","notatki":null,"status":null},{"clientId":58,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2608.99","realizacja":"0","notatki":null,"status":null},{"clientId":58,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2608.99","realizacja":"0","notatki":null,"status":null},{"clientId":83,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2595.67","realizacja":"0","notatki":null,"status":null},{"clientId":83,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2595.67","realizacja":"0","notatki":null,"status":null},{"clientId":83,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2595.67","realizacja":"0","notatki":null,"status":null},{"clientId":83,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2595.67","realizacja":"0","notatki":null,"status":null},{"clientId":53,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2530.71","realizacja":"0","notatki":null,"status":null},{"clientId":53,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2530.71","realizacja":"0","notatki":null,"status":null},{"clientId":53,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2530.71","realizacja":"0","notatki":null,"status":null},{"clientId":53,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2530.71","realizacja":"0","notatki":null,"status":null},{"clientId":82,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2480.89","realizacja":"0","notatki":null,"status":null},{"clientId":82,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2480.89","realizacja":"0","notatki":null,"status":null},{"clientId":82,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2480.89","realizacja":"0","notatki":null,"status":null},{"clientId":82,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2480.89","realizacja":"0","notatki":null,"status":null},{"clientId":35,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2465.77","realizacja":"0","notatki":null,"status":null},{"clientId":35,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2465.77","realizacja":"0","notatki":null,"status":null},{"clientId":35,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2465.77","realizacja":"0","notatki":null,"status":null},{"clientId":35,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2465.77","realizacja":"0","notatki":null,"status":null},{"clientId":72,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2392.12","realizacja":"0","notatki":null,"status":null},{"clientId":72,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2392.12","realizacja":"0","notatki":null,"status":null},{"clientId":72,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2392.12","realizacja":"0","notatki":null,"status":null},{"clientId":72,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2392.12","realizacja":"0","notatki":null,"status":null},{"clientId":127,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2354.2","realizacja":"0","notatki":null,"status":null},{"clientId":127,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2354.2","realizacja":"0","notatki":null,"status":null},{"clientId":127,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2354.2","realizacja":"0","notatki":null,"status":null},{"clientId":127,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2354.2","realizacja":"0","notatki":null,"status":null},{"clientId":87,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2249.18","realizacja":"0","notatki":null,"status":null},{"clientId":87,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2249.18","realizacja":"0","notatki":null,"status":null},{"clientId":87,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2249.18","realizacja":"0","notatki":null,"status":null},{"clientId":87,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2249.18","realizacja":"0","notatki":null,"status":null},{"clientId":25,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2187.27","realizacja":"0","notatki":null,"status":null},{"clientId":25,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2187.27","realizacja":"0","notatki":null,"status":null},{"clientId":25,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2187.27","realizacja":"0","notatki":null,"status":null},{"clientId":25,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2187.27","realizacja":"0","notatki":null,"status":null},{"clientId":20,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1906.05","realizacja":"0","notatki":null,"status":null},{"clientId":20,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1906.05","realizacja":"0","notatki":null,"status":null},{"clientId":20,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1906.05","realizacja":"0","notatki":null,"status":null},{"clientId":20,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1906.05","realizacja":"0","notatki":null,"status":null},{"clientId":43,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1580.08","realizacja":"0","notatki":null,"status":null},{"clientId":43,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1580.08","realizacja":"0","notatki":null,"status":null},{"clientId":43,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1580.08","realizacja":"0","notatki":null,"status":null},{"clientId":43,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1580.08","realizacja":"0","notatki":null,"status":null},{"clientId":33,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1327.69","realizacja":"0","notatki":null,"status":null},{"clientId":33,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1327.69","realizacja":"0","notatki":null,"status":null},{"clientId":33,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1327.69","realizacja":"0","notatki":null,"status":null},{"clientId":33,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1327.69","realizacja":"0","notatki":null,"status":null},{"clientId":81,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1314.7","realizacja":"0","notatki":null,"status":null},{"clientId":81,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1314.7","realizacja":"0","notatki":null,"status":null},{"clientId":81,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1314.7","realizacja":"0","notatki":null,"status":null},{"clientId":81,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1314.7","realizacja":"0","notatki":null,"status":null},{"clientId":38,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1197.41","realizacja":"0","notatki":null,"status":null},{"clientId":38,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1197.41","realizacja":"0","notatki":null,"status":null},{"clientId":38,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1197.41","realizacja":"0","notatki":null,"status":null},{"clientId":38,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1197.41","realizacja":"0","notatki":null,"status":null},{"clientId":49,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1196.71","realizacja":"0","notatki":null,"status":null},{"clientId":49,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1196.71","realizacja":"0","notatki":null,"status":null},{"clientId":49,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1196.71","realizacja":"0","notatki":null,"status":null},{"clientId":49,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1196.71","realizacja":"0","notatki":null,"status":null},{"clientId":15,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1077.47","realizacja":"0","notatki":null,"status":null},{"clientId":15,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1077.47","realizacja":"0","notatki":null,"status":null},{"clientId":15,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1077.47","realizacja":"0","notatki":null,"status":null},{"clientId":15,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1077.47","realizacja":"0","notatki":null,"status":null},{"clientId":78,"rok":2026,"miesiac":2,"tydzien":1,"plan":"849.16","realizacja":"0","notatki":null,"status":null},{"clientId":78,"rok":2026,"miesiac":2,"tydzien":2,"plan":"849.16","realizacja":"0","notatki":null,"status":null},{"clientId":78,"rok":2026,"miesiac":2,"tydzien":3,"plan":"849.16","realizacja":"0","notatki":null,"status":null},{"clientId":78,"rok":2026,"miesiac":2,"tydzien":4,"plan":"849.16","realizacja":"0","notatki":null,"status":null},{"clientId":24,"rok":2026,"miesiac":2,"tydzien":1,"plan":"840.33","realizacja":"0","notatki":null,"status":null},{"clientId":24,"rok":2026,"miesiac":2,"tydzien":2,"plan":"840.33","realizacja":"0","notatki":null,"status":null},{"clientId":24,"rok":2026,"miesiac":2,"tydzien":3,"plan":"840.33","realizacja":"0","notatki":null,"status":null},{"clientId":24,"rok":2026,"miesiac":2,"tydzien":4,"plan":"840.33","realizacja":"0","notatki":null,"status":null},{"clientId":117,"rok":2026,"miesiac":2,"tydzien":1,"plan":"794.36","realizacja":"0","notatki":null,"status":null},{"clientId":117,"rok":2026,"miesiac":2,"tydzien":2,"plan":"794.36","realizacja":"0","notatki":null,"status":null},{"clientId":117,"rok":2026,"miesiac":2,"tydzien":3,"plan":"794.36","realizacja":"0","notatki":null,"status":null},{"clientId":117,"rok":2026,"miesiac":2,"tydzien":4,"plan":"794.36","realizacja":"0","notatki":null,"status":null},{"clientId":19,"rok":2026,"miesiac":2,"tydzien":1,"plan":"729.4","realizacja":"0","notatki":null,"status":null},{"clientId":19,"rok":2026,"miesiac":2,"tydzien":2,"plan":"729.4","realizacja":"0","notatki":null,"status":null},{"clientId":19,"rok":2026,"miesiac":2,"tydzien":3,"plan":"729.4","realizacja":"0","notatki":null,"status":null},{"clientId":19,"rok":2026,"miesiac":2,"tydzien":4,"plan":"729.4","realizacja":"0","notatki":null,"status":null},{"clientId":16,"rok":2026,"miesiac":2,"tydzien":1,"plan":"594.74","realizacja":"0","notatki":null,"status":null},{"clientId":16,"rok":2026,"miesiac":2,"tydzien":2,"plan":"594.74","realizacja":"0","notatki":null,"status":null},{"clientId":16,"rok":2026,"miesiac":2,"tydzien":3,"plan":"594.74","realizacja":"0","notatki":null,"status":null},{"clientId":16,"rok":2026,"miesiac":2,"tydzien":4,"plan":"594.74","realizacja":"0","notatki":null,"status":null},{"clientId":41,"rok":2026,"miesiac":2,"tydzien":1,"plan":"567.42","realizacja":"0","notatki":null,"status":null},{"clientId":41,"rok":2026,"miesiac":2,"tydzien":2,"plan":"567.42","realizacja":"0","notatki":null,"status":null},{"clientId":41,"rok":2026,"miesiac":2,"tydzien":3,"plan":"567.42","realizacja":"0","notatki":null,"status":null},{"clientId":41,"rok":2026,"miesiac":2,"tydzien":4,"plan":"567.42","realizacja":"0","notatki":null,"status":null},{"clientId":100,"rok":2026,"miesiac":2,"tydzien":1,"plan":"524.16","realizacja":"0","notatki":null,"status":null},{"clientId":100,"rok":2026,"miesiac":2,"tydzien":2,"plan":"524.16","realizacja":"0","notatki":null,"status":null},{"clientId":100,"rok":2026,"miesiac":2,"tydzien":3,"plan":"524.16","realizacja":"0","notatki":null,"status":null},{"clientId":100,"rok":2026,"miesiac":2,"tydzien":4,"plan":"524.16","realizacja":"0","notatki":null,"status":null},{"clientId":17,"rok":2026,"miesiac":2,"tydzien":1,"plan":"496.62","realizacja":"0","notatki":null,"status":null},{"clientId":17,"rok":2026,"miesiac":2,"tydzien":2,"plan":"496.62","realizacja":"0","notatki":null,"status":null},{"clientId":17,"rok":2026,"miesiac":2,"tydzien":3,"plan":"496.62","realizacja":"0","notatki":null,"status":null},{"clientId":17,"rok":2026,"miesiac":2,"tydzien":4,"plan":"496.62","realizacja":"0","notatki":null,"status":null},{"clientId":42,"rok":2026,"miesiac":2,"tydzien":1,"plan":"302.94","realizacja":"0","notatki":null,"status":null},{"clientId":42,"rok":2026,"miesiac":2,"tydzien":2,"plan":"302.94","realizacja":"0","notatki":null,"status":null},{"clientId":42,"rok":2026,"miesiac":2,"tydzien":3,"plan":"302.94","realizacja":"0","notatki":null,"status":null},{"clientId":42,"rok":2026,"miesiac":2,"tydzien":4,"plan":"302.94","realizacja":"0","notatki":null,"status":null},{"clientId":61,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":61,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":61,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":61,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":46,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":46,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":46,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":46,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":66,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":66,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":66,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":66,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":63,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":63,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":63,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":63,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":64,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":64,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":64,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":64,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":65,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":65,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":65,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":65,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":67,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":67,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":67,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":67,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":111,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2281.22","realizacja":"0","notatki":null,"status":null},{"clientId":111,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2281.22","realizacja":"0","notatki":null,"status":null},{"clientId":111,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2281.22","realizacja":"0","notatki":null,"status":null},{"clientId":111,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2281.22","realizacja":"0","notatki":null,"status":null},{"clientId":156,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2132.42","realizacja":"0","notatki":null,"status":null},{"clientId":156,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2132.42","realizacja":"0","notatki":null,"status":null},{"clientId":156,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2132.42","realizacja":"0","notatki":null,"status":null},{"clientId":156,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2132.42","realizacja":"0","notatki":null,"status":null},{"clientId":147,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2094.62","realizacja":"0","notatki":null,"status":null},{"clientId":147,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2094.62","realizacja":"0","notatki":null,"status":null},{"clientId":147,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2094.62","realizacja":"0","notatki":null,"status":null},{"clientId":147,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2094.62","realizacja":"0","notatki":null,"status":null},{"clientId":88,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1908.26","realizacja":"0","notatki":null,"status":null},{"clientId":88,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1908.26","realizacja":"0","notatki":null,"status":null},{"clientId":88,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1908.26","realizacja":"0","notatki":null,"status":null},{"clientId":88,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1908.26","realizacja":"0","notatki":null,"status":null},{"clientId":151,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1718.31","realizacja":"0","notatki":null,"status":null},{"clientId":151,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1718.31","realizacja":"0","notatki":null,"status":null},{"clientId":151,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1718.31","realizacja":"0","notatki":null,"status":null},{"clientId":151,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1718.31","realizacja":"0","notatki":null,"status":null},{"clientId":142,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1590.18","realizacja":"0","notatki":null,"status":null},{"clientId":142,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1590.18","realizacja":"0","notatki":null,"status":null},{"clientId":142,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1590.18","realizacja":"0","notatki":null,"status":null},{"clientId":142,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1590.18","realizacja":"0","notatki":null,"status":null},{"clientId":124,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1519.86","realizacja":"0","notatki":null,"status":null},{"clientId":124,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1519.86","realizacja":"0","notatki":null,"status":null},{"clientId":124,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1519.86","realizacja":"0","notatki":null,"status":null},{"clientId":124,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1519.86","realizacja":"0","notatki":null,"status":null},{"clientId":149,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1354.79","realizacja":"0","notatki":null,"status":null},{"clientId":149,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1354.79","realizacja":"0","notatki":null,"status":null},{"clientId":149,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1354.79","realizacja":"0","notatki":null,"status":null},{"clientId":149,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1354.79","realizacja":"0","notatki":null,"status":null},{"clientId":138,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1338","realizacja":"0","notatki":null,"status":null},{"clientId":138,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1338","realizacja":"0","notatki":null,"status":null},{"clientId":138,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1338","realizacja":"0","notatki":null,"status":null},{"clientId":138,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1338","realizacja":"0","notatki":null,"status":null},{"clientId":93,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1326.31","realizacja":"0","notatki":null,"status":null},{"clientId":93,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1326.31","realizacja":"0","notatki":null,"status":null},{"clientId":93,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1326.31","realizacja":"0","notatki":null,"status":null},{"clientId":93,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1326.31","realizacja":"0","notatki":null,"status":null},{"clientId":118,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1316.75","realizacja":"0","notatki":null,"status":null},{"clientId":118,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1316.75","realizacja":"0","notatki":null,"status":null},{"clientId":118,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1316.75","realizacja":"0","notatki":null,"status":null},{"clientId":118,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1316.75","realizacja":"0","notatki":null,"status":null},{"clientId":128,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1267.45","realizacja":"0","notatki":null,"status":null},{"clientId":128,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1267.45","realizacja":"0","notatki":null,"status":null},{"clientId":128,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1267.45","realizacja":"0","notatki":null,"status":null},{"clientId":128,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1267.45","realizacja":"0","notatki":null,"status":null},{"clientId":137,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1202.87","realizacja":"0","notatki":null,"status":null},{"clientId":137,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1202.87","realizacja":"0","notatki":null,"status":null},{"clientId":137,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1202.87","realizacja":"0","notatki":null,"status":null},{"clientId":137,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1202.87","realizacja":"0","notatki":null,"status":null},{"clientId":162,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1134.56","realizacja":"0","notatki":null,"status":null},{"clientId":162,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1134.56","realizacja":"0","notatki":null,"status":null},{"clientId":162,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1134.56","realizacja":"0","notatki":null,"status":null},{"clientId":162,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1134.56","realizacja":"0","notatki":null,"status":null},{"clientId":134,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1099.29","realizacja":"0","notatki":null,"status":null},{"clientId":134,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1099.29","realizacja":"0","notatki":null,"status":null},{"clientId":134,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1099.29","realizacja":"0","notatki":null,"status":null},{"clientId":134,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1099.29","realizacja":"0","notatki":null,"status":null},{"clientId":98,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1040.47","realizacja":"0","notatki":null,"status":null},{"clientId":98,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1040.47","realizacja":"0","notatki":null,"status":null},{"clientId":98,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1040.47","realizacja":"0","notatki":null,"status":null},{"clientId":98,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1040.47","realizacja":"0","notatki":null,"status":null},{"clientId":121,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1020.98","realizacja":"0","notatki":null,"status":null},{"clientId":121,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1020.98","realizacja":"0","notatki":null,"status":null},{"clientId":121,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1020.98","realizacja":"0","notatki":null,"status":null},{"clientId":121,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1020.98","realizacja":"0","notatki":null,"status":null},{"clientId":99,"rok":2026,"miesiac":2,"tydzien":1,"plan":"921.01","realizacja":"0","notatki":null,"status":null},{"clientId":99,"rok":2026,"miesiac":2,"tydzien":2,"plan":"921.01","realizacja":"0","notatki":null,"status":null},{"clientId":99,"rok":2026,"miesiac":2,"tydzien":3,"plan":"921.01","realizacja":"0","notatki":null,"status":null},{"clientId":99,"rok":2026,"miesiac":2,"tydzien":4,"plan":"921.01","realizacja":"0","notatki":null,"status":null},{"clientId":90,"rok":2026,"miesiac":2,"tydzien":1,"plan":"841.69","realizacja":"0","notatki":null,"status":null},{"clientId":90,"rok":2026,"miesiac":2,"tydzien":2,"plan":"841.69","realizacja":"0","notatki":null,"status":null},{"clientId":90,"rok":2026,"miesiac":2,"tydzien":3,"plan":"841.69","realizacja":"0","notatki":null,"status":null},{"clientId":90,"rok":2026,"miesiac":2,"tydzien":4,"plan":"841.69","realizacja":"0","notatki":null,"status":null},{"clientId":116,"rok":2026,"miesiac":2,"tydzien":1,"plan":"782.3","realizacja":"0","notatki":null,"status":null},{"clientId":116,"rok":2026,"miesiac":2,"tydzien":2,"plan":"782.3","realizacja":"0","notatki":null,"status":null},{"clientId":116,"rok":2026,"miesiac":2,"tydzien":3,"plan":"782.3","realizacja":"0","notatki":null,"status":null},{"clientId":116,"rok":2026,"miesiac":2,"tydzien":4,"plan":"782.3","realizacja":"0","notatki":null,"status":null},{"clientId":157,"rok":2026,"miesiac":2,"tydzien":1,"plan":"648.47","realizacja":"0","notatki":null,"status":null},{"clientId":157,"rok":2026,"miesiac":2,"tydzien":2,"plan":"648.47","realizacja":"0","notatki":null,"status":null},{"clientId":157,"rok":2026,"miesiac":2,"tydzien":3,"plan":"648.47","realizacja":"0","notatki":null,"status":null},{"clientId":157,"rok":2026,"miesiac":2,"tydzien":4,"plan":"648.47","realizacja":"0","notatki":null,"status":null},{"clientId":102,"rok":2026,"miesiac":2,"tydzien":1,"plan":"377.54","realizacja":"0","notatki":null,"status":null},{"clientId":102,"rok":2026,"miesiac":2,"tydzien":2,"plan":"377.54","realizacja":"0","notatki":null,"status":null},{"clientId":102,"rok":2026,"miesiac":2,"tydzien":3,"plan":"377.54","realizacja":"0","notatki":null,"status":null},{"clientId":102,"rok":2026,"miesiac":2,"tydzien":4,"plan":"377.54","realizacja":"0","notatki":null,"status":null},{"clientId":114,"rok":2026,"miesiac":2,"tydzien":1,"plan":"343.18","realizacja":"0","notatki":null,"status":null},{"clientId":114,"rok":2026,"miesiac":2,"tydzien":2,"plan":"343.18","realizacja":"0","notatki":null,"status":null},{"clientId":114,"rok":2026,"miesiac":2,"tydzien":3,"plan":"343.18","realizacja":"0","notatki":null,"status":null},{"clientId":114,"rok":2026,"miesiac":2,"tydzien":4,"plan":"343.18","realizacja":"0","notatki":null,"status":null},{"clientId":159,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":159,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":159,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":159,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":101,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":101,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":101,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":101,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":163,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":163,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":163,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":163,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":140,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":140,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":140,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":140,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":333,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":333,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":333,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":333,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":141,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":141,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":141,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":141,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":160,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":160,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":160,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":160,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":94,"rok":2026,"miesiac":2,"tydzien":1,"plan":"3068.74","realizacja":"0","notatki":null,"status":null},{"clientId":94,"rok":2026,"miesiac":2,"tydzien":2,"plan":"3068.74","realizacja":"0","notatki":null,"status":null},{"clientId":94,"rok":2026,"miesiac":2,"tydzien":3,"plan":"3068.74","realizacja":"0","notatki":null,"status":null},{"clientId":94,"rok":2026,"miesiac":2,"tydzien":4,"plan":"3068.74","realizacja":"0","notatki":null,"status":null},{"clientId":91,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1509.42","realizacja":"0","notatki":null,"status":null},{"clientId":91,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1509.42","realizacja":"0","notatki":null,"status":null},{"clientId":91,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1509.42","realizacja":"0","notatki":null,"status":null},{"clientId":91,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1509.42","realizacja":"0","notatki":null,"status":null},{"clientId":126,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1494.27","realizacja":"0","notatki":null,"status":null},{"clientId":126,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1494.27","realizacja":"0","notatki":null,"status":null},{"clientId":126,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1494.27","realizacja":"0","notatki":null,"status":null},{"clientId":126,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1494.27","realizacja":"0","notatki":null,"status":null},{"clientId":152,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1004.24","realizacja":"0","notatki":null,"status":null},{"clientId":152,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1004.24","realizacja":"0","notatki":null,"status":null},{"clientId":152,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1004.24","realizacja":"0","notatki":null,"status":null},{"clientId":152,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1004.24","realizacja":"0","notatki":null,"status":null},{"clientId":105,"rok":2026,"miesiac":2,"tydzien":1,"plan":"909.78","realizacja":"0","notatki":null,"status":null},{"clientId":105,"rok":2026,"miesiac":2,"tydzien":2,"plan":"909.78","realizacja":"0","notatki":null,"status":null},{"clientId":105,"rok":2026,"miesiac":2,"tydzien":3,"plan":"909.78","realizacja":"0","notatki":null,"status":null},{"clientId":105,"rok":2026,"miesiac":2,"tydzien":4,"plan":"909.78","realizacja":"0","notatki":null,"status":null},{"clientId":148,"rok":2026,"miesiac":2,"tydzien":1,"plan":"773.68","realizacja":"0","notatki":null,"status":null},{"clientId":148,"rok":2026,"miesiac":2,"tydzien":2,"plan":"773.68","realizacja":"0","notatki":null,"status":null},{"clientId":148,"rok":2026,"miesiac":2,"tydzien":3,"plan":"773.68","realizacja":"0","notatki":null,"status":null},{"clientId":148,"rok":2026,"miesiac":2,"tydzien":4,"plan":"773.68","realizacja":"0","notatki":null,"status":null},{"clientId":106,"rok":2026,"miesiac":2,"tydzien":1,"plan":"614.93","realizacja":"0","notatki":null,"status":null},{"clientId":106,"rok":2026,"miesiac":2,"tydzien":2,"plan":"614.93","realizacja":"0","notatki":null,"status":null},{"clientId":106,"rok":2026,"miesiac":2,"tydzien":3,"plan":"614.93","realizacja":"0","notatki":null,"status":null},{"clientId":106,"rok":2026,"miesiac":2,"tydzien":4,"plan":"614.93","realizacja":"0","notatki":null,"status":null},{"clientId":146,"rok":2026,"miesiac":2,"tydzien":1,"plan":"561.64","realizacja":"0","notatki":null,"status":null},{"clientId":146,"rok":2026,"miesiac":2,"tydzien":2,"plan":"561.64","realizacja":"0","notatki":null,"status":null},{"clientId":146,"rok":2026,"miesiac":2,"tydzien":3,"plan":"561.64","realizacja":"0","notatki":null,"status":null},{"clientId":146,"rok":2026,"miesiac":2,"tydzien":4,"plan":"561.64","realizacja":"0","notatki":null,"status":null},{"clientId":107,"rok":2026,"miesiac":2,"tydzien":1,"plan":"493.85","realizacja":"0","notatki":null,"status":null},{"clientId":107,"rok":2026,"miesiac":2,"tydzien":2,"plan":"493.85","realizacja":"0","notatki":null,"status":null},{"clientId":107,"rok":2026,"miesiac":2,"tydzien":3,"plan":"493.85","realizacja":"0","notatki":null,"status":null},{"clientId":107,"rok":2026,"miesiac":2,"tydzien":4,"plan":"493.85","realizacja":"0","notatki":null,"status":null},{"clientId":133,"rok":2026,"miesiac":2,"tydzien":1,"plan":"380.79","realizacja":"0","notatki":null,"status":null},{"clientId":133,"rok":2026,"miesiac":2,"tydzien":2,"plan":"380.79","realizacja":"0","notatki":null,"status":null},{"clientId":133,"rok":2026,"miesiac":2,"tydzien":3,"plan":"380.79","realizacja":"0","notatki":null,"status":null},{"clientId":133,"rok":2026,"miesiac":2,"tydzien":4,"plan":"380.79","realizacja":"0","notatki":null,"status":null},{"clientId":131,"rok":2026,"miesiac":2,"tydzien":1,"plan":"294.42","realizacja":"0","notatki":null,"status":null},{"clientId":131,"rok":2026,"miesiac":2,"tydzien":2,"plan":"294.42","realizacja":"0","notatki":null,"status":null},{"clientId":131,"rok":2026,"miesiac":2,"tydzien":3,"plan":"294.42","realizacja":"0","notatki":null,"status":null},{"clientId":131,"rok":2026,"miesiac":2,"tydzien":4,"plan":"294.42","realizacja":"0","notatki":null,"status":null},{"clientId":145,"rok":2026,"miesiac":2,"tydzien":1,"plan":"271.73","realizacja":"0","notatki":null,"status":null},{"clientId":145,"rok":2026,"miesiac":2,"tydzien":2,"plan":"271.73","realizacja":"0","notatki":null,"status":null},{"clientId":145,"rok":2026,"miesiac":2,"tydzien":3,"plan":"271.73","realizacja":"0","notatki":null,"status":null},{"clientId":145,"rok":2026,"miesiac":2,"tydzien":4,"plan":"271.73","realizacja":"0","notatki":null,"status":null},{"clientId":110,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":110,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":110,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":110,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":154,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":154,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":154,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":154,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":155,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":155,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":155,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":155,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":103,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":103,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":103,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":103,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":122,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":122,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":122,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":122,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":334,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":334,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":334,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":334,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":135,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":135,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":135,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":135,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":108,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":108,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":108,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":108,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":104,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":104,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":104,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":104,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":97,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":97,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":97,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":97,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":95,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":95,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":95,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":95,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":109,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":109,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":109,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":109,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":96,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":96,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":96,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":96,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":150,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":150,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":150,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":150,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":335,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":335,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":335,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":335,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":130,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":130,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":130,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":130,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":132,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":132,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":132,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":132,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":161,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":161,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":161,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":161,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":120,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":120,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":120,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":120,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":115,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":115,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":115,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":115,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":136,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":136,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":136,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":136,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":112,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":112,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":112,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":112,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":336,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":336,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":336,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":336,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":89,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":89,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":89,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":89,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":143,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":143,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":143,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":143,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":144,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":144,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":144,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":144,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":125,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":125,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":125,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":125,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":123,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":123,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":123,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":123,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":153,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":153,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":153,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":153,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":158,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":158,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":158,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":158,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":92,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":92,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":92,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":92,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":119,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":119,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":119,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":119,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":129,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":129,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":129,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":129,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":139,"rok":2026,"miesiac":2,"tydzien":1,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":139,"rok":2026,"miesiac":2,"tydzien":2,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":139,"rok":2026,"miesiac":2,"tydzien":3,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":139,"rok":2026,"miesiac":2,"tydzien":4,"plan":"0","realizacja":"0","notatki":null,"status":null},{"clientId":337,"rok":2026,"miesiac":2,"tydzien":1,"plan":"4021.92","realizacja":"0","notatki":null,"status":null},{"clientId":337,"rok":2026,"miesiac":2,"tydzien":2,"plan":"4021.92","realizacja":"0","notatki":null,"status":null},{"clientId":337,"rok":2026,"miesiac":2,"tydzien":3,"plan":"4021.92","realizacja":"0","notatki":null,"status":null},{"clientId":337,"rok":2026,"miesiac":2,"tydzien":4,"plan":"4021.92","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":1,"plan":"2870.21","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":2,"plan":"2870.21","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":3,"plan":"2870.21","realizacja":"0","notatki":null,"status":null},{"clientId":52,"rok":2026,"miesiac":2,"tydzien":4,"plan":"2870.21","realizacja":"0","notatki":null,"status":null},{"clientId":338,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1680","realizacja":"0","notatki":null,"status":null},{"clientId":338,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1680","realizacja":"0","notatki":null,"status":null},{"clientId":338,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1680","realizacja":"0","notatki":null,"status":null},{"clientId":338,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1680","realizacja":"0","notatki":null,"status":null},{"clientId":339,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1590.47","realizacja":"0","notatki":null,"status":null},{"clientId":339,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1590.47","realizacja":"0","notatki":null,"status":null},{"clientId":339,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1590.47","realizacja":"0","notatki":null,"status":null},{"clientId":339,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1590.47","realizacja":"0","notatki":null,"status":null},{"clientId":340,"rok":2026,"miesiac":2,"tydzien":1,"plan":"1549.58","realizacja":"0","notatki":null,"status":null},{"clientId":340,"rok":2026,"miesiac":2,"tydzien":2,"plan":"1549.58","realizacja":"0","notatki":null,"status":null},{"clientId":340,"rok":2026,"miesiac":2,"tydzien":3,"plan":"1549.58","realizacja":"0","notatki":null,"status":null},{"clientId":340,"rok":2026,"miesiac":2,"tydzien":4,"plan":"1549.58","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":1,"plan":"840.65","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":2,"plan":"840.65","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":3,"plan":"840.65","realizacja":"0","notatki":null,"status":null},{"clientId":113,"rok":2026,"miesiac":2,"tydzien":4,"plan":"840.65","realizacja":"0","notatki":null,"status":null},{"clientId":341,"rok":2026,"miesiac":2,"tydzien":1,"plan":"574.81","realizacja":"0","notatki":null,"status":null},{"clientId":341,"rok":2026,"miesiac":2,"tydzien":2,"plan":"574.81","realizacja":"0","notatki":null,"status":null},{"clientId":341,"rok":2026,"miesiac":2,"tydzien":3,"plan":"574.81","realizacja":"0","notatki":null,"status":null},{"clientId":341,"rok":2026,"miesiac":2,"tydzien":4,"plan":"574.81","realizacja":"0","notatki":null,"status":null},{"clientId":342,"rok":2026,"miesiac":2,"tydzien":1,"plan":"383.69","realizacja":"0","notatki":null,"status":null},{"clientId":342,"rok":2026,"miesiac":2,"tydzien":2,"plan":"383.69","realizacja":"0","notatki":null,"status":null},{"clientId":342,"rok":2026,"miesiac":2,"tydzien":3,"plan":"383.69","realizacja":"0","notatki":null,"status":null},{"clientId":342,"rok":2026,"miesiac":2,"tydzien":4,"plan":"383.69","realizacja":"0","notatki":null,"status":null},{"clientId":343,"rok":2026,"miesiac":2,"tydzien":1,"plan":"41.12","realizacja":"0","notatki":null,"status":null},{"clientId":343,"rok":2026,"miesiac":2,"tydzien":2,"plan":"41.12","realizacja":"0","notatki":null,"status":null},{"clientId":343,"rok":2026,"miesiac":2,"tydzien":3,"plan":"41.12","realizacja":"0","notatki":null,"status":null},{"clientId":343,"rok":2026,"miesiac":2,"tydzien":4,"plan":"41.12","realizacja":"0","notatki":null,"status":null}]
+[
+  {
+    "clientId": "C002",
+    "klient": "Amar Beirut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "38036.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C002",
+    "klient": "Amar Beirut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "38036.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C002",
+    "klient": "Amar Beirut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "38036.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C002",
+    "klient": "Amar Beirut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "38036.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C007",
+    "klient": "Lupo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "23738.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C007",
+    "klient": "Lupo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "23738.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C007",
+    "klient": "Lupo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "23738.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C007",
+    "klient": "Lupo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "23738.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C010",
+    "klient": "Sakana Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "11487.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C010",
+    "klient": "Sakana Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "11487.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C010",
+    "klient": "Sakana Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "11487.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C010",
+    "klient": "Sakana Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "11487.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C008",
+    "klient": "Sakana Sushi - Burakowska P",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "6980.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C008",
+    "klient": "Sakana Sushi - Burakowska P",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "6980.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C008",
+    "klient": "Sakana Sushi - Burakowska P",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "6980.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C008",
+    "klient": "Sakana Sushi - Burakowska P",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "6980.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C011",
+    "klient": "SOUND GARDEN HOTEL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5938.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C011",
+    "klient": "SOUND GARDEN HOTEL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5938.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C011",
+    "klient": "SOUND GARDEN HOTEL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5938.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C011",
+    "klient": "SOUND GARDEN HOTEL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5938.97",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C009",
+    "klient": "Sakana Sushi Molieria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4809.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C009",
+    "klient": "Sakana Sushi Molieria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4809.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C009",
+    "klient": "Sakana Sushi Molieria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4809.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C009",
+    "klient": "Sakana Sushi Molieria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4809.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C001",
+    "klient": "Abruzzo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4249.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C001",
+    "klient": "Abruzzo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4249.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C001",
+    "klient": "Abruzzo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4249.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C001",
+    "klient": "Abruzzo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4249.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C003",
+    "klient": "Belvedere",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C003",
+    "klient": "Belvedere",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C003",
+    "klient": "Belvedere",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C003",
+    "klient": "Belvedere",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C005",
+    "klient": "Grzybki-Magazyn",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C005",
+    "klient": "Grzybki-Magazyn",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C005",
+    "klient": "Grzybki-Magazyn",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C005",
+    "klient": "Grzybki-Magazyn",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C004",
+    "klient": "DOM PRACOWNIKA SŁUŻBY ZDROWIA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C004",
+    "klient": "DOM PRACOWNIKA SŁUŻBY ZDROWIA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C004",
+    "klient": "DOM PRACOWNIKA SŁUŻBY ZDROWIA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C004",
+    "klient": "DOM PRACOWNIKA SŁUŻBY ZDROWIA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C006",
+    "klient": "Grzybki-Malownicza Produkcja",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C006",
+    "klient": "Grzybki-Malownicza Produkcja",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C006",
+    "klient": "Grzybki-Malownicza Produkcja",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C006",
+    "klient": "Grzybki-Malownicza Produkcja",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C076",
+    "klient": "Sushi Soul",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "9444.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C076",
+    "klient": "Sushi Soul",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "9444.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C076",
+    "klient": "Sushi Soul",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "9444.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C076",
+    "klient": "Sushi Soul",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "9444.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C069",
+    "klient": "Solivoda - Szkoła Amerykańska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "9321.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C069",
+    "klient": "Solivoda - Szkoła Amerykańska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "9321.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C069",
+    "klient": "Solivoda - Szkoła Amerykańska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "9321.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C069",
+    "klient": "Solivoda - Szkoła Amerykańska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "9321.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C023",
+    "klient": "Culture Cafe - Wola",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "8897.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C023",
+    "klient": "Culture Cafe - Wola",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "8897.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C023",
+    "klient": "Culture Cafe - Wola",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "8897.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C023",
+    "klient": "Culture Cafe - Wola",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "8897.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C070",
+    "klient": "Solivoda Konstancin PSE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "7763.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C070",
+    "klient": "Solivoda Konstancin PSE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "7763.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C070",
+    "klient": "Solivoda Konstancin PSE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "7763.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C070",
+    "klient": "Solivoda Konstancin PSE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "7763.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C026",
+    "klient": "GAN BEI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "7485.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C026",
+    "klient": "GAN BEI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "7485.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C026",
+    "klient": "GAN BEI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "7485.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C026",
+    "klient": "GAN BEI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "7485.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C044",
+    "klient": "Lunch - Kuba 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5537.6",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C044",
+    "klient": "Lunch - Kuba 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5537.6",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C044",
+    "klient": "Lunch - Kuba 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5537.6",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C044",
+    "klient": "Lunch - Kuba 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5537.6",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C059",
+    "klient": "Seafood Station",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5470.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C059",
+    "klient": "Seafood Station",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5470.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C059",
+    "klient": "Seafood Station",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5470.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C059",
+    "klient": "Seafood Station",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5470.32",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C021",
+    "klient": "Culture Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5320.5",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C021",
+    "klient": "Culture Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5320.5",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C021",
+    "klient": "Culture Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5320.5",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C021",
+    "klient": "Culture Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5320.5",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C027",
+    "klient": "GAN BEI CHMIELNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5276.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C027",
+    "klient": "GAN BEI CHMIELNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5276.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C027",
+    "klient": "GAN BEI CHMIELNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5276.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C027",
+    "klient": "GAN BEI CHMIELNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5276.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C073",
+    "klient": "Street Daszyńskiego",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5270.53",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C073",
+    "klient": "Street Daszyńskiego",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5270.53",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C073",
+    "klient": "Street Daszyńskiego",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5270.53",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C073",
+    "klient": "Street Daszyńskiego",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5270.53",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C084",
+    "klient": "Voda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5234.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C084",
+    "klient": "Voda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5234.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C084",
+    "klient": "Voda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5234.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C084",
+    "klient": "Voda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5234.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C060",
+    "klient": "SEAGULL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5144.51",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C060",
+    "klient": "SEAGULL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5144.51",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C060",
+    "klient": "SEAGULL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5144.51",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C060",
+    "klient": "SEAGULL",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5144.51",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C039",
+    "klient": "KUMPLE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4978.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C039",
+    "klient": "KUMPLE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4978.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C039",
+    "klient": "KUMPLE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4978.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C039",
+    "klient": "KUMPLE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4978.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C085",
+    "klient": "Wozownia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4713.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C085",
+    "klient": "Wozownia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4713.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C085",
+    "klient": "Wozownia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4713.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C085",
+    "klient": "Wozownia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4713.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C048",
+    "klient": "Pałac Rozalin",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4242.95",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C048",
+    "klient": "Pałac Rozalin",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4242.95",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C048",
+    "klient": "Pałac Rozalin",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4242.95",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C048",
+    "klient": "Pałac Rozalin",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4242.95",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C018",
+    "klient": "Camastra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4231.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C018",
+    "klient": "Camastra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4231.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C018",
+    "klient": "Camastra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4231.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C018",
+    "klient": "Camastra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4231.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C080",
+    "klient": "SZPITAL OTWOCK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4037.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C080",
+    "klient": "SZPITAL OTWOCK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4037.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C080",
+    "klient": "SZPITAL OTWOCK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4037.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C080",
+    "klient": "SZPITAL OTWOCK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4037.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C079",
+    "klient": "SZPITAL NA MADALIŃSKIEGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3965.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C079",
+    "klient": "SZPITAL NA MADALIŃSKIEGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3965.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C079",
+    "klient": "SZPITAL NA MADALIŃSKIEGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3965.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C079",
+    "klient": "SZPITAL NA MADALIŃSKIEGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3965.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C036",
+    "klient": "Kontakt Wine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3681.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C036",
+    "klient": "Kontakt Wine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3681.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C036",
+    "klient": "Kontakt Wine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3681.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C036",
+    "klient": "Kontakt Wine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3681.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C056",
+    "klient": "Restauracja Nolita",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3236.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C056",
+    "klient": "Restauracja Nolita",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3236.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C056",
+    "klient": "Restauracja Nolita",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3236.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C056",
+    "klient": "Restauracja Nolita",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3236.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C029",
+    "klient": "Grupa Cateringowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2756.07",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C029",
+    "klient": "Grupa Cateringowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2756.07",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C029",
+    "klient": "Grupa Cateringowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2756.07",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C029",
+    "klient": "Grupa Cateringowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2756.07",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C013",
+    "klient": "ARCHE HOTEL PUŁAWSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2707.46",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C013",
+    "klient": "ARCHE HOTEL PUŁAWSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2707.46",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C013",
+    "klient": "ARCHE HOTEL PUŁAWSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2707.46",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C013",
+    "klient": "ARCHE HOTEL PUŁAWSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2707.46",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C086",
+    "klient": "Zoli Pizzeria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2481.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C086",
+    "klient": "Zoli Pizzeria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2481.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C086",
+    "klient": "Zoli Pizzeria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2481.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C086",
+    "klient": "Zoli Pizzeria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2481.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C051",
+    "klient": "PASTA FINIESTRA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2330.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C051",
+    "klient": "PASTA FINIESTRA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2330.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C051",
+    "klient": "PASTA FINIESTRA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2330.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C051",
+    "klient": "PASTA FINIESTRA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2330.09",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C075",
+    "klient": "Street Polska 2 KASPRZAKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2282.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C075",
+    "klient": "Street Polska 2 KASPRZAKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2282.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C075",
+    "klient": "Street Polska 2 KASPRZAKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2282.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C075",
+    "klient": "Street Polska 2 KASPRZAKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2282.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C071",
+    "klient": "Stary Dom",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1895.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C071",
+    "klient": "Stary Dom",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1895.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C071",
+    "klient": "Stary Dom",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1895.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C071",
+    "klient": "Stary Dom",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1895.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C077",
+    "klient": "Sushi Today by Sakana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1493.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C077",
+    "klient": "Sushi Today by Sakana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1493.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C077",
+    "klient": "Sushi Today by Sakana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1493.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C077",
+    "klient": "Sushi Today by Sakana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1493.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C030",
+    "klient": "Hamra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1127.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C030",
+    "klient": "Hamra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1127.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C030",
+    "klient": "Hamra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1127.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C030",
+    "klient": "Hamra",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1127.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C012",
+    "klient": "Alegloria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1087.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C012",
+    "klient": "Alegloria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1087.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C012",
+    "klient": "Alegloria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1087.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C012",
+    "klient": "Alegloria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1087.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C031",
+    "klient": "HANULKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "832.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C031",
+    "klient": "HANULKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "832.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C031",
+    "klient": "HANULKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "832.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C031",
+    "klient": "HANULKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "832.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C074",
+    "klient": "Street ONZ",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "576.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C074",
+    "klient": "Street ONZ",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "576.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C074",
+    "klient": "Street ONZ",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "576.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C074",
+    "klient": "Street ONZ",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "576.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C057",
+    "klient": "Restauracja Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "434.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C057",
+    "klient": "Restauracja Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "434.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C057",
+    "klient": "Restauracja Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "434.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C057",
+    "klient": "Restauracja Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "434.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C022",
+    "klient": "Culture Cafe - Grzybowska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "424.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C022",
+    "klient": "Culture Cafe - Grzybowska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "424.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C022",
+    "klient": "Culture Cafe - Grzybowska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "424.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C022",
+    "klient": "Culture Cafe - Grzybowska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "424.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C068",
+    "klient": "Solivoda - Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C068",
+    "klient": "Solivoda - Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C068",
+    "klient": "Solivoda - Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C068",
+    "klient": "Solivoda - Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C055",
+    "klient": "Przedszkole nr.2 `Tęczowe Przedszkole`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C055",
+    "klient": "Przedszkole nr.2 `Tęczowe Przedszkole`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C055",
+    "klient": "Przedszkole nr.2 `Tęczowe Przedszkole`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C055",
+    "klient": "Przedszkole nr.2 `Tęczowe Przedszkole`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "POLKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "POLKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "POLKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "POLKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C034",
+    "klient": "Japoński Sąsiad 2 CZAPELSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "20084.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C034",
+    "klient": "Japoński Sąsiad 2 CZAPELSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "20084.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C034",
+    "klient": "Japoński Sąsiad 2 CZAPELSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "20084.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C034",
+    "klient": "Japoński Sąsiad 2 CZAPELSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "20084.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C014",
+    "klient": "Babcia Włoszka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "7095.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C014",
+    "klient": "Babcia Włoszka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "7095.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C014",
+    "klient": "Babcia Włoszka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "7095.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C014",
+    "klient": "Babcia Włoszka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "7095.03",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C040",
+    "klient": "La Casa Bistro & Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "5677.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C040",
+    "klient": "La Casa Bistro & Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "5677.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C040",
+    "klient": "La Casa Bistro & Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "5677.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C040",
+    "klient": "La Casa Bistro & Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "5677.1",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C050",
+    "klient": "Park Cafe 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4166.37",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C050",
+    "klient": "Park Cafe 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4166.37",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C050",
+    "klient": "Park Cafe 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4166.37",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C050",
+    "klient": "Park Cafe 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4166.37",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C037",
+    "klient": "Krzysztof Cieślak",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4140.11",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C037",
+    "klient": "Krzysztof Cieślak",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4140.11",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C037",
+    "klient": "Krzysztof Cieślak",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4140.11",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C037",
+    "klient": "Krzysztof Cieślak",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4140.11",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C028",
+    "klient": "Gmina Belsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3792.19",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C028",
+    "klient": "Gmina Belsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3792.19",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C028",
+    "klient": "Gmina Belsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3792.19",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C028",
+    "klient": "Gmina Belsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3792.19",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C047",
+    "klient": "PADRON",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3358.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C047",
+    "klient": "PADRON",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3358.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C047",
+    "klient": "PADRON",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3358.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C047",
+    "klient": "PADRON",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3358.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C054",
+    "klient": "PROSUSHI BROWARY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3214.88",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C054",
+    "klient": "PROSUSHI BROWARY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3214.88",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C054",
+    "klient": "PROSUSHI BROWARY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3214.88",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C054",
+    "klient": "PROSUSHI BROWARY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3214.88",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C062",
+    "klient": "Shiso Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3033.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C062",
+    "klient": "Shiso Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3033.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C062",
+    "klient": "Shiso Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3033.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C062",
+    "klient": "Shiso Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3033.9",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C032",
+    "klient": "Hoshi Sushi Mszczonów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2630.17",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C032",
+    "klient": "Hoshi Sushi Mszczonów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2630.17",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C032",
+    "klient": "Hoshi Sushi Mszczonów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2630.17",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C032",
+    "klient": "Hoshi Sushi Mszczonów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2630.17",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C045",
+    "klient": "Mazurkas",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2622.35",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C045",
+    "klient": "Mazurkas",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2622.35",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C045",
+    "klient": "Mazurkas",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2622.35",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C045",
+    "klient": "Mazurkas",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2622.35",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C058",
+    "klient": "Seafood House - SEABREEZE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2608.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C058",
+    "klient": "Seafood House - SEABREEZE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2608.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C058",
+    "klient": "Seafood House - SEABREEZE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2608.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C058",
+    "klient": "Seafood House - SEABREEZE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2608.99",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C083",
+    "klient": "VIVA TANGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2595.67",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C083",
+    "klient": "VIVA TANGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2595.67",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C083",
+    "klient": "VIVA TANGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2595.67",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C083",
+    "klient": "VIVA TANGO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2595.67",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C053",
+    "klient": "PROSUSHI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2530.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C053",
+    "klient": "PROSUSHI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2530.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C053",
+    "klient": "PROSUSHI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2530.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C053",
+    "klient": "PROSUSHI",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2530.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C082",
+    "klient": "U Barssa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2480.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C082",
+    "klient": "U Barssa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2480.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C082",
+    "klient": "U Barssa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2480.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C082",
+    "klient": "U Barssa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2480.89",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C035",
+    "klient": "Japoński Sąsiad BANDERII",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2465.77",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C035",
+    "klient": "Japoński Sąsiad BANDERII",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2465.77",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C035",
+    "klient": "Japoński Sąsiad BANDERII",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2465.77",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C035",
+    "klient": "Japoński Sąsiad BANDERII",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2465.77",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C072",
+    "klient": "Steak Dolna 41",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2392.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C072",
+    "klient": "Steak Dolna 41",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2392.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C072",
+    "klient": "Steak Dolna 41",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2392.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C072",
+    "klient": "Steak Dolna 41",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2392.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C127",
+    "klient": "Negroni Centrale",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2354.2",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C127",
+    "klient": "Negroni Centrale",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2354.2",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C127",
+    "klient": "Negroni Centrale",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2354.2",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C127",
+    "klient": "Negroni Centrale",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2354.2",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C087",
+    "klient": "ZPR Casino 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2249.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C087",
+    "klient": "ZPR Casino 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2249.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C087",
+    "klient": "ZPR Casino 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2249.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C087",
+    "klient": "ZPR Casino 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2249.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C025",
+    "klient": "EL PATIO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2187.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C025",
+    "klient": "EL PATIO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2187.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C025",
+    "klient": "EL PATIO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2187.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C025",
+    "klient": "EL PATIO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2187.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C020",
+    "klient": "Chocobon - CATERING",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1906.05",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C020",
+    "klient": "Chocobon - CATERING",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1906.05",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C020",
+    "klient": "Chocobon - CATERING",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1906.05",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C020",
+    "klient": "Chocobon - CATERING",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1906.05",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C043",
+    "klient": "LIMBA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1580.08",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C043",
+    "klient": "LIMBA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1580.08",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C043",
+    "klient": "LIMBA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1580.08",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C043",
+    "klient": "LIMBA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1580.08",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C033",
+    "klient": "IKI Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1327.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C033",
+    "klient": "IKI Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1327.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C033",
+    "klient": "IKI Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1327.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C033",
+    "klient": "IKI Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1327.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C081",
+    "klient": "TOSCA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1314.7",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C081",
+    "klient": "TOSCA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1314.7",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C081",
+    "klient": "TOSCA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1314.7",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C081",
+    "klient": "TOSCA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1314.7",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C038",
+    "klient": "Kuchnia Warszawska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1197.41",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C038",
+    "klient": "Kuchnia Warszawska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1197.41",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C038",
+    "klient": "Kuchnia Warszawska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1197.41",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C038",
+    "klient": "Kuchnia Warszawska",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1197.41",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C049",
+    "klient": "Panattoni Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1196.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C049",
+    "klient": "Panattoni Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1196.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C049",
+    "klient": "Panattoni Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1196.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C049",
+    "klient": "Panattoni Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1196.71",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C015",
+    "klient": "Bistro Oliwa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1077.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C015",
+    "klient": "Bistro Oliwa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1077.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C015",
+    "klient": "Bistro Oliwa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1077.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C015",
+    "klient": "Bistro Oliwa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1077.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C078",
+    "klient": "Sushi Zushi Żurawia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "849.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C078",
+    "klient": "Sushi Zushi Żurawia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "849.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C078",
+    "klient": "Sushi Zushi Żurawia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "849.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C078",
+    "klient": "Sushi Zushi Żurawia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "849.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C024",
+    "klient": "DOM OPIEKI `ANNA`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "840.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C024",
+    "klient": "DOM OPIEKI `ANNA`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "840.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C024",
+    "klient": "DOM OPIEKI `ANNA`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "840.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C024",
+    "klient": "DOM OPIEKI `ANNA`",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "840.33",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C117",
+    "klient": "Kuma no teburu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "794.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C117",
+    "klient": "Kuma no teburu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "794.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C117",
+    "klient": "Kuma no teburu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "794.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C117",
+    "klient": "Kuma no teburu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "794.36",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C019",
+    "klient": "Chocobon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "729.4",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C019",
+    "klient": "Chocobon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "729.4",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C019",
+    "klient": "Chocobon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "729.4",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C019",
+    "klient": "Chocobon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "729.4",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C016",
+    "klient": "Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "594.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C016",
+    "klient": "Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "594.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C016",
+    "klient": "Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "594.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C016",
+    "klient": "Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "594.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C041",
+    "klient": "La Ros 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "567.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C041",
+    "klient": "La Ros 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "567.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C041",
+    "klient": "La Ros 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "567.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C041",
+    "klient": "La Ros 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "567.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C100",
+    "klient": "Drukarnia GC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "524.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C100",
+    "klient": "Drukarnia GC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "524.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C100",
+    "klient": "Drukarnia GC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "524.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C100",
+    "klient": "Drukarnia GC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "524.16",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C017",
+    "klient": "BURGERLAB",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "496.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C017",
+    "klient": "BURGERLAB",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "496.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C017",
+    "klient": "BURGERLAB",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "496.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C017",
+    "klient": "BURGERLAB",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "496.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C042",
+    "klient": "Liban w Szklance",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "302.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C042",
+    "klient": "Liban w Szklance",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "302.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C042",
+    "klient": "Liban w Szklance",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "302.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C042",
+    "klient": "Liban w Szklance",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "302.94",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C061",
+    "klient": "SHIN SUSHI  2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C061",
+    "klient": "SHIN SUSHI  2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C061",
+    "klient": "SHIN SUSHI  2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C061",
+    "klient": "SHIN SUSHI  2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C046",
+    "klient": "MOSiR Poranki i Wieczory",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C046",
+    "klient": "MOSiR Poranki i Wieczory",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C046",
+    "klient": "MOSiR Poranki i Wieczory",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C046",
+    "klient": "MOSiR Poranki i Wieczory",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C066",
+    "klient": "SKALO - Prosushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C066",
+    "klient": "SKALO - Prosushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C066",
+    "klient": "SKALO - Prosushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C066",
+    "klient": "SKALO - Prosushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C063",
+    "klient": "SKALO - Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C063",
+    "klient": "SKALO - Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C063",
+    "klient": "SKALO - Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C063",
+    "klient": "SKALO - Buns and bottles bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C064",
+    "klient": "SKALO - Oni Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C064",
+    "klient": "SKALO - Oni Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C064",
+    "klient": "SKALO - Oni Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C064",
+    "klient": "SKALO - Oni Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C065",
+    "klient": "SKALO - Park Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C065",
+    "klient": "SKALO - Park Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C065",
+    "klient": "SKALO - Park Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C065",
+    "klient": "SKALO - Park Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C067",
+    "klient": "SKALO - Prosushi Browary",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C067",
+    "klient": "SKALO - Prosushi Browary",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C067",
+    "klient": "SKALO - Prosushi Browary",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C067",
+    "klient": "SKALO - Prosushi Browary",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C111",
+    "klient": "Just like you",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2281.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C111",
+    "klient": "Just like you",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2281.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C111",
+    "klient": "Just like you",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2281.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C111",
+    "klient": "Just like you",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2281.22",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C156",
+    "klient": "Ti Amo Tratoria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2132.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C156",
+    "klient": "Ti Amo Tratoria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2132.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C156",
+    "klient": "Ti Amo Tratoria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2132.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C156",
+    "klient": "Ti Amo Tratoria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2132.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C147",
+    "klient": "Sushi Mango 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2094.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C147",
+    "klient": "Sushi Mango 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2094.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C147",
+    "klient": "Sushi Mango 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2094.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C147",
+    "klient": "Sushi Mango 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2094.62",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C088",
+    "klient": "Ach Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1908.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C088",
+    "klient": "Ach Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1908.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C088",
+    "klient": "Ach Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1908.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C088",
+    "klient": "Ach Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1908.26",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C151",
+    "klient": "Śledzie z Bornholmu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1718.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C151",
+    "klient": "Śledzie z Bornholmu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1718.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C151",
+    "klient": "Śledzie z Bornholmu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1718.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C151",
+    "klient": "Śledzie z Bornholmu",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1718.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C142",
+    "klient": "Sklep Medyczny",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1590.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C142",
+    "klient": "Sklep Medyczny",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1590.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C142",
+    "klient": "Sklep Medyczny",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1590.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C142",
+    "klient": "Sklep Medyczny",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1590.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C124",
+    "klient": "Manna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1519.86",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C124",
+    "klient": "Manna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1519.86",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C124",
+    "klient": "Manna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1519.86",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C124",
+    "klient": "Manna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1519.86",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C149",
+    "klient": "Szaurmafia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1354.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C149",
+    "klient": "Szaurmafia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1354.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C149",
+    "klient": "Szaurmafia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1354.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C149",
+    "klient": "Szaurmafia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1354.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C138",
+    "klient": "SKALO - Prime WALICÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1338.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C138",
+    "klient": "SKALO - Prime WALICÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1338.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C138",
+    "klient": "SKALO - Prime WALICÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1338.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C138",
+    "klient": "SKALO - Prime WALICÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1338.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C093",
+    "klient": "Atelier Stylissimo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1326.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C093",
+    "klient": "Atelier Stylissimo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1326.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C093",
+    "klient": "Atelier Stylissimo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1326.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C093",
+    "klient": "Atelier Stylissimo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1326.31",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C118",
+    "klient": "LANS SIENNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1316.75",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C118",
+    "klient": "LANS SIENNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1316.75",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C118",
+    "klient": "LANS SIENNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1316.75",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C118",
+    "klient": "LANS SIENNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1316.75",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C128",
+    "klient": "No Tu Olideli",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1267.45",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C128",
+    "klient": "No Tu Olideli",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1267.45",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C128",
+    "klient": "No Tu Olideli",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1267.45",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C128",
+    "klient": "No Tu Olideli",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1267.45",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C137",
+    "klient": "SKALO - Prime MOKOTÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1202.87",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C137",
+    "klient": "SKALO - Prime MOKOTÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1202.87",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C137",
+    "klient": "SKALO - Prime MOKOTÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1202.87",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C137",
+    "klient": "SKALO - Prime MOKOTÓW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1202.87",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C162",
+    "klient": "W Kropki Bordo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1134.56",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C162",
+    "klient": "W Kropki Bordo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1134.56",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C162",
+    "klient": "W Kropki Bordo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1134.56",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C162",
+    "klient": "W Kropki Bordo",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1134.56",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C134",
+    "klient": "SERDECZNY BAR MLECZNY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1099.29",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C134",
+    "klient": "SERDECZNY BAR MLECZNY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1099.29",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C134",
+    "klient": "SERDECZNY BAR MLECZNY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1099.29",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C134",
+    "klient": "SERDECZNY BAR MLECZNY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1099.29",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C098",
+    "klient": "Cafe Jagiel",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1040.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C098",
+    "klient": "Cafe Jagiel",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1040.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C098",
+    "klient": "Cafe Jagiel",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1040.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C098",
+    "klient": "Cafe Jagiel",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1040.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C121",
+    "klient": "LOsteria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1020.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C121",
+    "klient": "LOsteria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1020.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C121",
+    "klient": "LOsteria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1020.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C121",
+    "klient": "LOsteria",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1020.98",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C099",
+    "klient": "DIFFERENT",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "921.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C099",
+    "klient": "DIFFERENT",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "921.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C099",
+    "klient": "DIFFERENT",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "921.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C099",
+    "klient": "DIFFERENT",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "921.01",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C090",
+    "klient": "AGLI AMICI 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "841.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C090",
+    "klient": "AGLI AMICI 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "841.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C090",
+    "klient": "AGLI AMICI 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "841.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C090",
+    "klient": "AGLI AMICI 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "841.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C116",
+    "klient": "Kubicz Salon fryzjerski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "782.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C116",
+    "klient": "Kubicz Salon fryzjerski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "782.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C116",
+    "klient": "Kubicz Salon fryzjerski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "782.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C116",
+    "klient": "Kubicz Salon fryzjerski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "782.3",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C157",
+    "klient": "Tomasz Łagowski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "648.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C157",
+    "klient": "Tomasz Łagowski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "648.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C157",
+    "klient": "Tomasz Łagowski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "648.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C157",
+    "klient": "Tomasz Łagowski",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "648.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C102",
+    "klient": "GAMAGYM",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "377.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C102",
+    "klient": "GAMAGYM",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "377.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C102",
+    "klient": "GAMAGYM",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "377.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C102",
+    "klient": "GAMAGYM",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "377.54",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C114",
+    "klient": "Kardamon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "343.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C114",
+    "klient": "Kardamon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "343.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C114",
+    "klient": "Kardamon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "343.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C114",
+    "klient": "Kardamon",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "343.18",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C159",
+    "klient": "TRUE STORY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C159",
+    "klient": "TRUE STORY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C159",
+    "klient": "TRUE STORY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C159",
+    "klient": "TRUE STORY",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C101",
+    "klient": "EWNS",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C101",
+    "klient": "EWNS",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C101",
+    "klient": "EWNS",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C101",
+    "klient": "EWNS",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C163",
+    "klient": "Wery Sweet",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C163",
+    "klient": "Wery Sweet",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C163",
+    "klient": "Wery Sweet",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C163",
+    "klient": "Wery Sweet",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C140",
+    "klient": "SKALO - Ten Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C140",
+    "klient": "SKALO - Ten Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C140",
+    "klient": "SKALO - Ten Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C140",
+    "klient": "SKALO - Ten Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C164",
+    "klient": "Gmina Konstancin-Jeziorna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C164",
+    "klient": "Gmina Konstancin-Jeziorna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C164",
+    "klient": "Gmina Konstancin-Jeziorna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C164",
+    "klient": "Gmina Konstancin-Jeziorna",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C141",
+    "klient": "SKALO - Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C141",
+    "klient": "SKALO - Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C141",
+    "klient": "SKALO - Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C141",
+    "klient": "SKALO - Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C160",
+    "klient": "Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C160",
+    "klient": "Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C160",
+    "klient": "Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C160",
+    "klient": "Tsuma Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C094",
+    "klient": "Bishops Bistro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "3068.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C094",
+    "klient": "Bishops Bistro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "3068.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C094",
+    "klient": "Bishops Bistro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "3068.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C094",
+    "klient": "Bishops Bistro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "3068.74",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C091",
+    "klient": "Akashia Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1509.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C091",
+    "klient": "Akashia Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1509.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C091",
+    "klient": "Akashia Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1509.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C091",
+    "klient": "Akashia Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1509.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C126",
+    "klient": "Nakama Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1494.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C126",
+    "klient": "Nakama Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1494.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C126",
+    "klient": "Nakama Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1494.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C126",
+    "klient": "Nakama Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1494.27",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C152",
+    "klient": "Świetlica",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1004.24",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C152",
+    "klient": "Świetlica",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1004.24",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C152",
+    "klient": "Świetlica",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1004.24",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C152",
+    "klient": "Świetlica",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1004.24",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C105",
+    "klient": "Iguana AFICIONADO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "909.78",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C105",
+    "klient": "Iguana AFICIONADO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "909.78",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C105",
+    "klient": "Iguana AFICIONADO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "909.78",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C105",
+    "klient": "Iguana AFICIONADO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "909.78",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C148",
+    "klient": "Sushi Point 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "773.68",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C148",
+    "klient": "Sushi Point 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "773.68",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C148",
+    "klient": "Sushi Point 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "773.68",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C148",
+    "klient": "Sushi Point 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "773.68",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C106",
+    "klient": "IGUANA Cigarro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "614.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C106",
+    "klient": "IGUANA Cigarro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "614.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C106",
+    "klient": "IGUANA Cigarro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "614.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C106",
+    "klient": "IGUANA Cigarro",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "614.93",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C146",
+    "klient": "Sushi Flow",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "561.64",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C146",
+    "klient": "Sushi Flow",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "561.64",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C146",
+    "klient": "Sushi Flow",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "561.64",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C146",
+    "klient": "Sushi Flow",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "561.64",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C107",
+    "klient": "IGUANA Gdańsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "493.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C107",
+    "klient": "IGUANA Gdańsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "493.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C107",
+    "klient": "IGUANA Gdańsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "493.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C107",
+    "klient": "IGUANA Gdańsk",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "493.85",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C133",
+    "klient": "Sake Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "380.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C133",
+    "klient": "Sake Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "380.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C133",
+    "klient": "Sake Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "380.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C133",
+    "klient": "Sake Izakaya",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "380.79",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C131",
+    "klient": "PrimeCut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "294.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C131",
+    "klient": "PrimeCut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "294.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C131",
+    "klient": "PrimeCut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "294.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C131",
+    "klient": "PrimeCut",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "294.42",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C145",
+    "klient": "SUSHI 101",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "271.73",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C145",
+    "klient": "SUSHI 101",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "271.73",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C145",
+    "klient": "SUSHI 101",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "271.73",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C145",
+    "klient": "SUSHI 101",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "271.73",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C110",
+    "klient": "JOT Żoliborz",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C110",
+    "klient": "JOT Żoliborz",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C110",
+    "klient": "JOT Żoliborz",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C110",
+    "klient": "JOT Żoliborz",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C154",
+    "klient": "Ten Sushi 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C154",
+    "klient": "Ten Sushi 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C154",
+    "klient": "Ten Sushi 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C154",
+    "klient": "Ten Sushi 2",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C155",
+    "klient": "The Morning After",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C155",
+    "klient": "The Morning After",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C155",
+    "klient": "The Morning After",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C155",
+    "klient": "The Morning After",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C103",
+    "klient": "GiGi Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C103",
+    "klient": "GiGi Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C103",
+    "klient": "GiGi Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C103",
+    "klient": "GiGi Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C122",
+    "klient": "Magu Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C122",
+    "klient": "Magu Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C122",
+    "klient": "Magu Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C122",
+    "klient": "Magu Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C165",
+    "klient": "Sushi Atelier",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C165",
+    "klient": "Sushi Atelier",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C165",
+    "klient": "Sushi Atelier",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C165",
+    "klient": "Sushi Atelier",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C135",
+    "klient": "Silk&Spicy",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C135",
+    "klient": "Silk&Spicy",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C135",
+    "klient": "Silk&Spicy",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C135",
+    "klient": "Silk&Spicy",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C108",
+    "klient": "JOT OMA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C108",
+    "klient": "JOT OMA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C108",
+    "klient": "JOT OMA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C108",
+    "klient": "JOT OMA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C104",
+    "klient": "HOŻA Argentine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C104",
+    "klient": "HOŻA Argentine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C104",
+    "klient": "HOŻA Argentine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C104",
+    "klient": "HOŻA Argentine",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C097",
+    "klient": "BOSKO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C097",
+    "klient": "BOSKO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C097",
+    "klient": "BOSKO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C097",
+    "klient": "BOSKO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C095",
+    "klient": "Blikle",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C095",
+    "klient": "Blikle",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C095",
+    "klient": "Blikle",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C095",
+    "klient": "Blikle",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C109",
+    "klient": "JOT Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C109",
+    "klient": "JOT Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C109",
+    "klient": "JOT Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C109",
+    "klient": "JOT Wilanów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C096",
+    "klient": "Blikle Placówki",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C096",
+    "klient": "Blikle Placówki",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C096",
+    "klient": "Blikle Placówki",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C096",
+    "klient": "Blikle Placówki",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C150",
+    "klient": "Szkoła w Mińsku",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C150",
+    "klient": "Szkoła w Mińsku",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C150",
+    "klient": "Szkoła w Mińsku",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C150",
+    "klient": "Szkoła w Mińsku",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C166",
+    "klient": "Fiori Foods",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C166",
+    "klient": "Fiori Foods",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C166",
+    "klient": "Fiori Foods",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C166",
+    "klient": "Fiori Foods",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C130",
+    "klient": "Pizzeria Italiana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C130",
+    "klient": "Pizzeria Italiana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C130",
+    "klient": "Pizzeria Italiana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C130",
+    "klient": "Pizzeria Italiana",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C132",
+    "klient": "Przedszkole Ciekawi Świata",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C132",
+    "klient": "Przedszkole Ciekawi Świata",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C132",
+    "klient": "Przedszkole Ciekawi Świata",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C132",
+    "klient": "Przedszkole Ciekawi Świata",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C161",
+    "klient": "Usagi Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C161",
+    "klient": "Usagi Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C161",
+    "klient": "Usagi Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C161",
+    "klient": "Usagi Sushi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C120",
+    "klient": "Łochów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C120",
+    "klient": "Łochów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C120",
+    "klient": "Łochów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C120",
+    "klient": "Łochów",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C115",
+    "klient": "Królewska Kawa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C115",
+    "klient": "Królewska Kawa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C115",
+    "klient": "Królewska Kawa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C115",
+    "klient": "Królewska Kawa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C136",
+    "klient": "Silk&Spicy GDAŃSK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C136",
+    "klient": "Silk&Spicy GDAŃSK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C136",
+    "klient": "Silk&Spicy GDAŃSK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C136",
+    "klient": "Silk&Spicy GDAŃSK",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C112",
+    "klient": "Kaizen S.C",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C112",
+    "klient": "Kaizen S.C",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C112",
+    "klient": "Kaizen S.C",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C112",
+    "klient": "Kaizen S.C",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "Kaliska 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "Kaliska 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "Kaliska 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "Kaliska 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C167",
+    "klient": "Szkoła w Mińsku - Magda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C167",
+    "klient": "Szkoła w Mińsku - Magda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C167",
+    "klient": "Szkoła w Mińsku - Magda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C167",
+    "klient": "Szkoła w Mińsku - Magda",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C089",
+    "klient": "Activ Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C089",
+    "klient": "Activ Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C089",
+    "klient": "Activ Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C089",
+    "klient": "Activ Cafe",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C143",
+    "klient": "SMASZ IT DOLNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C143",
+    "klient": "SMASZ IT DOLNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C143",
+    "klient": "SMASZ IT DOLNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C143",
+    "klient": "SMASZ IT DOLNA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C144",
+    "klient": "SMASZ IT SOLEC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C144",
+    "klient": "SMASZ IT SOLEC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C144",
+    "klient": "SMASZ IT SOLEC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C144",
+    "klient": "SMASZ IT SOLEC",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C125",
+    "klient": "Margariter Ros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C125",
+    "klient": "Margariter Ros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C125",
+    "klient": "Margariter Ros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C125",
+    "klient": "Margariter Ros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C123",
+    "klient": "Magu Sushi Instalatorowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C123",
+    "klient": "Magu Sushi Instalatorowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C123",
+    "klient": "Magu Sushi Instalatorowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C123",
+    "klient": "Magu Sushi Instalatorowa",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C153",
+    "klient": "Takumi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C153",
+    "klient": "Takumi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C153",
+    "klient": "Takumi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C153",
+    "klient": "Takumi",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C158",
+    "klient": "Tres Toros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C158",
+    "klient": "Tres Toros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C158",
+    "klient": "Tres Toros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C158",
+    "klient": "Tres Toros",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C092",
+    "klient": "Arizona Burger WOLSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C092",
+    "klient": "Arizona Burger WOLSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C092",
+    "klient": "Arizona Burger WOLSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C092",
+    "klient": "Arizona Burger WOLSKA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C119",
+    "klient": "Legia Sports Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C119",
+    "klient": "Legia Sports Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C119",
+    "klient": "Legia Sports Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C119",
+    "klient": "Legia Sports Bar",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C129",
+    "klient": "Palermo Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C129",
+    "klient": "Palermo Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C129",
+    "klient": "Palermo Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C129",
+    "klient": "Palermo Pruszków",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C139",
+    "klient": "SKALO - Prime WROCŁAW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C139",
+    "klient": "SKALO - Prime WROCŁAW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C139",
+    "klient": "SKALO - Prime WROCŁAW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C139",
+    "klient": "SKALO - Prime WROCŁAW",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "0.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C168",
+    "klient": "YUMMY FOOD",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "4021.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C168",
+    "klient": "YUMMY FOOD",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "4021.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C168",
+    "klient": "YUMMY FOOD",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "4021.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C168",
+    "klient": "YUMMY FOOD",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "4021.92",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "Polka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "2870.21",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "Polka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "2870.21",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "Polka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "2870.21",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C052",
+    "klient": "Polka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "2870.21",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C169",
+    "klient": "TO SUSHI LESZNOWOLA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1680.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C169",
+    "klient": "TO SUSHI LESZNOWOLA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1680.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C169",
+    "klient": "TO SUSHI LESZNOWOLA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1680.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C169",
+    "klient": "TO SUSHI LESZNOWOLA",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1680.0",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C170",
+    "klient": "TO SUSHI DAWIDY BANKOWE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1590.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C170",
+    "klient": "TO SUSHI DAWIDY BANKOWE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1590.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C170",
+    "klient": "TO SUSHI DAWIDY BANKOWE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1590.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C170",
+    "klient": "TO SUSHI DAWIDY BANKOWE",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1590.47",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C171",
+    "klient": "SKALO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "1549.58",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C171",
+    "klient": "SKALO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "1549.58",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C171",
+    "klient": "SKALO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "1549.58",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C171",
+    "klient": "SKALO",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "1549.58",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "KALISKA 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "840.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "KALISKA 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "840.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "KALISKA 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "840.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C113",
+    "klient": "KALISKA 20",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "840.65",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C172",
+    "klient": "Przystań Aloha - Basen Wodnik",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "574.81",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C172",
+    "klient": "Przystań Aloha - Basen Wodnik",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "574.81",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C172",
+    "klient": "Przystań Aloha - Basen Wodnik",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "574.81",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C172",
+    "klient": "Przystań Aloha - Basen Wodnik",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "574.81",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C173",
+    "klient": "Małgosia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "383.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C173",
+    "klient": "Małgosia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "383.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C173",
+    "klient": "Małgosia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "383.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C173",
+    "klient": "Małgosia",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "383.69",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C174",
+    "klient": "Anna Żmudzka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 1,
+    "plan": "41.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C174",
+    "klient": "Anna Żmudzka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 2,
+    "plan": "41.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C174",
+    "klient": "Anna Żmudzka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 3,
+    "plan": "41.12",
+    "realizacja": "0"
+  },
+  {
+    "clientId": "C174",
+    "klient": "Anna Żmudzka",
+    "rok": 2026,
+    "miesiac": 2,
+    "tydzien": 4,
+    "plan": "41.12",
+    "realizacja": "0"
+  }
+]

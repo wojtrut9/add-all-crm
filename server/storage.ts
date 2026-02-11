@@ -634,7 +634,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(gte(contacts.data, monthStart), lte(contacts.data, monthEnd)));
 
     const monthSales = allMonthContacts
-      .filter(c => c.status === "Zamówił" || c.status === "Zamowil")
+      .filter(c => c.status === "Zamowil")
       .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
     const getWorkingDaysPassed = () => {
@@ -669,7 +669,7 @@ export class DatabaseStorage implements IStorage {
       const hClients = allClients.filter(c => c.opiekun === name && c.aktywny
         && (c.grupaMvp?.includes("Premium") || c.grupaMvp?.includes("Standard")));
       const hContacts = weekContacts.filter(c => c.opiekun === name);
-      const ordered = hContacts.filter(c => c.status === "Zamówił" || c.status === "Zamowil").length;
+      const ordered = hContacts.filter(c => c.status === "Zamowil").length;
       const contacted = hContacts.filter(c => c.status && c.status !== "Do zrobienia").length;
       return {
         name,
@@ -807,7 +807,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           like(contacts.data, `${prefix}%`),
-          eq(contacts.status, "Zamówił"),
+          eq(contacts.status, "Zamowil"),
         )
       );
 

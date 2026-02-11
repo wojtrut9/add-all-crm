@@ -501,6 +501,9 @@ export async function registerRoutes(
   app.patch("/api/plan/weekly/:id", authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
+      if (!id || id <= 0) {
+        return res.status(400).json({ message: "Nieprawidlowe ID rekordu tygodniowego. Rekord nie istnieje w bazie." });
+      }
       const { realizacja } = req.body;
       await storage.updateWeeklyPlan(id, Number(realizacja));
       res.json({ success: true });

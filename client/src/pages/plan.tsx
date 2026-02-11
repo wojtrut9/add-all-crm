@@ -34,9 +34,11 @@ function WeekInput({ weeklyId, initialValue, onSaved }: { weeklyId: number; init
   const [value, setValue] = useState(String(initialValue || ""));
   const [dirty, setDirty] = useState(false);
   const { toast } = useToast();
+  const isDisabled = !weeklyId || weeklyId <= 0;
 
   const mutation = useMutation({
     mutationFn: async (realizacja: number) => {
+      if (isDisabled) throw new Error("Brak rekordu tygodniowego");
       await apiRequest("PATCH", `/api/plan/weekly/${weeklyId}`, { realizacja });
     },
     onSuccess: () => {
@@ -44,32 +46,37 @@ function WeekInput({ weeklyId, initialValue, onSaved }: { weeklyId: number; init
       onSaved();
     },
     onError: () => {
-      toast({ title: "Błąd zapisu", variant: "destructive" });
+      toast({ title: "Błąd zapisu", description: isDisabled ? "Brak rekordu w bazie" : undefined, variant: "destructive" });
     },
   });
 
   const handleBlur = useCallback(() => {
     const num = parseFloat(value) || 0;
-    if (dirty) {
+    if (dirty && !isDisabled) {
       mutation.mutate(num);
     }
-  }, [value, dirty]);
+  }, [value, dirty, isDisabled]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       const num = parseFloat(value) || 0;
-      if (dirty) {
+      if (dirty && !isDisabled) {
         mutation.mutate(num);
       }
     }
-  }, [value, dirty]);
+  }, [value, dirty, isDisabled]);
 
   return (
     <Input
       type="number"
       step="0.01"
-      className="w-20 h-8 text-right text-sm bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
+      className={`w-20 h-8 text-right text-sm ${isDisabled
+        ? "bg-muted/50 border-muted text-muted-foreground cursor-not-allowed"
+        : "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
+      }`}
       value={value}
+      disabled={isDisabled}
+      title={isDisabled ? "Brak rekordu tygodniowego w bazie" : undefined}
       onChange={(e) => { setValue(e.target.value); setDirty(true); }}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}

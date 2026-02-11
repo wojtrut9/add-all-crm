@@ -88,70 +88,95 @@ export async function migrateDatabase() {
       client_id INTEGER NOT NULL,
       rok INTEGER NOT NULL,
       miesiac INTEGER NOT NULL,
-      wartosc DECIMAL DEFAULT 0,
-      marza DECIMAL DEFAULT 0
+      sprzedaz DECIMAL,
+      koszt DECIMAL,
+      zysk DECIMAL,
+      marza DECIMAL,
+      created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS client_sales_weekly (
       id SERIAL PRIMARY KEY,
       client_id INTEGER NOT NULL,
       rok INTEGER NOT NULL,
+      miesiac INTEGER NOT NULL,
       tydzien INTEGER NOT NULL,
-      wartosc DECIMAL DEFAULT 0
+      plan DECIMAL,
+      realizacja DECIMAL,
+      notatki TEXT,
+      status TEXT
     );
 
     CREATE TABLE IF NOT EXISTS sales_targets (
       id SERIAL PRIMARY KEY,
       rok INTEGER NOT NULL,
       miesiac INTEGER NOT NULL,
-      plan_obrotu DECIMAL DEFAULT 0,
-      wykonanie_obrotu DECIMAL DEFAULT 0,
-      plan_marzy DECIMAL DEFAULT 0,
-      wykonanie_marzy DECIMAL DEFAULT 0
+      plan_obrotu DECIMAL,
+      wykonanie_obrotu DECIMAL
     );
 
     CREATE TABLE IF NOT EXISTS salaries (
       id SERIAL PRIMARY KEY,
       osoba TEXT NOT NULL,
-      firma TEXT,
-      dzial TEXT,
+      firma TEXT NOT NULL,
+      dzial TEXT NOT NULL,
       forma_zatrudnienia TEXT,
-      netto TEXT,
-      brutto TEXT,
-      koszt_pracodawcy TEXT,
+      netto DECIMAL,
+      brutto DECIMAL,
+      vat DECIMAL,
+      koszt_pracodawcy DECIMAL,
       aktywny_miesiace JSONB
     );
 
     CREATE TABLE IF NOT EXISTS costs (
       id SERIAL PRIMARY KEY,
       nazwa TEXT NOT NULL,
+      firma TEXT,
       dzial TEXT,
-      koszt TEXT,
+      rodzaj TEXT,
+      kategoria TEXT,
+      netto DECIMAL,
+      koszt DECIMAL,
+      notatka TEXT,
       aktywny_miesiace JSONB
     );
 
     CREATE TABLE IF NOT EXISTS fleet (
       id SERIAL PRIMARY KEY,
       opis TEXT NOT NULL,
+      firma TEXT,
+      dzial TEXT,
       rodzaj TEXT,
-      koszt TEXT,
+      netto DECIMAL,
+      koszt DECIMAL,
       aktywny_miesiace JSONB
     );
 
     CREATE TABLE IF NOT EXISTS notes (
       id SERIAL PRIMARY KEY,
       tytul TEXT NOT NULL,
-      tresc TEXT,
-      kategoria TEXT,
+      client_id INTEGER,
       autor TEXT NOT NULL,
+      kategoria TEXT NOT NULL DEFAULT 'Inna',
+      tagi TEXT,
+      tresc TEXT,
       created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS daily_analysis (
+      id SERIAL PRIMARY KEY,
+      rok INTEGER NOT NULL,
+      miesiac INTEGER NOT NULL,
+      dzien INTEGER NOT NULL,
+      sprzedaz DECIMAL,
+      dni_robocze INTEGER NOT NULL DEFAULT 21
     );
 
     CREATE TABLE IF NOT EXISTS sales_history (
       id SERIAL PRIMARY KEY,
       rok INTEGER NOT NULL,
       miesiac INTEGER NOT NULL,
-      wartosc DECIMAL DEFAULT 0
+      wartosc DECIMAL NOT NULL
     );
   `);
 

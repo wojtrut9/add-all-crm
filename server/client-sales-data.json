@@ -1,1 +1,1410 @@
-[{"clientId":2,"rok":2026,"miesiac":1,"sprzedaz":"36225.57","koszt":"27221.79","zysk":"9003.78","marza":"24.9"},{"clientId":2,"rok":2025,"miesiac":12,"sprzedaz":"25365.58","koszt":"19049.55","zysk":"6316.03","marza":"24.9"},{"clientId":7,"rok":2026,"miesiac":1,"sprzedaz":"22608.21","koszt":"14895.72","zysk":"7712.49","marza":"34.1"},{"clientId":7,"rok":2025,"miesiac":12,"sprzedaz":"22488.31","koszt":"14819.8","zysk":"7668.51","marza":"34.1"},{"clientId":10,"rok":2026,"miesiac":1,"sprzedaz":"10940.75","koszt":"6772.75","zysk":"4168","marza":"38.1"},{"clientId":10,"rok":2025,"miesiac":12,"sprzedaz":"12206.6","koszt":"7555.89","zysk":"4650.71","marza":"38.1"},{"clientId":8,"rok":2026,"miesiac":1,"sprzedaz":"6648.54","koszt":"4055.14","zysk":"2593.4","marza":"39"},{"clientId":8,"rok":2025,"miesiac":12,"sprzedaz":"11086.17","koszt":"6762.56","zysk":"4323.61","marza":"39"},{"clientId":11,"rok":2026,"miesiac":1,"sprzedaz":"5656.16","koszt":"3489.81","zysk":"2166.35","marza":"38.3"},{"clientId":11,"rok":2025,"miesiac":12,"sprzedaz":"13641.08","koszt":"8416.55","zysk":"5224.53","marza":"38.3"},{"clientId":9,"rok":2026,"miesiac":1,"sprzedaz":"4580.3","koszt":"2718.08","zysk":"1862.22","marza":"40.7"},{"clientId":9,"rok":2025,"miesiac":12,"sprzedaz":"5743.48","koszt":"3405.88","zysk":"2337.6","marza":"40.7"},{"clientId":1,"rok":2026,"miesiac":1,"sprzedaz":"4047.6","koszt":"2441.64","zysk":"1605.96","marza":"39.7"},{"clientId":1,"rok":2025,"miesiac":12,"sprzedaz":"4950.06","koszt":"2984.89","zysk":"1965.17","marza":"39.7"},{"clientId":3,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":3,"rok":2025,"miesiac":12,"sprzedaz":"400.96","koszt":"0","zysk":"0","marza":"0"},{"clientId":5,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":4,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":4,"rok":2025,"miesiac":12,"sprzedaz":"34247.56","koszt":"0","zysk":"0","marza":"0"},{"clientId":6,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":76,"rok":2026,"miesiac":1,"sprzedaz":"8994.57","koszt":"5392.62","zysk":"3601.95","marza":"40"},{"clientId":76,"rok":2025,"miesiac":12,"sprzedaz":"11939.04","koszt":"7163.42","zysk":"4775.62","marza":"40"},{"clientId":69,"rok":2026,"miesiac":1,"sprzedaz":"8877.85","koszt":"5104.38","zysk":"3773.47","marza":"42.5"},{"clientId":69,"rok":2025,"miesiac":12,"sprzedaz":"4038.69","koszt":"2322.25","zysk":"1716.44","marza":"42.5"},{"clientId":23,"rok":2026,"miesiac":1,"sprzedaz":"8474.23","koszt":"5476.84","zysk":"2997.39","marza":"35.4"},{"clientId":23,"rok":2025,"miesiac":12,"sprzedaz":"10446.66","koszt":"6748.54","zysk":"3698.12","marza":"35.4"},{"clientId":70,"rok":2026,"miesiac":1,"sprzedaz":"7393.42","koszt":"3982.76","zysk":"3410.66","marza":"46.1"},{"clientId":70,"rok":2025,"miesiac":12,"sprzedaz":"12788.3","koszt":"6892.89","zysk":"5895.41","marza":"46.1"},{"clientId":26,"rok":2026,"miesiac":1,"sprzedaz":"7129.46","koszt":"4246.89","zysk":"2882.57","marza":"40.4"},{"clientId":26,"rok":2025,"miesiac":12,"sprzedaz":"9100.17","koszt":"5423.7","zysk":"3676.47","marza":"40.4"},{"clientId":44,"rok":2026,"miesiac":1,"sprzedaz":"5273.9","koszt":"3322.02","zysk":"1951.88","marza":"37"},{"clientId":44,"rok":2025,"miesiac":12,"sprzedaz":"3333.02","koszt":"2099.8","zysk":"1233.22","marza":"37"},{"clientId":59,"rok":2026,"miesiac":1,"sprzedaz":"5209.83","koszt":"3251.4","zysk":"1958.43","marza":"37.6"},{"clientId":59,"rok":2025,"miesiac":12,"sprzedaz":"7431.03","koszt":"4636.96","zysk":"2794.07","marza":"37.6"},{"clientId":21,"rok":2026,"miesiac":1,"sprzedaz":"5067.14","koszt":"3326.61","zysk":"1740.53","marza":"34.3"},{"clientId":21,"rok":2025,"miesiac":12,"sprzedaz":"3760.64","koszt":"2470.74","zysk":"1289.9","marza":"34.3"},{"clientId":27,"rok":2026,"miesiac":1,"sprzedaz":"5025.47","koszt":"2885.08","zysk":"2140.39","marza":"42.6"},{"clientId":27,"rok":2025,"miesiac":12,"sprzedaz":"7314.76","koszt":"4198.67","zysk":"3116.09","marza":"42.6"},{"clientId":73,"rok":2026,"miesiac":1,"sprzedaz":"5019.55","koszt":"3064.71","zysk":"1954.84","marza":"38.9"},{"clientId":73,"rok":2025,"miesiac":12,"sprzedaz":"5676.86","koszt":"3468.56","zysk":"2208.3","marza":"38.9"},{"clientId":84,"rok":2026,"miesiac":1,"sprzedaz":"4985.64","koszt":"3551.37","zysk":"1434.27","marza":"28.8"},{"clientId":84,"rok":2025,"miesiac":12,"sprzedaz":"5564.42","koszt":"3961.87","zysk":"1602.55","marza":"28.8"},{"clientId":60,"rok":2026,"miesiac":1,"sprzedaz":"4899.53","koszt":"3289.96","zysk":"1609.57","marza":"32.9"},{"clientId":60,"rok":2025,"miesiac":12,"sprzedaz":"6257.34","koszt":"4198.68","zysk":"2058.66","marza":"32.9"},{"clientId":39,"rok":2026,"miesiac":1,"sprzedaz":"4741.2","koszt":"3050.68","zysk":"1690.52","marza":"35.7"},{"clientId":39,"rok":2025,"miesiac":12,"sprzedaz":"6625.66","koszt":"4260.3","zysk":"2365.36","marza":"35.7"},{"clientId":85,"rok":2026,"miesiac":1,"sprzedaz":"4489.02","koszt":"2690.17","zysk":"1798.85","marza":"40.1"},{"clientId":85,"rok":2025,"miesiac":12,"sprzedaz":"4936.72","koszt":"2957.1","zysk":"1979.62","marza":"40.1"},{"clientId":48,"rok":2026,"miesiac":1,"sprzedaz":"4040.9","koszt":"2429.97","zysk":"1610.93","marza":"39.9"},{"clientId":48,"rok":2025,"miesiac":12,"sprzedaz":"2894.7","koszt":"1739.71","zysk":"1154.99","marza":"39.9"},{"clientId":18,"rok":2026,"miesiac":1,"sprzedaz":"4029.92","koszt":"2517.19","zysk":"1512.73","marza":"37.5"},{"clientId":80,"rok":2026,"miesiac":1,"sprzedaz":"3845.61","koszt":"2413.37","zysk":"1432.24","marza":"37.2"},{"clientId":80,"rok":2025,"miesiac":12,"sprzedaz":"4974.88","koszt":"3124.22","zysk":"1850.66","marza":"37.2"},{"clientId":79,"rok":2026,"miesiac":1,"sprzedaz":"3776.5","koszt":"2750.5","zysk":"1026","marza":"27.2"},{"clientId":79,"rok":2025,"miesiac":12,"sprzedaz":"4515.07","koszt":"3286.97","zysk":"1228.1","marza":"27.2"},{"clientId":36,"rok":2026,"miesiac":1,"sprzedaz":"3505.92","koszt":"2143.68","zysk":"1362.24","marza":"38.9"},{"clientId":36,"rok":2025,"miesiac":12,"sprzedaz":"5892.27","koszt":"3600.18","zysk":"2292.09","marza":"38.9"},{"clientId":56,"rok":2026,"miesiac":1,"sprzedaz":"3081.9","koszt":"1769.17","zysk":"1312.73","marza":"42.6"},{"clientId":56,"rok":2025,"miesiac":12,"sprzedaz":"3924.09","koszt":"2252.43","zysk":"1671.66","marza":"42.6"},{"clientId":29,"rok":2026,"miesiac":1,"sprzedaz":"2624.83","koszt":"1647.59","zysk":"977.24","marza":"37.2"},{"clientId":29,"rok":2025,"miesiac":12,"sprzedaz":"6883.69","koszt":"4322.96","zysk":"2560.73","marza":"37.2"},{"clientId":13,"rok":2026,"miesiac":1,"sprzedaz":"2578.53","koszt":"1622.7","zysk":"955.83","marza":"37.1"},{"clientId":13,"rok":2025,"miesiac":12,"sprzedaz":"5992.73","koszt":"3769.43","zysk":"2223.3","marza":"37.1"},{"clientId":86,"rok":2026,"miesiac":1,"sprzedaz":"2363.48","koszt":"1266.39","zysk":"1097.09","marza":"46.4"},{"clientId":86,"rok":2025,"miesiac":12,"sprzedaz":"5247.17","koszt":"2812.48","zysk":"2434.69","marza":"46.4"},{"clientId":51,"rok":2026,"miesiac":1,"sprzedaz":"2219.13","koszt":"1492.69","zysk":"726.44","marza":"32.7"},{"clientId":51,"rok":2025,"miesiac":12,"sprzedaz":"2237.18","koszt":"1505.62","zysk":"731.56","marza":"32.7"},{"clientId":75,"rok":2026,"miesiac":1,"sprzedaz":"2173.43","koszt":"1339.19","zysk":"834.24","marza":"38.4"},{"clientId":75,"rok":2025,"miesiac":12,"sprzedaz":"8145.52","koszt":"5017.64","zysk":"3127.88","marza":"38.4"},{"clientId":71,"rok":2026,"miesiac":1,"sprzedaz":"1805.64","koszt":"942.43","zysk":"863.21","marza":"47.8"},{"clientId":71,"rok":2025,"miesiac":12,"sprzedaz":"4534.96","koszt":"2367.25","zysk":"2167.71","marza":"47.8"},{"clientId":77,"rok":2026,"miesiac":1,"sprzedaz":"1422.76","koszt":"908.41","zysk":"514.35","marza":"36.2"},{"clientId":77,"rok":2025,"miesiac":12,"sprzedaz":"2640.51","koszt":"1684.65","zysk":"955.86","marza":"36.2"},{"clientId":30,"rok":2026,"miesiac":1,"sprzedaz":"1073.54","koszt":"781.67","zysk":"291.87","marza":"27.2"},{"clientId":30,"rok":2025,"miesiac":12,"sprzedaz":"2009.89","koszt":"1463.2","zysk":"546.69","marza":"27.2"},{"clientId":12,"rok":2026,"miesiac":1,"sprzedaz":"1035.27","koszt":"678.18","zysk":"357.09","marza":"34.5"},{"clientId":12,"rok":2025,"miesiac":12,"sprzedaz":"8533.33","koszt":"5589.33","zysk":"2944","marza":"34.5"},{"clientId":31,"rok":2026,"miesiac":1,"sprzedaz":"793.32","koszt":"495.53","zysk":"297.79","marza":"37.5"},{"clientId":74,"rok":2026,"miesiac":1,"sprzedaz":"548.87","koszt":"342.84","zysk":"206.03","marza":"37.5"},{"clientId":57,"rok":2026,"miesiac":1,"sprzedaz":"413.85","koszt":"259.32","zysk":"154.53","marza":"37.3"},{"clientId":57,"rok":2025,"miesiac":12,"sprzedaz":"6974.48","koszt":"4373","zysk":"2601.48","marza":"37.3"},{"clientId":22,"rok":2026,"miesiac":1,"sprzedaz":"403.82","koszt":"264.56","zysk":"139.26","marza":"34.5"},{"clientId":22,"rok":2025,"miesiac":12,"sprzedaz":"1084.92","koszt":"710.62","zysk":"374.3","marza":"34.5"},{"clientId":68,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":55,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":55,"rok":2025,"miesiac":12,"sprzedaz":"3210.01","koszt":"0","zysk":"0","marza":"0"},{"clientId":52,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":34,"rok":2026,"miesiac":1,"sprzedaz":"19127.96","koszt":"10798.15","zysk":"8329.81","marza":"43.5"},{"clientId":34,"rok":2025,"miesiac":12,"sprzedaz":"2120.92","koszt":"1198.32","zysk":"922.6","marza":"43.5"},{"clientId":14,"rok":2026,"miesiac":1,"sprzedaz":"6757.17","koszt":"4156.1","zysk":"2601.07","marza":"38.5"},{"clientId":14,"rok":2025,"miesiac":12,"sprzedaz":"6181.85","koszt":"3801.84","zysk":"2380.01","marza":"38.5"},{"clientId":40,"rok":2026,"miesiac":1,"sprzedaz":"5406.76","koszt":"3769.83","zysk":"1636.93","marza":"30.3"},{"clientId":40,"rok":2025,"miesiac":12,"sprzedaz":"4013.25","koszt":"2797.24","zysk":"1216.01","marza":"30.3"},{"clientId":50,"rok":2026,"miesiac":1,"sprzedaz":"3967.97","koszt":"2690.6","zysk":"1277.37","marza":"32.2"},{"clientId":50,"rok":2025,"miesiac":12,"sprzedaz":"10904.74","koszt":"7393.41","zysk":"3511.33","marza":"32.2"},{"clientId":37,"rok":2026,"miesiac":1,"sprzedaz":"3942.96","koszt":"2088.57","zysk":"1854.39","marza":"47"},{"clientId":37,"rok":2025,"miesiac":12,"sprzedaz":"3379.68","koszt":"1791.23","zysk":"1588.45","marza":"47"},{"clientId":28,"rok":2026,"miesiac":1,"sprzedaz":"3611.61","koszt":"2255.91","zysk":"1355.7","marza":"37.5"},{"clientId":47,"rok":2026,"miesiac":1,"sprzedaz":"3198.34","koszt":"2254.06","zysk":"944.28","marza":"29.5"},{"clientId":47,"rok":2025,"miesiac":12,"sprzedaz":"5018.19","koszt":"3537.82","zysk":"1480.37","marza":"29.5"},{"clientId":54,"rok":2026,"miesiac":1,"sprzedaz":"3061.79","koszt":"1798.22","zysk":"1263.57","marza":"41.3"},{"clientId":54,"rok":2025,"miesiac":12,"sprzedaz":"4524.99","koszt":"2656.17","zysk":"1868.82","marza":"41.3"},{"clientId":62,"rok":2026,"miesiac":1,"sprzedaz":"2889.43","koszt":"1681.02","zysk":"1208.41","marza":"41.8"},{"clientId":62,"rok":2025,"miesiac":12,"sprzedaz":"4003.32","koszt":"2329.93","zysk":"1673.39","marza":"41.8"},{"clientId":32,"rok":2026,"miesiac":1,"sprzedaz":"2504.92","koszt":"1544.96","zysk":"959.96","marza":"38.3"},{"clientId":32,"rok":2025,"miesiac":12,"sprzedaz":"1920.52","koszt":"1184.96","zysk":"735.56","marza":"38.3"},{"clientId":45,"rok":2026,"miesiac":1,"sprzedaz":"2497.48","koszt":"1670.24","zysk":"827.24","marza":"33.1"},{"clientId":45,"rok":2025,"miesiac":12,"sprzedaz":"1153.85","koszt":"771.93","zysk":"381.92","marza":"33.1"},{"clientId":58,"rok":2026,"miesiac":1,"sprzedaz":"2484.75","koszt":"1363.47","zysk":"1121.28","marza":"45.1"},{"clientId":58,"rok":2025,"miesiac":12,"sprzedaz":"5454.82","koszt":"2994.7","zysk":"2460.12","marza":"45.1"},{"clientId":83,"rok":2026,"miesiac":1,"sprzedaz":"2472.07","koszt":"1353.32","zysk":"1118.75","marza":"45.3"},{"clientId":83,"rok":2025,"miesiac":12,"sprzedaz":"5148.28","koszt":"2816.11","zysk":"2332.17","marza":"45.3"},{"clientId":53,"rok":2026,"miesiac":1,"sprzedaz":"2410.2","koszt":"1429.89","zysk":"980.31","marza":"40.7"},{"clientId":53,"rok":2025,"miesiac":12,"sprzedaz":"3870.17","koszt":"2295.01","zysk":"1575.16","marza":"40.7"},{"clientId":82,"rok":2026,"miesiac":1,"sprzedaz":"2362.75","koszt":"1386.36","zysk":"976.39","marza":"41.3"},{"clientId":82,"rok":2025,"miesiac":12,"sprzedaz":"4422.94","koszt":"2596.27","zysk":"1826.67","marza":"41.3"},{"clientId":35,"rok":2026,"miesiac":1,"sprzedaz":"2348.35","koszt":"1309.92","zysk":"1038.43","marza":"44.2"},{"clientId":35,"rok":2025,"miesiac":12,"sprzedaz":"2612.24","koszt":"1457.63","zysk":"1154.61","marza":"44.2"},{"clientId":72,"rok":2026,"miesiac":1,"sprzedaz":"2278.21","koszt":"1392.69","zysk":"885.52","marza":"38.9"},{"clientId":72,"rok":2025,"miesiac":12,"sprzedaz":"1868.44","koszt":"1141.62","zysk":"726.82","marza":"38.9"},{"clientId":127,"rok":2026,"miesiac":1,"sprzedaz":"2242.1","koszt":"1395.18","zysk":"846.92","marza":"37.8"},{"clientId":127,"rok":2025,"miesiac":12,"sprzedaz":"3470.54","koszt":"2158.68","zysk":"1311.86","marza":"37.8"},{"clientId":87,"rok":2026,"miesiac":1,"sprzedaz":"2142.08","koszt":"1132.14","zysk":"1009.94","marza":"47.1"},{"clientId":87,"rok":2025,"miesiac":12,"sprzedaz":"2619.99","koszt":"1385.97","zysk":"1234.02","marza":"47.1"},{"clientId":25,"rok":2026,"miesiac":1,"sprzedaz":"2083.11","koszt":"1594.76","zysk":"488.35","marza":"23.4"},{"clientId":25,"rok":2025,"miesiac":12,"sprzedaz":"2660.62","koszt":"2038.03","zysk":"622.59","marza":"23.4"},{"clientId":20,"rok":2026,"miesiac":1,"sprzedaz":"1815.29","koszt":"1244.04","zysk":"571.25","marza":"31.5"},{"clientId":20,"rok":2025,"miesiac":12,"sprzedaz":"2386.96","koszt":"1635.07","zysk":"751.89","marza":"31.5"},{"clientId":43,"rok":2026,"miesiac":1,"sprzedaz":"1504.84","koszt":"897.41","zysk":"607.43","marza":"40.4"},{"clientId":43,"rok":2025,"miesiac":12,"sprzedaz":"880.54","koszt":"524.8","zysk":"355.74","marza":"40.4"},{"clientId":33,"rok":2026,"miesiac":1,"sprzedaz":"1264.47","koszt":"724.84","zysk":"539.63","marza":"42.7"},{"clientId":33,"rok":2025,"miesiac":12,"sprzedaz":"1467.55","koszt":"840.91","zysk":"626.64","marza":"42.7"},{"clientId":81,"rok":2026,"miesiac":1,"sprzedaz":"1252.1","koszt":"782.09","zysk":"470.01","marza":"37.5"},{"clientId":38,"rok":2026,"miesiac":1,"sprzedaz":"1140.39","koszt":"695.58","zysk":"444.81","marza":"39"},{"clientId":38,"rok":2025,"miesiac":12,"sprzedaz":"2944.82","koszt":"1796.34","zysk":"1148.48","marza":"39"},{"clientId":49,"rok":2026,"miesiac":1,"sprzedaz":"1139.72","koszt":"727.2","zysk":"412.52","marza":"36.2"},{"clientId":49,"rok":2025,"miesiac":12,"sprzedaz":"1580.82","koszt":"1008.56","zysk":"572.26","marza":"36.2"},{"clientId":15,"rok":2026,"miesiac":1,"sprzedaz":"1026.16","koszt":"640.97","zysk":"385.19","marza":"37.5"},{"clientId":78,"rok":2026,"miesiac":1,"sprzedaz":"808.72","koszt":"483.96","zysk":"324.76","marza":"40.2"},{"clientId":78,"rok":2025,"miesiac":12,"sprzedaz":"3698.7","koszt":"2211.82","zysk":"1486.88","marza":"40.2"},{"clientId":24,"rok":2026,"miesiac":1,"sprzedaz":"800.31","koszt":"459.97","zysk":"340.34","marza":"42.5"},{"clientId":24,"rok":2025,"miesiac":12,"sprzedaz":"609.14","koszt":"350.26","zysk":"258.88","marza":"42.5"},{"clientId":117,"rok":2026,"miesiac":1,"sprzedaz":"756.53","koszt":"457.96","zysk":"298.57","marza":"39.5"},{"clientId":117,"rok":2025,"miesiac":12,"sprzedaz":"822.29","koszt":"497.49","zysk":"324.8","marza":"39.5"},{"clientId":19,"rok":2026,"miesiac":1,"sprzedaz":"694.67","koszt":"461.73","zysk":"232.94","marza":"33.5"},{"clientId":19,"rok":2025,"miesiac":12,"sprzedaz":"2348.69","koszt":"1561.88","zysk":"786.81","marza":"33.5"},{"clientId":16,"rok":2026,"miesiac":1,"sprzedaz":"566.42","koszt":"303.94","zysk":"262.48","marza":"46.3"},{"clientId":16,"rok":2025,"miesiac":12,"sprzedaz":"912.59","koszt":"490.06","zysk":"422.53","marza":"46.3"},{"clientId":41,"rok":2026,"miesiac":1,"sprzedaz":"540.4","koszt":"323.89","zysk":"216.51","marza":"40.1"},{"clientId":41,"rok":2025,"miesiac":12,"sprzedaz":"596.06","koszt":"357.04","zysk":"239.02","marza":"40.1"},{"clientId":100,"rok":2026,"miesiac":1,"sprzedaz":"499.2","koszt":"315.73","zysk":"183.47","marza":"36.8"},{"clientId":100,"rok":2025,"miesiac":12,"sprzedaz":"499.2","koszt":"315.49","zysk":"183.71","marza":"36.8"},{"clientId":17,"rok":2026,"miesiac":1,"sprzedaz":"472.97","koszt":"318.76","zysk":"154.21","marza":"32.6"},{"clientId":17,"rok":2025,"miesiac":12,"sprzedaz":"542.76","koszt":"365.82","zysk":"176.94","marza":"32.6"},{"clientId":42,"rok":2026,"miesiac":1,"sprzedaz":"288.51","koszt":"177.67","zysk":"110.84","marza":"38.4"},{"clientId":42,"rok":2025,"miesiac":12,"sprzedaz":"246.15","koszt":"151.63","zysk":"94.52","marza":"38.4"},{"clientId":61,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":61,"rok":2025,"miesiac":12,"sprzedaz":"1158.41","koszt":"0","zysk":"0","marza":"0"},{"clientId":46,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":46,"rok":2025,"miesiac":12,"sprzedaz":"849.94","koszt":"0","zysk":"0","marza":"0"},{"clientId":66,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":63,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":64,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":64,"rok":2025,"miesiac":12,"sprzedaz":"1080.05","koszt":"0","zysk":"0","marza":"0"},{"clientId":65,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":65,"rok":2025,"miesiac":12,"sprzedaz":"1373.46","koszt":"0","zysk":"0","marza":"0"},{"clientId":67,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":111,"rok":2026,"miesiac":1,"sprzedaz":"2172.59","koszt":"1484.05","zysk":"688.54","marza":"31.7"},{"clientId":111,"rok":2025,"miesiac":12,"sprzedaz":"2076.1","koszt":"1417.98","zysk":"658.12","marza":"31.7"},{"clientId":156,"rok":2026,"miesiac":1,"sprzedaz":"2030.88","koszt":"1305.88","zysk":"725","marza":"35.7"},{"clientId":156,"rok":2025,"miesiac":12,"sprzedaz":"2634.96","koszt":"1694.28","zysk":"940.68","marza":"35.7"},{"clientId":147,"rok":2026,"miesiac":1,"sprzedaz":"1994.88","koszt":"1304.76","zysk":"690.12","marza":"34.6"},{"clientId":147,"rok":2025,"miesiac":12,"sprzedaz":"1526.14","koszt":"998.1","zysk":"528.04","marza":"34.6"},{"clientId":88,"rok":2026,"miesiac":1,"sprzedaz":"1817.39","koszt":"1137.29","zysk":"680.1","marza":"37.4"},{"clientId":88,"rok":2025,"miesiac":12,"sprzedaz":"1830.96","koszt":"1146.18","zysk":"684.78","marza":"37.4"},{"clientId":151,"rok":2026,"miesiac":1,"sprzedaz":"1636.49","koszt":"879.88","zysk":"756.61","marza":"46.2"},{"clientId":151,"rok":2025,"miesiac":12,"sprzedaz":"2392.99","koszt":"1287.43","zysk":"1105.56","marza":"46.2"},{"clientId":142,"rok":2026,"miesiac":1,"sprzedaz":"1514.46","koszt":"860.76","zysk":"653.7","marza":"43.2"},{"clientId":142,"rok":2025,"miesiac":12,"sprzedaz":"638.11","koszt":"362.45","zysk":"275.66","marza":"43.2"},{"clientId":124,"rok":2026,"miesiac":1,"sprzedaz":"1447.49","koszt":"897.97","zysk":"549.52","marza":"38"},{"clientId":124,"rok":2025,"miesiac":12,"sprzedaz":"2470.49","koszt":"1531.7","zysk":"938.79","marza":"38"},{"clientId":149,"rok":2026,"miesiac":1,"sprzedaz":"1290.28","koszt":"786.88","zysk":"503.4","marza":"39"},{"clientId":149,"rok":2025,"miesiac":12,"sprzedaz":"1229.26","koszt":"749.85","zysk":"479.41","marza":"39"},{"clientId":138,"rok":2026,"miesiac":1,"sprzedaz":"1274.29","koszt":"667.91","zysk":"606.38","marza":"47.6"},{"clientId":138,"rok":2025,"miesiac":12,"sprzedaz":"3671.19","koszt":"1923.7","zysk":"1747.49","marza":"47.6"},{"clientId":93,"rok":2026,"miesiac":1,"sprzedaz":"1263.15","koszt":"808.67","zysk":"454.48","marza":"36"},{"clientId":93,"rok":2025,"miesiac":12,"sprzedaz":"1587.42","koszt":"1015.95","zysk":"571.47","marza":"36"},{"clientId":118,"rok":2026,"miesiac":1,"sprzedaz":"1254.05","koszt":"888.8","zysk":"365.25","marza":"29.1"},{"clientId":118,"rok":2025,"miesiac":12,"sprzedaz":"512.68","koszt":"363.49","zysk":"149.19","marza":"29.1"},{"clientId":128,"rok":2026,"miesiac":1,"sprzedaz":"1207.1","koszt":"691.1","zysk":"516","marza":"42.7"},{"clientId":128,"rok":2025,"miesiac":12,"sprzedaz":"1821.77","koszt":"1043.87","zysk":"777.9","marza":"42.7"},{"clientId":137,"rok":2026,"miesiac":1,"sprzedaz":"1145.59","koszt":"621.46","zysk":"524.13","marza":"45.8"},{"clientId":137,"rok":2025,"miesiac":12,"sprzedaz":"747.74","koszt":"405.28","zysk":"342.46","marza":"45.8"},{"clientId":162,"rok":2026,"miesiac":1,"sprzedaz":"1080.53","koszt":"693.36","zysk":"387.17","marza":"35.8"},{"clientId":162,"rok":2025,"miesiac":12,"sprzedaz":"1309.37","koszt":"840.62","zysk":"468.75","marza":"35.8"},{"clientId":134,"rok":2026,"miesiac":1,"sprzedaz":"1046.94","koszt":"675.75","zysk":"371.19","marza":"35.5"},{"clientId":134,"rok":2025,"miesiac":12,"sprzedaz":"1738.96","koszt":"1121.63","zysk":"617.33","marza":"35.5"},{"clientId":98,"rok":2026,"miesiac":1,"sprzedaz":"990.92","koszt":"599.62","zysk":"391.3","marza":"39.5"},{"clientId":98,"rok":2025,"miesiac":12,"sprzedaz":"1119.88","koszt":"677.53","zysk":"442.35","marza":"39.5"},{"clientId":121,"rok":2026,"miesiac":1,"sprzedaz":"972.36","koszt":"546.2","zysk":"426.16","marza":"43.8"},{"clientId":121,"rok":2025,"miesiac":12,"sprzedaz":"2276.53","koszt":"1279.41","zysk":"997.12","marza":"43.8"},{"clientId":99,"rok":2026,"miesiac":1,"sprzedaz":"877.15","koszt":"546.08","zysk":"331.07","marza":"37.7"},{"clientId":99,"rok":2025,"miesiac":12,"sprzedaz":"1123.03","koszt":"699.65","zysk":"423.38","marza":"37.7"},{"clientId":90,"rok":2026,"miesiac":1,"sprzedaz":"801.61","koszt":"516","zysk":"285.61","marza":"35.6"},{"clientId":90,"rok":2025,"miesiac":12,"sprzedaz":"2557.29","koszt":"1646.89","zysk":"910.4","marza":"35.6"},{"clientId":116,"rok":2026,"miesiac":1,"sprzedaz":"745.05","koszt":"345.19","zysk":"399.86","marza":"53.7"},{"clientId":116,"rok":2025,"miesiac":12,"sprzedaz":"736.96","koszt":"341.21","zysk":"395.75","marza":"53.7"},{"clientId":157,"rok":2026,"miesiac":1,"sprzedaz":"617.59","koszt":"361.83","zysk":"255.76","marza":"41.4"},{"clientId":157,"rok":2025,"miesiac":12,"sprzedaz":"796.32","koszt":"466.64","zysk":"329.68","marza":"41.4"},{"clientId":102,"rok":2026,"miesiac":1,"sprzedaz":"359.56","koszt":"267.63","zysk":"91.93","marza":"25.6"},{"clientId":102,"rok":2025,"miesiac":12,"sprzedaz":"535.17","koszt":"398.17","zysk":"137","marza":"25.6"},{"clientId":114,"rok":2026,"miesiac":1,"sprzedaz":"326.84","koszt":"194.32","zysk":"132.52","marza":"40.5"},{"clientId":114,"rok":2025,"miesiac":12,"sprzedaz":"470.51","koszt":"279.95","zysk":"190.56","marza":"40.5"},{"clientId":159,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":101,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":101,"rok":2025,"miesiac":12,"sprzedaz":"415.72","koszt":"0","zysk":"0","marza":"0"},{"clientId":163,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":140,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":333,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":141,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":141,"rok":2025,"miesiac":12,"sprzedaz":"396.77","koszt":"0","zysk":"0","marza":"0"},{"clientId":160,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":160,"rok":2025,"miesiac":12,"sprzedaz":"391.38","koszt":"0","zysk":"0","marza":"0"},{"clientId":94,"rok":2026,"miesiac":1,"sprzedaz":"2922.61","koszt":"1834.44","zysk":"1088.17","marza":"37.2"},{"clientId":94,"rok":2025,"miesiac":12,"sprzedaz":"2902.05","koszt":"1822.49","zysk":"1079.56","marza":"37.2"},{"clientId":91,"rok":2026,"miesiac":1,"sprzedaz":"1437.54","koszt":"939.5","zysk":"498.04","marza":"34.6"},{"clientId":91,"rok":2025,"miesiac":12,"sprzedaz":"3267.43","koszt":"2136.9","zysk":"1130.53","marza":"34.6"},{"clientId":126,"rok":2026,"miesiac":1,"sprzedaz":"1423.11","koszt":"857.23","zysk":"565.88","marza":"39.8"},{"clientId":126,"rok":2025,"miesiac":12,"sprzedaz":"1360.94","koszt":"819.29","zysk":"541.65","marza":"39.8"},{"clientId":152,"rok":2026,"miesiac":1,"sprzedaz":"956.42","koszt":"514.04","zysk":"442.38","marza":"46.3"},{"clientId":152,"rok":2025,"miesiac":12,"sprzedaz":"986.91","koszt":"529.97","zysk":"456.94","marza":"46.3"},{"clientId":105,"rok":2026,"miesiac":1,"sprzedaz":"866.46","koszt":"541.21","zysk":"325.25","marza":"37.5"},{"clientId":148,"rok":2026,"miesiac":1,"sprzedaz":"736.84","koszt":"404.94","zysk":"331.9","marza":"45"},{"clientId":148,"rok":2025,"miesiac":12,"sprzedaz":"1323.1","koszt":"727.71","zysk":"595.39","marza":"45"},{"clientId":106,"rok":2026,"miesiac":1,"sprzedaz":"585.65","koszt":"320.06","zysk":"265.59","marza":"45.3"},{"clientId":106,"rok":2025,"miesiac":12,"sprzedaz":"536.93","koszt":"293.7","zysk":"243.23","marza":"45.3"},{"clientId":146,"rok":2026,"miesiac":1,"sprzedaz":"534.9","koszt":"323.44","zysk":"211.46","marza":"39.5"},{"clientId":146,"rok":2025,"miesiac":12,"sprzedaz":"654.92","koszt":"396.23","zysk":"258.69","marza":"39.5"},{"clientId":107,"rok":2026,"miesiac":1,"sprzedaz":"470.33","koszt":"290.13","zysk":"180.2","marza":"38.3"},{"clientId":107,"rok":2025,"miesiac":12,"sprzedaz":"1024.21","koszt":"631.94","zysk":"392.27","marza":"38.3"},{"clientId":133,"rok":2026,"miesiac":1,"sprzedaz":"362.66","koszt":"196.52","zysk":"166.14","marza":"45.8"},{"clientId":133,"rok":2025,"miesiac":12,"sprzedaz":"663.86","koszt":"359.81","zysk":"304.05","marza":"45.8"},{"clientId":131,"rok":2026,"miesiac":1,"sprzedaz":"280.4","koszt":"136.51","zysk":"143.89","marza":"51.3"},{"clientId":131,"rok":2025,"miesiac":12,"sprzedaz":"960.6","koszt":"467.81","zysk":"492.79","marza":"51.3"},{"clientId":145,"rok":2026,"miesiac":1,"sprzedaz":"258.79","koszt":"137.68","zysk":"121.11","marza":"46.8"},{"clientId":145,"rok":2025,"miesiac":12,"sprzedaz":"528.89","koszt":"281.37","zysk":"247.52","marza":"46.8"},{"clientId":110,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":154,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":155,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":103,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":122,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":334,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":135,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":108,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":104,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":104,"rok":2025,"miesiac":12,"sprzedaz":"1021.56","koszt":"0","zysk":"0","marza":"0"},{"clientId":97,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":95,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":109,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":96,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":150,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":335,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":130,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":132,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":132,"rok":2025,"miesiac":12,"sprzedaz":"2361.92","koszt":"0","zysk":"0","marza":"0"},{"clientId":161,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":120,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":120,"rok":2025,"miesiac":12,"sprzedaz":"1077.7","koszt":"0","zysk":"0","marza":"0"},{"clientId":115,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":115,"rok":2025,"miesiac":12,"sprzedaz":"716.32","koszt":"0","zysk":"0","marza":"0"},{"clientId":136,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":112,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":113,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":336,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":89,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":143,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":144,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":125,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":125,"rok":2025,"miesiac":12,"sprzedaz":"391.8","koszt":"0","zysk":"0","marza":"0"},{"clientId":123,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":153,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":158,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":92,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":119,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":129,"rok":2026,"miesiac":1,"sprzedaz":"0","koszt":"0","zysk":"0","marza":"0"},{"clientId":129,"rok":2025,"miesiac":12,"sprzedaz":"683.89","koszt":"0","zysk":"0","marza":"0"},{"clientId":139,"rok":2026,"miesiac":1,"sprzedaz":"-619.65","koszt":"-344.1","zysk":"-275.55","marza":"0"},{"clientId":139,"rok":2025,"miesiac":12,"sprzedaz":"653.77","koszt":"0","zysk":"0","marza":"0"},{"clientId":337,"rok":2026,"miesiac":1,"sprzedaz":"3830.4","koszt":"2763.67","zysk":"1066.73","marza":"27.8"},{"clientId":337,"rok":2025,"miesiac":12,"sprzedaz":"787.68","koszt":"568.7","zysk":"218.98","marza":"27.8"},{"clientId":52,"rok":2025,"miesiac":12,"sprzedaz":"3543.62","koszt":"2370.68","zysk":"1172.94","marza":"33.1"},{"clientId":338,"rok":2026,"miesiac":1,"sprzedaz":"1600","koszt":"1127.26","zysk":"472.74","marza":"29.5"},{"clientId":338,"rok":2025,"miesiac":12,"sprzedaz":"320","koszt":"225.6","zysk":"94.4","marza":"29.5"},{"clientId":339,"rok":2026,"miesiac":1,"sprzedaz":"1514.73","koszt":"1017.7","zysk":"497.03","marza":"32.8"},{"clientId":339,"rok":2025,"miesiac":12,"sprzedaz":"210","koszt":"141.12","zysk":"68.88","marza":"32.8"},{"clientId":340,"rok":2026,"miesiac":1,"sprzedaz":"1475.79","koszt":"1323.75","zysk":"152.04","marza":"10.3"},{"clientId":340,"rok":2025,"miesiac":12,"sprzedaz":"181.3","koszt":"162.63","zysk":"18.67","marza":"10.3"},{"clientId":341,"rok":2026,"miesiac":1,"sprzedaz":"547.44","koszt":"250.43","zysk":"297.01","marza":"54.3"},{"clientId":341,"rok":2025,"miesiac":12,"sprzedaz":"1147.91","koszt":"524.59","zysk":"623.32","marza":"54.3"},{"clientId":342,"rok":2026,"miesiac":1,"sprzedaz":"365.42","koszt":"318.23","zysk":"47.19","marza":"12.9"},{"clientId":342,"rok":2025,"miesiac":12,"sprzedaz":"422.47","koszt":"367.97","zysk":"54.5","marza":"12.9"},{"clientId":343,"rok":2026,"miesiac":1,"sprzedaz":"39.16","koszt":"35.12","zysk":"4.04","marza":"10.3"},{"clientId":343,"rok":2025,"miesiac":12,"sprzedaz":"48.35","koszt":"43.37","zysk":"4.98","marza":"10.3"}]
+[
+  {
+    "clientId": "C002",
+    "klient": "Amar Beirut",
+    "sprzedaz": 36225.57,
+    "koszt": 27221.79,
+    "zysk": 9003.78,
+    "marza": 24.85
+  },
+  {
+    "clientId": "C007",
+    "klient": "Lupo",
+    "sprzedaz": 22608.21,
+    "koszt": 14895.72,
+    "zysk": 7712.49,
+    "marza": 34.11
+  },
+  {
+    "clientId": "C010",
+    "klient": "Sakana Wilanów",
+    "sprzedaz": 10940.75,
+    "koszt": 6772.75,
+    "zysk": 4168.0,
+    "marza": 38.1
+  },
+  {
+    "clientId": "C008",
+    "klient": "Sakana Sushi - Burakowska P",
+    "sprzedaz": 6648.54,
+    "koszt": 4055.14,
+    "zysk": 2593.4,
+    "marza": 39.01
+  },
+  {
+    "clientId": "C011",
+    "klient": "SOUND GARDEN HOTEL",
+    "sprzedaz": 5656.16,
+    "koszt": 3489.81,
+    "zysk": 2166.35,
+    "marza": 38.3
+  },
+  {
+    "clientId": "C009",
+    "klient": "Sakana Sushi Molieria",
+    "sprzedaz": 4580.3,
+    "koszt": 2718.08,
+    "zysk": 1862.22,
+    "marza": 40.66
+  },
+  {
+    "clientId": "C001",
+    "klient": "Abruzzo",
+    "sprzedaz": 4047.6,
+    "koszt": 2441.64,
+    "zysk": 1605.96,
+    "marza": 39.68
+  },
+  {
+    "clientId": "C003",
+    "klient": "Belvedere",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C005",
+    "klient": "Grzybki-Magazyn",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C004",
+    "klient": "DOM PRACOWNIKA SŁUŻBY ZDROWIA",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C006",
+    "klient": "Grzybki-Malownicza Produkcja",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C076",
+    "klient": "Sushi Soul",
+    "sprzedaz": 8994.57,
+    "koszt": 5392.62,
+    "zysk": 3601.95,
+    "marza": 40.05
+  },
+  {
+    "clientId": "C069",
+    "klient": "Solivoda - Szkoła Amerykańska",
+    "sprzedaz": 8877.85,
+    "koszt": 5104.38,
+    "zysk": 3773.47,
+    "marza": 42.5
+  },
+  {
+    "clientId": "C023",
+    "klient": "Culture Cafe - Wola",
+    "sprzedaz": 8474.23,
+    "koszt": 5476.84,
+    "zysk": 2997.39,
+    "marza": 35.37
+  },
+  {
+    "clientId": "C070",
+    "klient": "Solivoda Konstancin PSE",
+    "sprzedaz": 7393.42,
+    "koszt": 3982.76,
+    "zysk": 3410.66,
+    "marza": 46.13
+  },
+  {
+    "clientId": "C026",
+    "klient": "GAN BEI",
+    "sprzedaz": 7129.46,
+    "koszt": 4246.89,
+    "zysk": 2882.57,
+    "marza": 40.43
+  },
+  {
+    "clientId": "C044",
+    "klient": "Lunch - Kuba 2",
+    "sprzedaz": 5273.9,
+    "koszt": 3322.02,
+    "zysk": 1951.88,
+    "marza": 37.01
+  },
+  {
+    "clientId": "C059",
+    "klient": "Seafood Station",
+    "sprzedaz": 5209.83,
+    "koszt": 3251.4,
+    "zysk": 1958.43,
+    "marza": 37.59
+  },
+  {
+    "clientId": "C021",
+    "klient": "Culture Cafe",
+    "sprzedaz": 5067.14,
+    "koszt": 3326.61,
+    "zysk": 1740.53,
+    "marza": 34.35
+  },
+  {
+    "clientId": "C027",
+    "klient": "GAN BEI CHMIELNA",
+    "sprzedaz": 5025.47,
+    "koszt": 2885.08,
+    "zysk": 2140.39,
+    "marza": 42.59
+  },
+  {
+    "clientId": "C073",
+    "klient": "Street Daszyńskiego",
+    "sprzedaz": 5019.55,
+    "koszt": 3064.71,
+    "zysk": 1954.84,
+    "marza": 38.94
+  },
+  {
+    "clientId": "C084",
+    "klient": "Voda",
+    "sprzedaz": 4985.64,
+    "koszt": 3551.37,
+    "zysk": 1434.27,
+    "marza": 28.77
+  },
+  {
+    "clientId": "C060",
+    "klient": "SEAGULL",
+    "sprzedaz": 4899.53,
+    "koszt": 3289.96,
+    "zysk": 1609.57,
+    "marza": 32.85
+  },
+  {
+    "clientId": "C039",
+    "klient": "KUMPLE",
+    "sprzedaz": 4741.2,
+    "koszt": 3050.68,
+    "zysk": 1690.52,
+    "marza": 35.66
+  },
+  {
+    "clientId": "C085",
+    "klient": "Wozownia",
+    "sprzedaz": 4489.02,
+    "koszt": 2690.17,
+    "zysk": 1798.85,
+    "marza": 40.07
+  },
+  {
+    "clientId": "C048",
+    "klient": "Pałac Rozalin",
+    "sprzedaz": 4040.9,
+    "koszt": 2429.97,
+    "zysk": 1610.93,
+    "marza": 39.87
+  },
+  {
+    "clientId": "C018",
+    "klient": "Camastra",
+    "sprzedaz": 4029.92,
+    "koszt": 2517.19,
+    "zysk": 1512.73,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C080",
+    "klient": "SZPITAL OTWOCK",
+    "sprzedaz": 3845.61,
+    "koszt": 2413.37,
+    "zysk": 1432.24,
+    "marza": 37.24
+  },
+  {
+    "clientId": "C079",
+    "klient": "SZPITAL NA MADALIŃSKIEGO",
+    "sprzedaz": 3776.5,
+    "koszt": 2750.5,
+    "zysk": 1026.0,
+    "marza": 27.17
+  },
+  {
+    "clientId": "C036",
+    "klient": "Kontakt Wine",
+    "sprzedaz": 3505.92,
+    "koszt": 2143.68,
+    "zysk": 1362.24,
+    "marza": 38.86
+  },
+  {
+    "clientId": "C056",
+    "klient": "Restauracja Nolita",
+    "sprzedaz": 3081.9,
+    "koszt": 1769.17,
+    "zysk": 1312.73,
+    "marza": 42.59
+  },
+  {
+    "clientId": "C029",
+    "klient": "Grupa Cateringowa",
+    "sprzedaz": 2624.83,
+    "koszt": 1647.59,
+    "zysk": 977.24,
+    "marza": 37.23
+  },
+  {
+    "clientId": "C013",
+    "klient": "ARCHE HOTEL PUŁAWSKA",
+    "sprzedaz": 2578.53,
+    "koszt": 1622.7,
+    "zysk": 955.83,
+    "marza": 37.07
+  },
+  {
+    "clientId": "C086",
+    "klient": "Zoli Pizzeria",
+    "sprzedaz": 2363.48,
+    "koszt": 1266.39,
+    "zysk": 1097.09,
+    "marza": 46.42
+  },
+  {
+    "clientId": "C051",
+    "klient": "PASTA FINIESTRA",
+    "sprzedaz": 2219.13,
+    "koszt": 1492.69,
+    "zysk": 726.44,
+    "marza": 32.74
+  },
+  {
+    "clientId": "C075",
+    "klient": "Street Polska 2 KASPRZAKA",
+    "sprzedaz": 2173.43,
+    "koszt": 1339.19,
+    "zysk": 834.24,
+    "marza": 38.38
+  },
+  {
+    "clientId": "C071",
+    "klient": "Stary Dom",
+    "sprzedaz": 1805.64,
+    "koszt": 942.43,
+    "zysk": 863.21,
+    "marza": 47.81
+  },
+  {
+    "clientId": "C077",
+    "klient": "Sushi Today by Sakana",
+    "sprzedaz": 1422.76,
+    "koszt": 908.41,
+    "zysk": 514.35,
+    "marza": 36.15
+  },
+  {
+    "clientId": "C030",
+    "klient": "Hamra",
+    "sprzedaz": 1073.54,
+    "koszt": 781.67,
+    "zysk": 291.87,
+    "marza": 27.19
+  },
+  {
+    "clientId": "C012",
+    "klient": "Alegloria",
+    "sprzedaz": 1035.27,
+    "koszt": 678.18,
+    "zysk": 357.09,
+    "marza": 34.49
+  },
+  {
+    "clientId": "C031",
+    "klient": "HANULKA",
+    "sprzedaz": 793.32,
+    "koszt": 495.53,
+    "zysk": 297.79,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C074",
+    "klient": "Street ONZ",
+    "sprzedaz": 548.87,
+    "koszt": 342.84,
+    "zysk": 206.03,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C057",
+    "klient": "Restauracja Wilanów",
+    "sprzedaz": 413.85,
+    "koszt": 259.32,
+    "zysk": 154.53,
+    "marza": 37.34
+  },
+  {
+    "clientId": "C022",
+    "klient": "Culture Cafe - Grzybowska",
+    "sprzedaz": 403.82,
+    "koszt": 264.56,
+    "zysk": 139.26,
+    "marza": 34.49
+  },
+  {
+    "clientId": "C068",
+    "klient": "Solivoda - Pruszków",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C055",
+    "klient": "Przedszkole nr.2 `Tęczowe Przedszkole`",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C052",
+    "klient": "POLKA",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C034",
+    "klient": "Japoński Sąsiad 2 CZAPELSKA",
+    "sprzedaz": 19127.96,
+    "koszt": 10798.15,
+    "zysk": 8329.81,
+    "marza": 43.55
+  },
+  {
+    "clientId": "C014",
+    "klient": "Babcia Włoszka",
+    "sprzedaz": 6757.17,
+    "koszt": 4156.1,
+    "zysk": 2601.07,
+    "marza": 38.49
+  },
+  {
+    "clientId": "C040",
+    "klient": "La Casa Bistro & Cafe",
+    "sprzedaz": 5406.76,
+    "koszt": 3769.83,
+    "zysk": 1636.93,
+    "marza": 30.28
+  },
+  {
+    "clientId": "C050",
+    "klient": "Park Cafe 2",
+    "sprzedaz": 3967.97,
+    "koszt": 2690.6,
+    "zysk": 1277.37,
+    "marza": 32.19
+  },
+  {
+    "clientId": "C037",
+    "klient": "Krzysztof Cieślak",
+    "sprzedaz": 3942.96,
+    "koszt": 2088.57,
+    "zysk": 1854.39,
+    "marza": 47.03
+  },
+  {
+    "clientId": "C028",
+    "klient": "Gmina Belsk",
+    "sprzedaz": 3611.61,
+    "koszt": 2255.91,
+    "zysk": 1355.7,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C047",
+    "klient": "PADRON",
+    "sprzedaz": 3198.34,
+    "koszt": 2254.06,
+    "zysk": 944.28,
+    "marza": 29.52
+  },
+  {
+    "clientId": "C054",
+    "klient": "PROSUSHI BROWARY",
+    "sprzedaz": 3061.79,
+    "koszt": 1798.22,
+    "zysk": 1263.57,
+    "marza": 41.27
+  },
+  {
+    "clientId": "C062",
+    "klient": "Shiso Sushi",
+    "sprzedaz": 2889.43,
+    "koszt": 1681.02,
+    "zysk": 1208.41,
+    "marza": 41.82
+  },
+  {
+    "clientId": "C032",
+    "klient": "Hoshi Sushi Mszczonów",
+    "sprzedaz": 2504.92,
+    "koszt": 1544.96,
+    "zysk": 959.96,
+    "marza": 38.32
+  },
+  {
+    "clientId": "C045",
+    "klient": "Mazurkas",
+    "sprzedaz": 2497.48,
+    "koszt": 1670.24,
+    "zysk": 827.24,
+    "marza": 33.12
+  },
+  {
+    "clientId": "C058",
+    "klient": "Seafood House - SEABREEZE",
+    "sprzedaz": 2484.75,
+    "koszt": 1363.47,
+    "zysk": 1121.28,
+    "marza": 45.13
+  },
+  {
+    "clientId": "C083",
+    "klient": "VIVA TANGO",
+    "sprzedaz": 2472.07,
+    "koszt": 1353.32,
+    "zysk": 1118.75,
+    "marza": 45.26
+  },
+  {
+    "clientId": "C053",
+    "klient": "PROSUSHI",
+    "sprzedaz": 2410.2,
+    "koszt": 1429.89,
+    "zysk": 980.31,
+    "marza": 40.67
+  },
+  {
+    "clientId": "C082",
+    "klient": "U Barssa",
+    "sprzedaz": 2362.75,
+    "koszt": 1386.36,
+    "zysk": 976.39,
+    "marza": 41.32
+  },
+  {
+    "clientId": "C035",
+    "klient": "Japoński Sąsiad BANDERII",
+    "sprzedaz": 2348.35,
+    "koszt": 1309.92,
+    "zysk": 1038.43,
+    "marza": 44.22
+  },
+  {
+    "clientId": "C072",
+    "klient": "Steak Dolna 41",
+    "sprzedaz": 2278.21,
+    "koszt": 1392.69,
+    "zysk": 885.52,
+    "marza": 38.87
+  },
+  {
+    "clientId": "C127",
+    "klient": "Negroni Centrale",
+    "sprzedaz": 2242.1,
+    "koszt": 1395.18,
+    "zysk": 846.92,
+    "marza": 37.77
+  },
+  {
+    "clientId": "C087",
+    "klient": "ZPR Casino 2",
+    "sprzedaz": 2142.08,
+    "koszt": 1132.14,
+    "zysk": 1009.94,
+    "marza": 47.15
+  },
+  {
+    "clientId": "C025",
+    "klient": "EL PATIO",
+    "sprzedaz": 2083.11,
+    "koszt": 1594.76,
+    "zysk": 488.35,
+    "marza": 23.44
+  },
+  {
+    "clientId": "C020",
+    "klient": "Chocobon - CATERING",
+    "sprzedaz": 1815.29,
+    "koszt": 1244.04,
+    "zysk": 571.25,
+    "marza": 31.47
+  },
+  {
+    "clientId": "C043",
+    "klient": "LIMBA",
+    "sprzedaz": 1504.84,
+    "koszt": 897.41,
+    "zysk": 607.43,
+    "marza": 40.36
+  },
+  {
+    "clientId": "C033",
+    "klient": "IKI Izakaya",
+    "sprzedaz": 1264.47,
+    "koszt": 724.84,
+    "zysk": 539.63,
+    "marza": 42.68
+  },
+  {
+    "clientId": "C081",
+    "klient": "TOSCA",
+    "sprzedaz": 1252.1,
+    "koszt": 782.09,
+    "zysk": 470.01,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C038",
+    "klient": "Kuchnia Warszawska",
+    "sprzedaz": 1140.39,
+    "koszt": 695.58,
+    "zysk": 444.81,
+    "marza": 39.0
+  },
+  {
+    "clientId": "C049",
+    "klient": "Panattoni Cafe",
+    "sprzedaz": 1139.72,
+    "koszt": 727.2,
+    "zysk": 412.52,
+    "marza": 36.19
+  },
+  {
+    "clientId": "C015",
+    "klient": "Bistro Oliwa",
+    "sprzedaz": 1026.16,
+    "koszt": 640.97,
+    "zysk": 385.19,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C078",
+    "klient": "Sushi Zushi Żurawia",
+    "sprzedaz": 808.72,
+    "koszt": 483.96,
+    "zysk": 324.76,
+    "marza": 40.16
+  },
+  {
+    "clientId": "C024",
+    "klient": "DOM OPIEKI `ANNA`",
+    "sprzedaz": 800.31,
+    "koszt": 459.97,
+    "zysk": 340.34,
+    "marza": 42.53
+  },
+  {
+    "clientId": "C117",
+    "klient": "Kuma no teburu",
+    "sprzedaz": 756.53,
+    "koszt": 457.96,
+    "zysk": 298.57,
+    "marza": 39.47
+  },
+  {
+    "clientId": "C019",
+    "klient": "Chocobon",
+    "sprzedaz": 694.67,
+    "koszt": 461.73,
+    "zysk": 232.94,
+    "marza": 33.53
+  },
+  {
+    "clientId": "C016",
+    "klient": "Buns and bottles bar",
+    "sprzedaz": 566.42,
+    "koszt": 303.94,
+    "zysk": 262.48,
+    "marza": 46.34
+  },
+  {
+    "clientId": "C041",
+    "klient": "La Ros 2",
+    "sprzedaz": 540.4,
+    "koszt": 323.89,
+    "zysk": 216.51,
+    "marza": 40.06
+  },
+  {
+    "clientId": "C100",
+    "klient": "Drukarnia GC",
+    "sprzedaz": 499.2,
+    "koszt": 315.73,
+    "zysk": 183.47,
+    "marza": 36.75
+  },
+  {
+    "clientId": "C017",
+    "klient": "BURGERLAB",
+    "sprzedaz": 472.97,
+    "koszt": 318.76,
+    "zysk": 154.21,
+    "marza": 32.6
+  },
+  {
+    "clientId": "C042",
+    "klient": "Liban w Szklance",
+    "sprzedaz": 288.51,
+    "koszt": 177.67,
+    "zysk": 110.84,
+    "marza": 38.42
+  },
+  {
+    "clientId": "C061",
+    "klient": "SHIN SUSHI  2",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C046",
+    "klient": "MOSiR Poranki i Wieczory",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C066",
+    "klient": "SKALO - Prosushi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C063",
+    "klient": "SKALO - Buns and bottles bar",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C064",
+    "klient": "SKALO - Oni Izakaya",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C065",
+    "klient": "SKALO - Park Cafe",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C067",
+    "klient": "SKALO - Prosushi Browary",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C111",
+    "klient": "Just like you",
+    "sprzedaz": 2172.59,
+    "koszt": 1484.05,
+    "zysk": 688.54,
+    "marza": 31.69
+  },
+  {
+    "clientId": "C156",
+    "klient": "Ti Amo Tratoria",
+    "sprzedaz": 2030.88,
+    "koszt": 1305.88,
+    "zysk": 725.0,
+    "marza": 35.7
+  },
+  {
+    "clientId": "C147",
+    "klient": "Sushi Mango 2",
+    "sprzedaz": 1994.88,
+    "koszt": 1304.76,
+    "zysk": 690.12,
+    "marza": 34.59
+  },
+  {
+    "clientId": "C088",
+    "klient": "Ach Cafe",
+    "sprzedaz": 1817.39,
+    "koszt": 1137.29,
+    "zysk": 680.1,
+    "marza": 37.42
+  },
+  {
+    "clientId": "C151",
+    "klient": "Śledzie z Bornholmu",
+    "sprzedaz": 1636.49,
+    "koszt": 879.88,
+    "zysk": 756.61,
+    "marza": 46.23
+  },
+  {
+    "clientId": "C142",
+    "klient": "Sklep Medyczny",
+    "sprzedaz": 1514.46,
+    "koszt": 860.76,
+    "zysk": 653.7,
+    "marza": 43.16
+  },
+  {
+    "clientId": "C124",
+    "klient": "Manna",
+    "sprzedaz": 1447.49,
+    "koszt": 897.97,
+    "zysk": 549.52,
+    "marza": 37.96
+  },
+  {
+    "clientId": "C149",
+    "klient": "Szaurmafia",
+    "sprzedaz": 1290.28,
+    "koszt": 786.88,
+    "zysk": 503.4,
+    "marza": 39.01
+  },
+  {
+    "clientId": "C138",
+    "klient": "SKALO - Prime WALICÓW",
+    "sprzedaz": 1274.29,
+    "koszt": 667.91,
+    "zysk": 606.38,
+    "marza": 47.59
+  },
+  {
+    "clientId": "C093",
+    "klient": "Atelier Stylissimo",
+    "sprzedaz": 1263.15,
+    "koszt": 808.67,
+    "zysk": 454.48,
+    "marza": 35.98
+  },
+  {
+    "clientId": "C118",
+    "klient": "LANS SIENNA",
+    "sprzedaz": 1254.05,
+    "koszt": 888.8,
+    "zysk": 365.25,
+    "marza": 29.13
+  },
+  {
+    "clientId": "C128",
+    "klient": "No Tu Olideli",
+    "sprzedaz": 1207.1,
+    "koszt": 691.1,
+    "zysk": 516.0,
+    "marza": 42.75
+  },
+  {
+    "clientId": "C137",
+    "klient": "SKALO - Prime MOKOTÓW",
+    "sprzedaz": 1145.59,
+    "koszt": 621.46,
+    "zysk": 524.13,
+    "marza": 45.75
+  },
+  {
+    "clientId": "C162",
+    "klient": "W Kropki Bordo",
+    "sprzedaz": 1080.53,
+    "koszt": 693.36,
+    "zysk": 387.17,
+    "marza": 35.83
+  },
+  {
+    "clientId": "C134",
+    "klient": "SERDECZNY BAR MLECZNY",
+    "sprzedaz": 1046.94,
+    "koszt": 675.75,
+    "zysk": 371.19,
+    "marza": 35.46
+  },
+  {
+    "clientId": "C098",
+    "klient": "Cafe Jagiel",
+    "sprzedaz": 990.92,
+    "koszt": 599.62,
+    "zysk": 391.3,
+    "marza": 39.49
+  },
+  {
+    "clientId": "C121",
+    "klient": "LOsteria",
+    "sprzedaz": 972.36,
+    "koszt": 546.2,
+    "zysk": 426.16,
+    "marza": 43.83
+  },
+  {
+    "clientId": "C099",
+    "klient": "DIFFERENT",
+    "sprzedaz": 877.15,
+    "koszt": 546.08,
+    "zysk": 331.07,
+    "marza": 37.74
+  },
+  {
+    "clientId": "C090",
+    "klient": "AGLI AMICI 2",
+    "sprzedaz": 801.61,
+    "koszt": 516.0,
+    "zysk": 285.61,
+    "marza": 35.63
+  },
+  {
+    "clientId": "C116",
+    "klient": "Kubicz Salon fryzjerski",
+    "sprzedaz": 745.05,
+    "koszt": 345.19,
+    "zysk": 399.86,
+    "marza": 53.67
+  },
+  {
+    "clientId": "C157",
+    "klient": "Tomasz Łagowski",
+    "sprzedaz": 617.59,
+    "koszt": 361.83,
+    "zysk": 255.76,
+    "marza": 41.41
+  },
+  {
+    "clientId": "C102",
+    "klient": "GAMAGYM",
+    "sprzedaz": 359.56,
+    "koszt": 267.63,
+    "zysk": 91.93,
+    "marza": 25.57
+  },
+  {
+    "clientId": "C114",
+    "klient": "Kardamon",
+    "sprzedaz": 326.84,
+    "koszt": 194.32,
+    "zysk": 132.52,
+    "marza": 40.55
+  },
+  {
+    "clientId": "C159",
+    "klient": "TRUE STORY",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C101",
+    "klient": "EWNS",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C163",
+    "klient": "Wery Sweet",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C140",
+    "klient": "SKALO - Ten Sushi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C164",
+    "klient": "Gmina Konstancin-Jeziorna",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C141",
+    "klient": "SKALO - Tsuma Sushi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C160",
+    "klient": "Tsuma Sushi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C094",
+    "klient": "Bishops Bistro",
+    "sprzedaz": 2922.61,
+    "koszt": 1834.44,
+    "zysk": 1088.17,
+    "marza": 37.23
+  },
+  {
+    "clientId": "C091",
+    "klient": "Akashia Sushi",
+    "sprzedaz": 1437.54,
+    "koszt": 939.5,
+    "zysk": 498.04,
+    "marza": 34.65
+  },
+  {
+    "clientId": "C126",
+    "klient": "Nakama Izakaya",
+    "sprzedaz": 1423.11,
+    "koszt": 857.23,
+    "zysk": 565.88,
+    "marza": 39.76
+  },
+  {
+    "clientId": "C152",
+    "klient": "Świetlica",
+    "sprzedaz": 956.42,
+    "koszt": 514.04,
+    "zysk": 442.38,
+    "marza": 46.25
+  },
+  {
+    "clientId": "C105",
+    "klient": "Iguana AFICIONADO",
+    "sprzedaz": 866.46,
+    "koszt": 541.21,
+    "zysk": 325.25,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C148",
+    "klient": "Sushi Point 2",
+    "sprzedaz": 736.84,
+    "koszt": 404.94,
+    "zysk": 331.9,
+    "marza": 45.04
+  },
+  {
+    "clientId": "C106",
+    "klient": "IGUANA Cigarro",
+    "sprzedaz": 585.65,
+    "koszt": 320.06,
+    "zysk": 265.59,
+    "marza": 45.35
+  },
+  {
+    "clientId": "C146",
+    "klient": "Sushi Flow",
+    "sprzedaz": 534.9,
+    "koszt": 323.44,
+    "zysk": 211.46,
+    "marza": 39.53
+  },
+  {
+    "clientId": "C107",
+    "klient": "IGUANA Gdańsk",
+    "sprzedaz": 470.33,
+    "koszt": 290.13,
+    "zysk": 180.2,
+    "marza": 38.31
+  },
+  {
+    "clientId": "C133",
+    "klient": "Sake Izakaya",
+    "sprzedaz": 362.66,
+    "koszt": 196.52,
+    "zysk": 166.14,
+    "marza": 45.81
+  },
+  {
+    "clientId": "C131",
+    "klient": "PrimeCut",
+    "sprzedaz": 280.4,
+    "koszt": 136.51,
+    "zysk": 143.89,
+    "marza": 51.32
+  },
+  {
+    "clientId": "C145",
+    "klient": "SUSHI 101",
+    "sprzedaz": 258.79,
+    "koszt": 137.68,
+    "zysk": 121.11,
+    "marza": 46.8
+  },
+  {
+    "clientId": "C110",
+    "klient": "JOT Żoliborz",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C154",
+    "klient": "Ten Sushi 2",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C155",
+    "klient": "The Morning After",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C103",
+    "klient": "GiGi Bar",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C122",
+    "klient": "Magu Sushi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C165",
+    "klient": "Sushi Atelier",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C135",
+    "klient": "Silk&Spicy",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C108",
+    "klient": "JOT OMA",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C104",
+    "klient": "HOŻA Argentine",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C097",
+    "klient": "BOSKO",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C095",
+    "klient": "Blikle",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C109",
+    "klient": "JOT Wilanów",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C096",
+    "klient": "Blikle Placówki",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C150",
+    "klient": "Szkoła w Mińsku",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C166",
+    "klient": "Fiori Foods",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C130",
+    "klient": "Pizzeria Italiana",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C132",
+    "klient": "Przedszkole Ciekawi Świata",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C161",
+    "klient": "Usagi Sushi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C120",
+    "klient": "Łochów",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C115",
+    "klient": "Królewska Kawa",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C136",
+    "klient": "Silk&Spicy GDAŃSK",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C112",
+    "klient": "Kaizen S.C",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C113",
+    "klient": "Kaliska 20",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C167",
+    "klient": "Szkoła w Mińsku - Magda",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C089",
+    "klient": "Activ Cafe",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C143",
+    "klient": "SMASZ IT DOLNA",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C144",
+    "klient": "SMASZ IT SOLEC",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C125",
+    "klient": "Margariter Ros",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C123",
+    "klient": "Magu Sushi Instalatorowa",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C153",
+    "klient": "Takumi",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C158",
+    "klient": "Tres Toros",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C092",
+    "klient": "Arizona Burger WOLSKA",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C119",
+    "klient": "Legia Sports Bar",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C129",
+    "klient": "Palermo Pruszków",
+    "sprzedaz": 0.0,
+    "koszt": 0.0,
+    "zysk": 0.0,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C139",
+    "klient": "SKALO - Prime WROCŁAW",
+    "sprzedaz": -619.65,
+    "koszt": -344.1,
+    "zysk": -275.55,
+    "marza": 0.0
+  },
+  {
+    "clientId": "C168",
+    "klient": "YUMMY FOOD",
+    "sprzedaz": 3830.4,
+    "koszt": 2763.67,
+    "zysk": 1066.73,
+    "marza": 27.85
+  },
+  {
+    "clientId": "C052",
+    "klient": "Polka",
+    "sprzedaz": 2733.53,
+    "koszt": 1830.02,
+    "zysk": 903.51,
+    "marza": 33.05
+  },
+  {
+    "clientId": "C169",
+    "klient": "TO SUSHI LESZNOWOLA",
+    "sprzedaz": 1600.0,
+    "koszt": 1127.26,
+    "zysk": 472.74,
+    "marza": 29.55
+  },
+  {
+    "clientId": "C170",
+    "klient": "TO SUSHI DAWIDY BANKOWE",
+    "sprzedaz": 1514.73,
+    "koszt": 1017.7,
+    "zysk": 497.03,
+    "marza": 32.81
+  },
+  {
+    "clientId": "C171",
+    "klient": "SKALO",
+    "sprzedaz": 1475.79,
+    "koszt": 1323.75,
+    "zysk": 152.04,
+    "marza": 10.3
+  },
+  {
+    "clientId": "C113",
+    "klient": "KALISKA 20",
+    "sprzedaz": 800.62,
+    "koszt": 500.09,
+    "zysk": 300.53,
+    "marza": 37.54
+  },
+  {
+    "clientId": "C172",
+    "klient": "Przystań Aloha - Basen Wodnik",
+    "sprzedaz": 547.44,
+    "koszt": 250.43,
+    "zysk": 297.01,
+    "marza": 54.25
+  },
+  {
+    "clientId": "C173",
+    "klient": "Małgosia",
+    "sprzedaz": 365.42,
+    "koszt": 318.23,
+    "zysk": 47.19,
+    "marza": 12.92
+  },
+  {
+    "clientId": "C174",
+    "klient": "Anna Żmudzka",
+    "sprzedaz": 39.16,
+    "koszt": 35.12,
+    "zysk": 4.04,
+    "marza": 10.31
+  }
+]

@@ -384,8 +384,8 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{
                       backgroundColor:
-                        c.status === "Zamówił" || c.status === "Zamowil" ? "hsl(var(--chart-4))" :
-                        c.status === "Nie zamówił" || c.status === "Nie zamowil" ? "hsl(var(--destructive))" :
+                        c.status === "Zamowil" ? "hsl(var(--chart-4))" :
+                        c.status === "Nie zamowil" ? "hsl(var(--destructive))" :
                         c.status === "W trakcie" ? "hsl(var(--chart-2))" :
                         c.status === "Zrobione" ? "hsl(var(--chart-5))" :
                         "hsl(var(--muted-foreground))"
