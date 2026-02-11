@@ -112,6 +112,15 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/clients/:id", authMiddleware, async (req, res) => {
+    try {
+      await storage.deleteClient(Number(req.params.id));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/clients/import", authMiddleware, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "Brak pliku" });

@@ -27,8 +27,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Search, Download, Upload, Plus, AlertTriangle, Phone,
-  MapPin, Users, Pencil, Save, X,
+  MapPin, Users, Pencil, Save, X, Trash2,
 } from "lucide-react";
 import type { Client } from "@shared/schema";
 
@@ -162,6 +173,20 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("DELETE", `/api/clients/${client.id}`);
+    },
+    onSuccess: () => {
+      toast({ title: `Usunięto klienta ${client.klient}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      onClose();
+    },
+    onError: () => {
+      toast({ title: "Błąd usuwania klienta", variant: "destructive" });
+    },
+  });
+
   const handleSave = () => {
     updateMutation.mutate({
       klient: form.klient,
@@ -246,9 +271,36 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
             {client.klient}
             <Badge variant={client.segment === "Premium" ? "default" : "secondary"}>{client.segment}</Badge>
           </DialogTitle>
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)} data-testid="button-edit-client">
-            <Pencil className="w-4 h-4 mr-1" /> Edytuj
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)} data-testid="button-edit-client">
+              <Pencil className="w-4 h-4 mr-1" /> Edytuj
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" data-testid="button-delete-client">
+                  <Trash2 className="w-4 h-4 mr-1" /> Usuń
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Czy na pewno chcesz usunąć tego klienta?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Klient <strong>{client.klient}</strong> zostanie trwale usunięty. Tej operacji nie można cofnąć.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteMutation.mutate()}
+                    disabled={deleteMutation.isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteMutation.isPending ? "Usuwam..." : "Usuń klienta"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </DialogHeader>
       <div className="space-y-4">
