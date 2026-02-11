@@ -624,7 +624,8 @@ export class DatabaseStorage implements IStorage {
       .where(and(gte(contacts.data, weekStart), lte(contacts.data, weekEnd)));
 
     const weeklyOrders = ["Gosia", "Magda"].map(name => {
-      const hClients = allClients.filter(c => c.opiekun === name && c.aktywny);
+      const hClients = allClients.filter(c => c.opiekun === name && c.aktywny
+        && (c.grupaMvp?.includes("Premium") || c.grupaMvp?.includes("Standard")));
       const hContacts = weekContacts.filter(c => c.opiekun === name);
       const ordered = hContacts.filter(c => c.status === "Zamówił" || c.status === "Zamowil").length;
       const contacted = hContacts.filter(c => c.status && c.status !== "Do zrobienia").length;
