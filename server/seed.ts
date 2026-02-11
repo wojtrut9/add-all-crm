@@ -3,22 +3,20 @@ import { hashPassword } from "./auth";
 import {
   users, drivers, vehicles, salaries, costs, fleet,
   salesTargets, salesHistory, clients, contacts, deliveries, notes,
+  clientSales, clientSalesWeekly,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import clientsData from "./clients-data.json";
 import contactsData from "./contacts-data.json";
 import deliveriesData from "./deliveries-data.json";
 import notesData from "./notes-data.json";
+import clientSalesData from "./client-sales-data.json";
+import clientSalesWeeklyData from "./client-sales-weekly-data.json";
 
 export async function seedDatabase() {
   const existingUsers = await db.select().from(users).limit(1);
   const existingClients = await db.select().from(clients).limit(1);
   const existingContacts = await db.select().from(contacts).limit(1);
-
-  if (existingUsers.length > 0 && existingClients.length > 0 && existingContacts.length > 0) {
-    console.log("Database already seeded, skipping...");
-    return;
-  }
 
   if (existingUsers.length === 0) {
     await seedCoreData();
@@ -26,12 +24,24 @@ export async function seedDatabase() {
 
   if (existingClients.length === 0) {
     await seedTableData("clients", clients, clientsData);
+  } else {
+    await seedTableData("clients", clients, clientsData);
   }
 
   if (existingContacts.length === 0) {
     await seedTableData("contacts", contacts, contactsData);
     await seedTableData("deliveries", deliveries, deliveriesData);
     await seedTableData("notes", notes, notesData);
+  }
+
+  const existingSales = await db.select().from(clientSales).limit(1);
+  if (existingSales.length === 0) {
+    await seedTableData("client_sales", clientSales, clientSalesData as any);
+  }
+
+  const existingWeekly = await db.select().from(clientSalesWeekly).limit(1);
+  if (existingWeekly.length === 0) {
+    await seedTableData("client_sales_weekly", clientSalesWeekly, clientSalesWeeklyData as any);
   }
 
   console.log("Database seeded successfully!");
