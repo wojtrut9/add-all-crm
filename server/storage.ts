@@ -215,6 +215,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSalesAnalysis(rok: number, miesiac: number): Promise<any> {
+    const prevMiesiac = miesiac === 1 ? 12 : miesiac - 1;
+    const prevRok = miesiac === 1 ? rok - 1 : rok;
+
     const salesData = await db
       .select({
         clientId: clientSales.clientId,
@@ -226,51 +229,117 @@ export class DatabaseStorage implements IStorage {
       .from(clientSales)
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
 
+    const prevSalesData = await db
+      .select({
+        clientId: clientSales.clientId,
+        sprzedaz: clientSales.sprzedaz,
+      })
+      .from(clientSales)
+      .where(and(eq(clientSales.rok, prevRok), eq(clientSales.miesiac, prevMiesiac)));
+
+    const prevSalesMap = new Map<number, number>();
+    for (const ps of prevSalesData) {
+      prevSalesMap.set(ps.clientId, Number(ps.sprzedaz || 0));
+    }
+
     const allClients = await db.select().from(clients);
+    const salesMap = new Map<number, typeof salesData[0]>();
+    for (const s of salesData) {
+      salesMap.set(s.clientId, s);
+    }
 
-    const grupyMap: Record<string, { klientow: number; aktywnych: number; sprzedaz: number; koszt: number; zysk: number }> = {};
-    const grupyNames = ["Gosia Premium", "Magda Premium", "Magda Standard", "Weryfikacja - zostana", "Weryfikacja - odejda", "Inne"];
+    const grupyNames = ["Gosia Premium", "Magda Premium", "Magda Standard", "Weryfikacja Zostaną", "Weryfikacja Odejdą", "Inne"];
 
+    function matchGrupa(grupaMvp: string | null): string {
+      const g = grupaMvp || "Inne";
+      if (g.includes("Gosia") && g.includes("Premium")) return "Gosia Premium";
+      if (g.includes("Magda") && g.includes("Premium")) return "Magda Premium";
+      if (g.includes("Magda") && g.includes("Standard")) return "Magda Standard";
+      if (g.includes("Zostaną") || g.includes("zostana") || g.includes("zostan")) return "Weryfikacja Zostaną";
+      if (g.includes("Odejdą") || g.includes("odejda") || g.includes("odejd")) return "Weryfikacja Odejdą";
+      return "Inne";
+    }
+
+    type GroupData = {
+      klientow: number;
+      aktywnych: number;
+      sprzedaz: number;
+      koszt: number;
+      zysk: number;
+      prevSprzedaz: number;
+      klienci: Array<{
+        id: number;
+        klient: string;
+        rabat: number | null;
+        sprzedaz: number;
+        koszt: number;
+        zysk: number;
+        marza: number;
+        prevSprzedaz: number;
+        zmiana: number | null;
+      }>;
+    };
+
+    const grupyMap: Record<string, GroupData> = {};
     for (const name of grupyNames) {
-      grupyMap[name] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0 };
+      grupyMap[name] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0, prevSprzedaz: 0, klienci: [] };
     }
 
     for (const client of allClients) {
-      const grupa = client.grupaMvp || "Inne";
-      const key = grupyNames.find(g => grupa.includes(g.replace("Weryfikacja - zostana", "zostana").replace("Weryfikacja - odejda", "odejda").replace("Gosia Premium", "Gosia Premium").replace("Magda Premium", "Magda Premium").replace("Magda Standard", "Magda Standard"))) || "Inne";
+      const matchKey = matchGrupa(client.grupaMvp);
+      if (!grupyMap[matchKey]) grupyMap[matchKey] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0, prevSprzedaz: 0, klienci: [] };
 
-      let matchKey = "Inne";
-      if (grupa.includes("Gosia") && grupa.includes("Premium")) matchKey = "Gosia Premium";
-      else if (grupa.includes("Magda") && grupa.includes("Premium")) matchKey = "Magda Premium";
-      else if (grupa.includes("Magda") && grupa.includes("Standard")) matchKey = "Magda Standard";
-      else if (grupa.includes("zostana") || grupa.includes("zostan")) matchKey = "Weryfikacja - zostana";
-      else if (grupa.includes("odejda") || grupa.includes("odejd")) matchKey = "Weryfikacja - odejda";
+      const sale = salesMap.get(client.id);
+      const sprzedaz = sale ? Number(sale.sprzedaz || 0) : 0;
+      const koszt = sale ? Number(sale.koszt || 0) : 0;
+      const zysk = sale ? Number(sale.zysk || 0) : 0;
+      const marza = sale ? Number(sale.marza || 0) : 0;
+      const prevSp = prevSalesMap.get(client.id) || 0;
 
-      if (!grupyMap[matchKey]) grupyMap[matchKey] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0 };
       grupyMap[matchKey].klientow++;
-      if (client.aktywny) grupyMap[matchKey].aktywnych++;
+      if (sprzedaz > 0) grupyMap[matchKey].aktywnych++;
+      grupyMap[matchKey].sprzedaz += sprzedaz;
+      grupyMap[matchKey].koszt += koszt;
+      grupyMap[matchKey].zysk += zysk;
+      grupyMap[matchKey].prevSprzedaz += prevSp;
 
-      const sale = salesData.find(s => s.clientId === client.id);
       if (sale) {
-        grupyMap[matchKey].sprzedaz += Number(sale.sprzedaz || 0);
-        grupyMap[matchKey].koszt += Number(sale.koszt || 0);
-        grupyMap[matchKey].zysk += Number(sale.zysk || 0);
+        const zmiana = prevSp > 0 ? ((sprzedaz - prevSp) / prevSp * 100) : (sprzedaz > 0 ? 100 : null);
+        grupyMap[matchKey].klienci.push({
+          id: client.id,
+          klient: client.klient,
+          rabat: client.rabatProcent ? Number(client.rabatProcent) : null,
+          sprzedaz,
+          koszt,
+          zysk,
+          marza,
+          prevSprzedaz: prevSp,
+          zmiana,
+        });
       }
     }
 
-    const groups = Object.entries(grupyMap)
-      .filter(([_, v]) => v.klientow > 0)
-      .map(([grupa, v]) => ({
-        grupa,
-        klientow: v.klientow,
-        aktywnych: v.aktywnych,
-        sprzedaz: v.sprzedaz,
-        koszt: v.koszt,
-        zysk: v.zysk,
-        marza: v.sprzedaz > 0 ? (v.zysk / v.sprzedaz * 100) : 0,
-      }));
+    const groups = grupyNames
+      .filter(name => grupyMap[name] && grupyMap[name].klientow > 0)
+      .map(name => {
+        const v = grupyMap[name];
+        const zmiana = v.prevSprzedaz > 0 ? ((v.sprzedaz - v.prevSprzedaz) / v.prevSprzedaz * 100) : 0;
+        v.klienci.sort((a, b) => b.sprzedaz - a.sprzedaz);
+        return {
+          grupa: name,
+          klientow: v.klientow,
+          aktywnych: v.aktywnych,
+          sprzedaz: v.sprzedaz,
+          koszt: v.koszt,
+          zysk: v.zysk,
+          marza: v.sprzedaz > 0 ? (v.zysk / v.sprzedaz * 100) : 0,
+          prevSprzedaz: v.prevSprzedaz,
+          zmiana,
+          klienci: v.klienci,
+        };
+      });
 
-    return { groups };
+    return { groups, prevMiesiac, prevRok };
   }
 
   async getSalesDashboard(): Promise<any> {
