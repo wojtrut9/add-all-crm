@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { authFetch } from "@/lib/auth";
+import { useAuth, authFetch } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,13 +39,15 @@ import { pl } from "date-fns/locale";
 
 export default function DeliveriesPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isHandlowiec = user?.rola === "handlowiec";
   const [selectedDate, setSelectedDate] = useState(() => {
     const tomorrow = addDays(new Date(), 1);
     return format(tomorrow, "yyyy-MM-dd");
   });
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  const { data: deliveries = [], isLoading } = useQuery({
+  const { data: allDeliveries = [], isLoading } = useQuery({
     queryKey: ["/api/deliveries", selectedDate],
     queryFn: async () => {
       const res = await authFetch(`/api/deliveries?date=${selectedDate}`);
@@ -53,6 +55,10 @@ export default function DeliveriesPage() {
       return res.json();
     },
   });
+
+  const deliveries = isHandlowiec
+    ? allDeliveries.filter((d: any) => d.opiekun === user?.imie)
+    : allDeliveries;
 
   const { data: drivers = [] } = useQuery({
     queryKey: ["/api/drivers"],
@@ -122,11 +128,13 @@ export default function DeliveriesPage() {
     <div className="p-6 space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold">Dostawy</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport} data-testid="button-export-deliveries">
-            <Download className="w-4 h-4 mr-1" /> Pobierz plan dnia
-          </Button>
-        </div>
+        {!isHandlowiec && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} data-testid="button-export-deliveries">
+              <Download className="w-4 h-4 mr-1" /> Pobierz plan dnia
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -187,54 +195,66 @@ export default function DeliveriesPage() {
                     <TableCell className="font-medium">{i + 1}</TableCell>
                     <TableCell className="font-medium">{d.clientName || "-"}</TableCell>
                     <TableCell>
-                      <Select
-                        value={d.kierowca || "none"}
-                        onValueChange={(v) => updateDelivery(d.id, "kierowca", v === "none" ? null : v)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Wybierz" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">-</SelectItem>
-                          {drivers.map((dr: any) => (
-                            <SelectItem key={dr.id} value={dr.imie}>{dr.imie}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {isHandlowiec ? (
+                        <span className="text-sm">{d.kierowca || "-"}</span>
+                      ) : (
+                        <Select
+                          value={d.kierowca || "none"}
+                          onValueChange={(v) => updateDelivery(d.id, "kierowca", v === "none" ? null : v)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Wybierz" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">-</SelectItem>
+                            {drivers.map((dr: any) => (
+                              <SelectItem key={dr.id} value={dr.imie}>{dr.imie}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell>{d.opiekun || "-"}</TableCell>
                     <TableCell>
-                      <Select
-                        value={d.auto || "none"}
-                        onValueChange={(v) => updateDelivery(d.id, "auto", v === "none" ? null : v)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Wybierz" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">-</SelectItem>
-                          {vehicles.map((v: any) => (
-                            <SelectItem key={v.id} value={v.nazwa}>{v.nazwa}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {isHandlowiec ? (
+                        <span className="text-sm">{d.auto || "-"}</span>
+                      ) : (
+                        <Select
+                          value={d.auto || "none"}
+                          onValueChange={(v) => updateDelivery(d.id, "auto", v === "none" ? null : v)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Wybierz" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">-</SelectItem>
+                            {vehicles.map((v: any) => (
+                              <SelectItem key={v.id} value={v.nazwa}>{v.nazwa}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={d.platnosc || "none"}
-                        onValueChange={(v) => updateDelivery(d.id, "platnosc", v === "none" ? null : v)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Wybierz" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">-</SelectItem>
-                          <SelectItem value="gotowka">Gotowka</SelectItem>
-                          <SelectItem value="karta">Karta</SelectItem>
-                          <SelectItem value="przelew">Przelew</SelectItem>
-                          <SelectItem value="do potwierdzenia">Do potwierdzenia</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {isHandlowiec ? (
+                        <span className="text-sm">{d.platnosc || "-"}</span>
+                      ) : (
+                        <Select
+                          value={d.platnosc || "none"}
+                          onValueChange={(v) => updateDelivery(d.id, "platnosc", v === "none" ? null : v)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Wybierz" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">-</SelectItem>
+                            <SelectItem value="gotowka">Gotowka</SelectItem>
+                            <SelectItem value="karta">Karta</SelectItem>
+                            <SelectItem value="przelew">Przelew</SelectItem>
+                            <SelectItem value="do potwierdzenia">Do potwierdzenia</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Input
@@ -255,27 +275,35 @@ export default function DeliveriesPage() {
                       {d.wartoscNettoWz ? `${Number(d.wartoscNettoWz).toLocaleString("pl-PL")} PLN` : "-"}
                     </TableCell>
                     <TableCell>
-                      <Checkbox
-                        checked={d.winaSkalo || false}
-                        onCheckedChange={(v) => updateDelivery(d.id, "winaSkalo", v)}
-                        data-testid={`checkbox-wina-${d.id}`}
-                      />
+                      {isHandlowiec ? (
+                        <span className="text-sm">{d.winaSkalo ? "TAK" : "NIE"}</span>
+                      ) : (
+                        <Checkbox
+                          checked={d.winaSkalo || false}
+                          onCheckedChange={(v) => updateDelivery(d.id, "winaSkalo", v)}
+                          data-testid={`checkbox-wina-${d.id}`}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={d.akcjaWindykacja || "brak"}
-                        onValueChange={(v) => updateDelivery(d.id, "akcjaWindykacja", v)}
-                      >
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="brak">Brak</SelectItem>
-                          <SelectItem value="Stopien 1">Stopien 1 - Przypomnienie</SelectItem>
-                          <SelectItem value="Stopien 2">Stopien 2 - Wezwanie</SelectItem>
-                          <SelectItem value="Stopien 3">Stopien 3 - Wstrzymanie</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {isHandlowiec ? (
+                        <span className="text-sm">{d.akcjaWindykacja || "brak"}</span>
+                      ) : (
+                        <Select
+                          value={d.akcjaWindykacja || "brak"}
+                          onValueChange={(v) => updateDelivery(d.id, "akcjaWindykacja", v)}
+                        >
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="brak">Brak</SelectItem>
+                            <SelectItem value="Stopien 1">Stopien 1 - Przypomnienie</SelectItem>
+                            <SelectItem value="Stopien 2">Stopien 2 - Wezwanie</SelectItem>
+                            <SelectItem value="Stopien 3">Stopien 3 - Wstrzymanie</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

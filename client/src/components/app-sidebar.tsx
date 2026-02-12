@@ -42,6 +42,7 @@ export function AppSidebar() {
     { title: "M\u00f3j dzie\u0144", url: "/", icon: LayoutDashboard },
     { title: "Klienci", url: "/klienci", icon: Users },
     { title: "Kalendarz", url: "/kalendarz", icon: Calendar },
+    { title: "Dostawy", url: "/dostawy", icon: Truck },
     { title: "Moja sprzeda\u017c", url: "/moja-sprzedaz", icon: TrendingUp },
     { title: "Notatki", url: "/notatki", icon: StickyNote },
   ];

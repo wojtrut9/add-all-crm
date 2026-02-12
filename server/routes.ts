@@ -288,23 +288,23 @@ export async function registerRoutes(
       if (status === "Zamowil") {
         await storage.updateClient(contact.clientId, { brakiZamowien: 0 });
 
-        if (kwota && Number(kwota) > 0) {
-          const contactDate = new Date(contact.data);
-          let nextDay = new Date(contactDate);
+        const contactDate = new Date(contact.data);
+        let nextDay = new Date(contactDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
           nextDay.setDate(nextDay.getDate() + 1);
-          while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
-            nextDay.setDate(nextDay.getDate() + 1);
-          }
-
-          const client = await storage.getClient(contact.clientId);
-          await storage.createDelivery({
-            dataDostawy: nextDay.toISOString().split("T")[0],
-            clientId: contact.clientId,
-            opiekun: contact.opiekun,
-            wartoscNettoWz: kwota,
-            platnosc: client?.warunkiPlatnosci || "do potwierdzenia",
-          });
         }
+
+        const client = await storage.getClient(contact.clientId);
+        const kwotaValue = kwota ? String(kwota) : "0";
+
+        await storage.createDelivery({
+          dataDostawy: nextDay.toISOString().split("T")[0],
+          clientId: contact.clientId,
+          opiekun: contact.opiekun,
+          wartoscNettoWz: kwotaValue,
+          platnosc: client?.warunkiPlatnosci || "do potwierdzenia",
+        });
       } else if (status === "Nie zamowil") {
         const client = await storage.getClient(contact.clientId);
         if (client) {

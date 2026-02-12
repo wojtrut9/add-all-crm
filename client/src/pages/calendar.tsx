@@ -164,9 +164,14 @@ export default function CalendarPage() {
         method: "PATCH",
         body: JSON.stringify({ status, kwota }),
       });
-      toast({ title: "Zaktualizowano" });
+      if (status === "Zamowil" && (!kwota || Number(kwota) === 0)) {
+        toast({ title: "Uwaga", description: "Zamowienie bez kwoty \u2014 dostawa zostanie utworzona z kwota 0 PLN. Mozesz ja zaktualizowac pozniej." });
+      } else {
+        toast({ title: "Zaktualizowano" });
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/deliveries"] });
     } catch {
       toast({ title: "Blad aktualizacji", variant: "destructive" });
     }

@@ -33,7 +33,7 @@ function AppRoutes() {
       <Route path="/" component={Dashboard} />
       {(isAdmin || isHandlowiec) && <Route path="/klienci" component={ClientsPage} />}
       {(isAdmin || isHandlowiec) && <Route path="/kalendarz" component={CalendarPage} />}
-      {(isAdmin || isLogistyka) && <Route path="/dostawy" component={DeliveriesPage} />}
+      {(isAdmin || isLogistyka || isHandlowiec) && <Route path="/dostawy" component={DeliveriesPage} />}
       {(isAdmin || isLogistyka) && <Route path="/kierowcy" component={DriversPage} />}
       {isAdmin && <Route path="/analiza" component={SalesAnalysisPage} />}
       {isAdmin && <Route path="/plan" component={PlanPage} />}
