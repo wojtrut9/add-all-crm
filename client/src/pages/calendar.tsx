@@ -50,9 +50,10 @@ const statusDotColors: Record<string, string> = {
 function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange: (id: number, status: string, kwota?: string) => void }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState(contact.status);
+  const [kwotaValue, setKwotaValue] = useState(contact.kwota || "");
 
   const handleSave = () => {
-    onStatusChange(contact.id, newStatus);
+    onStatusChange(contact.id, newStatus, kwotaValue || undefined);
     setDialogOpen(false);
   };
 
@@ -96,6 +97,19 @@ function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange
                 </SelectContent>
               </Select>
             </div>
+            {(newStatus === "Zamowil" || newStatus === "Zrobione") && (
+              <div>
+                <Label>Kwota zamowienia (PLN)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0"
+                  value={kwotaValue}
+                  onChange={(e) => setKwotaValue(e.target.value)}
+                  data-testid="input-kwota"
+                />
+              </div>
+            )}
             <div>
               <Label>Data</Label>
               <p className="text-sm">{contact.data}</p>
