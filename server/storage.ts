@@ -58,6 +58,16 @@ export interface IStorage {
 
   getDashboardStats(opiekun?: string, rola?: string): Promise<any>;
 
+  importClientSales(rok: number, miesiac: number, data: Array<{klient: string; sprzedaz: number; koszt: number; zysk: number; marza: number}>): Promise<{imported: number; notFound: string[]}>;
+  deleteClientSalesForMonth(rok: number, miesiac: number): Promise<number>;
+  importMonthlyPlan(rok: number, miesiac: number, data: Array<{klient: string; cel: number}>): Promise<{imported: number; notFound: string[]}>;
+  deleteMonthlyPlan(rok: number, miesiac: number): Promise<number>;
+  updateSalesTarget(id: number, data: {planObrotu?: number; wykonanieObrotu?: number}): Promise<any>;
+  updateSalesTargetsBulk(rok: number, targets: Array<{miesiac: number; planObrotu: number}>): Promise<{updated: number}>;
+  syncSalesTargetExecution(rok: number, miesiac: number): Promise<{total: number}>;
+  syncSalesTargetsForYear(rok: number): Promise<{updated: number}>;
+  autoGeneratePlan(rok: number, miesiac: number, wspolczynnik: number): Promise<{generated: number; skipped: number}>;
+
   getDailyAnalysis(rok: number, miesiac: number): Promise<DailyAnalysis[]>;
   getDniRobocze(rok: number, miesiac: number): Promise<number>;
   upsertDailyAnalysis(rok: number, miesiac: number, dzien: number, sprzedaz: string | null): Promise<DailyAnalysis>;
@@ -500,7 +510,9 @@ export class DatabaseStorage implements IStorage {
     const weeklyData = await db.select().from(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
 
-    const clientIds = [...new Set(weeklyData.map(w => w.clientId))];
+    const clientIdSet = new Set<number>();
+    weeklyData.forEach(w => clientIdSet.add(w.clientId));
+    const clientIds = Array.from(clientIdSet);
     if (clientIds.length === 0) return { groups: [], prev1Month, prev1Year, prev2Month, prev2Year, prevMonthTotalSales: 0 };
 
     let allClients = await db.select().from(clients);
@@ -558,9 +570,9 @@ export class DatabaseStorage implements IStorage {
       weeklyByClient.get(w.clientId)!.push(w);
     }
 
-    for (const [cid, weeks] of weeklyByClient) {
+    weeklyByClient.forEach((weeks, cid) => {
       const client = clientMap.get(cid);
-      if (!client) continue;
+      if (!client) return;
 
       const grupa = matchGrupa(client.grupaMvp);
       if (!grupyMap[grupa]) grupyMap[grupa] = [];
@@ -591,7 +603,7 @@ export class DatabaseStorage implements IStorage {
         notatki: weeks[0]?.notatki || null,
         status: weeks[0]?.status || null,
       });
-    }
+    });
 
     const groups = grupyOrder
       .filter(name => grupyMap[name] && grupyMap[name].length > 0)
@@ -625,6 +637,225 @@ export class DatabaseStorage implements IStorage {
         eq(clientSalesWeekly.rok, rok),
         eq(clientSalesWeekly.miesiac, miesiac)
       ));
+  }
+
+  async importClientSales(rok: number, miesiac: number, data: Array<{klient: string; sprzedaz: number; koszt: number; zysk: number; marza: number}>): Promise<{imported: number; notFound: string[]}> {
+    const allClients = await db.select().from(clients);
+    const clientNameMap = new Map<string, number>();
+    for (const c of allClients) {
+      clientNameMap.set(c.klient.trim().toLowerCase(), c.id);
+    }
+
+    let imported = 0;
+    const notFound: string[] = [];
+
+    for (const row of data) {
+      const nameKey = row.klient.trim().toLowerCase();
+      let clientId = clientNameMap.get(nameKey);
+
+      if (!clientId) {
+        const found = allClients.find(c => c.klient.trim().toLowerCase().includes(nameKey) || nameKey.includes(c.klient.trim().toLowerCase()));
+        if (found) clientId = found.id;
+      }
+
+      if (!clientId) {
+        notFound.push(row.klient);
+        continue;
+      }
+
+      await db.insert(clientSales).values({
+        clientId,
+        rok,
+        miesiac,
+        sprzedaz: String(row.sprzedaz),
+        koszt: String(row.koszt),
+        zysk: String(row.zysk),
+        marza: String(row.marza),
+      });
+      imported++;
+    }
+
+    return { imported, notFound };
+  }
+
+  async deleteClientSalesForMonth(rok: number, miesiac: number): Promise<number> {
+    const existing = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    await db.delete(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    return existing.length;
+  }
+
+  async importMonthlyPlan(rok: number, miesiac: number, data: Array<{klient: string; cel: number}>): Promise<{imported: number; notFound: string[]}> {
+    const allClients = await db.select().from(clients);
+    const clientNameMap = new Map<string, number>();
+    for (const c of allClients) {
+      clientNameMap.set(c.klient.trim().toLowerCase(), c.id);
+    }
+
+    let imported = 0;
+    const notFound: string[] = [];
+
+    for (const row of data) {
+      const nameKey = row.klient.trim().toLowerCase();
+      let clientId = clientNameMap.get(nameKey);
+
+      if (!clientId) {
+        const found = allClients.find(c => c.klient.trim().toLowerCase().includes(nameKey) || nameKey.includes(c.klient.trim().toLowerCase()));
+        if (found) clientId = found.id;
+      }
+
+      if (!clientId) {
+        notFound.push(row.klient);
+        continue;
+      }
+
+      const weeklyPlan = String(row.cel / 4);
+      for (let tydzien = 1; tydzien <= 4; tydzien++) {
+        await db.insert(clientSalesWeekly).values({
+          clientId,
+          rok,
+          miesiac,
+          tydzien,
+          plan: weeklyPlan,
+          realizacja: "0",
+        });
+      }
+      imported++;
+    }
+
+    return { imported, notFound };
+  }
+
+  async deleteMonthlyPlan(rok: number, miesiac: number): Promise<number> {
+    const existing = await db.select().from(clientSalesWeekly)
+      .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+    await db.delete(clientSalesWeekly)
+      .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+    return existing.length;
+  }
+
+  async updateSalesTarget(id: number, data: {planObrotu?: number; wykonanieObrotu?: number}): Promise<any> {
+    const updateData: any = {};
+    if (data.planObrotu !== undefined) updateData.planObrotu = String(data.planObrotu);
+    if (data.wykonanieObrotu !== undefined) updateData.wykonanieObrotu = String(data.wykonanieObrotu);
+    const [updated] = await db.update(salesTargets).set(updateData).where(eq(salesTargets.id, id)).returning();
+    return updated;
+  }
+
+  async syncSalesTargetExecution(rok: number, miesiac: number): Promise<{total: number}> {
+    const salesData = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const total = salesData.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+
+    const existing = await db.select().from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+
+    if (existing.length > 0) {
+      await db.update(salesTargets)
+        .set({ wykonanieObrotu: String(total) })
+        .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    } else {
+      await db.insert(salesTargets).values({
+        rok,
+        miesiac,
+        planObrotu: "0",
+        wykonanieObrotu: String(total),
+      });
+    }
+
+    return { total };
+  }
+
+  async updateSalesTargetsBulk(rok: number, targets: Array<{miesiac: number; planObrotu: number}>): Promise<{updated: number}> {
+    let updated = 0;
+    for (const t of targets) {
+      const existing = await db.select().from(salesTargets)
+        .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, t.miesiac)));
+      if (existing.length > 0) {
+        await db.update(salesTargets)
+          .set({ planObrotu: String(t.planObrotu) })
+          .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, t.miesiac)));
+      } else {
+        await db.insert(salesTargets).values({
+          rok,
+          miesiac: t.miesiac,
+          planObrotu: String(t.planObrotu),
+          wykonanieObrotu: "0",
+        });
+      }
+      updated++;
+    }
+    return { updated };
+  }
+
+  async syncSalesTargetsForYear(rok: number): Promise<{updated: number}> {
+    let updated = 0;
+    for (let m = 1; m <= 12; m++) {
+      const result = await this.syncSalesTargetExecution(rok, m);
+      if (result.total > 0) updated++;
+    }
+    return { updated };
+  }
+
+  async autoGeneratePlan(rok: number, miesiac: number, wspolczynnik: number): Promise<{generated: number; skipped: number}> {
+    const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
+    const prevYear = miesiac === 1 ? rok - 1 : rok;
+
+    const prev2Month = prevMonth === 1 ? 12 : prevMonth - 1;
+    const prev2Year = prevMonth === 1 ? prevYear - 1 : prevYear;
+    const prev3Month = prev2Month === 1 ? 12 : prev2Month - 1;
+    const prev3Year = prev2Month === 1 ? prev2Year - 1 : prev2Year;
+
+    const allClients = await db.select().from(clients).where(eq(clients.aktywny, true));
+
+    const prevSales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prevYear), eq(clientSales.miesiac, prevMonth)));
+    const prevMap = new Map(prevSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    const prev2Sales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prev2Year), eq(clientSales.miesiac, prev2Month)));
+    const prev2Map = new Map(prev2Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    const prev3Sales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prev3Year), eq(clientSales.miesiac, prev3Month)));
+    const prev3Map = new Map(prev3Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    let generated = 0;
+    let skipped = 0;
+
+    for (const client of allClients) {
+      let baseSales = prevMap.get(client.id) || 0;
+
+      if (baseSales === 0) {
+        const vals = [prev2Map.get(client.id) || 0, prev3Map.get(client.id) || 0].filter(v => v > 0);
+        if (vals.length > 0) {
+          baseSales = vals.reduce((a, b) => a + b, 0) / vals.length;
+        }
+      }
+
+      if (baseSales === 0) {
+        skipped++;
+        continue;
+      }
+
+      const cel = baseSales * wspolczynnik;
+      const weeklyPlan = String(cel / 4);
+
+      for (let tydzien = 1; tydzien <= 4; tydzien++) {
+        await db.insert(clientSalesWeekly).values({
+          clientId: client.id,
+          rok,
+          miesiac,
+          tydzien,
+          plan: weeklyPlan,
+          realizacja: "0",
+        });
+      }
+      generated++;
+    }
+
+    return { generated, skipped };
   }
 
   async getNotes(autor?: string): Promise<Note[]> {

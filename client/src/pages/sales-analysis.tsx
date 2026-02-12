@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { authFetch } from "@/lib/auth";
+import { useState, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { authFetch, useAuth } from "@/lib/auth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -19,7 +21,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Star, ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Star, ArrowUp, ArrowDown, ArrowRight, Upload, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine,
@@ -117,10 +127,203 @@ function KpiCard({ label, value, prevValue, prevLabel, isMarza }: {
   );
 }
 
+function parseCSVContent(content: string): Array<{klient: string; sprzedaz: number; koszt: number; zysk: number; marza: number}> {
+  const lines = content.split("\n").map(l => l.replace(/\r$/, "")).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const values = line.split(",").map(v => v.trim());
+    const row: Record<string, string> = {};
+    headers.forEach((h, i) => { row[h] = values[i] || ""; });
+    return {
+      klient: row["Klient"] || row["klient"] || "",
+      sprzedaz: parseFloat(row["Sprzedaz"] || row["sprzedaz"] || "0") || 0,
+      koszt: parseFloat(row["Koszt"] || row["koszt"] || "0") || 0,
+      zysk: parseFloat(row["Zysk"] || row["zysk"] || "0") || 0,
+      marza: parseFloat(row["Marza"] || row["marza"] || "0") || 0,
+    };
+  }).filter(r => r.klient);
+}
+
+function ImportSalesModal({ open, onClose, defaultRok, defaultMiesiac }: {
+  open: boolean;
+  onClose: () => void;
+  defaultRok: number;
+  defaultMiesiac: number;
+}) {
+  const [importRok, setImportRok] = useState(defaultRok);
+  const [importMiesiac, setImportMiesiac] = useState(defaultMiesiac);
+  const [parsedData, setParsedData] = useState<Array<{klient: string; sprzedaz: number; koszt: number; zysk: number; marza: number}>>([]);
+  const [fileName, setFileName] = useState("");
+  const [existsWarning, setExistsWarning] = useState(false);
+  const [existsCount, setExistsCount] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const checkMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch(`/api/sales-data/check?rok=${importRok}&miesiac=${importMiesiac}`);
+      return res.json();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/sales-data?rok=${importRok}&miesiac=${importMiesiac}`);
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: async (data: typeof parsedData) => {
+      const res = await apiRequest("POST", "/api/sales-data/import", { rok: importRok, miesiac: importMiesiac, data });
+      return res.json();
+    },
+    onSuccess: (result) => {
+      const notFoundMsg = result.notFound?.length > 0 ? ` Nieznalezieni: ${result.notFound.join(", ")}` : "";
+      toast({ title: `Zaimportowano dane za ${MONTHS[importMiesiac - 1]} ${importRok}`, description: `${result.imported} klientow.${notFoundMsg}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-analysis"] });
+      resetAndClose();
+    },
+    onError: () => {
+      toast({ title: "Blad importu", variant: "destructive" });
+    },
+  });
+
+  const resetAndClose = () => {
+    setParsedData([]);
+    setFileName("");
+    setExistsWarning(false);
+    onClose();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      const data = parseCSVContent(content);
+      setParsedData(data);
+      setExistsWarning(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    if (parsedData.length === 0) return;
+
+    const checkResult = await checkMutation.mutateAsync();
+    if (checkResult.exists && !existsWarning) {
+      setExistsWarning(true);
+      setExistsCount(checkResult.count);
+      return;
+    }
+
+    if (existsWarning) {
+      await deleteMutation.mutateAsync();
+    }
+
+    importMutation.mutate(parsedData);
+  };
+
+  const totalSprzedaz = parsedData.reduce((s, r) => s + r.sprzedaz, 0);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Import danych sprzedazowych</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={String(importMiesiac)} onValueChange={(v) => { setImportMiesiac(Number(v)); setExistsWarning(false); }}>
+              <SelectTrigger className="w-[140px]" data-testid="select-import-month">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => (
+                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(importRok)} onValueChange={(v) => { setImportRok(Number(v)); setExistsWarning(false); }}>
+              <SelectTrigger className="w-[100px]" data-testid="select-import-year">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => fileRef.current?.click()} data-testid="button-upload-csv">
+              <Upload className="w-4 h-4 mr-2" /> {fileName || "Wybierz plik CSV"}
+            </Button>
+            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
+          </div>
+
+          {existsWarning && (
+            <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="text-sm">Dane za {MONTHS[importMiesiac - 1]} {importRok} juz istnieja ({existsCount} rekordow). Kliknij ponownie aby nadpisac.</span>
+            </div>
+          )}
+
+          {parsedData.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Podglad: {parsedData.length} klientow, laczna sprzedaz: {fmtPLN(totalSprzedaz)}</p>
+              <div className="overflow-auto max-h-[300px] border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Lp.</TableHead>
+                      <TableHead>Klient</TableHead>
+                      <TableHead className="text-right">Sprzedaz</TableHead>
+                      <TableHead className="text-right">Koszt</TableHead>
+                      <TableHead className="text-right">Zysk</TableHead>
+                      <TableHead className="text-right">Marza</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedData.slice(0, 50).map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                        <TableCell className="font-medium">{r.klient}</TableCell>
+                        <TableCell className="text-right">{fmtPLN(r.sprzedaz)}</TableCell>
+                        <TableCell className="text-right">{fmtPLN(r.koszt)}</TableCell>
+                        <TableCell className="text-right">{fmtPLN(r.zysk)}</TableCell>
+                        <TableCell className="text-right">{r.marza.toFixed(1)}%</TableCell>
+                      </TableRow>
+                    ))}
+                    {parsedData.length > 50 && (
+                      <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">...i {parsedData.length - 50} wiecej</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={resetAndClose} data-testid="button-cancel-import">Anuluj</Button>
+          <Button onClick={handleImport} disabled={parsedData.length === 0 || importMutation.isPending} data-testid="button-do-import">
+            {importMutation.isPending ? "Importowanie..." : existsWarning ? "Nadpisz i importuj" : "Importuj"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function SalesAnalysisPage() {
   const [rok, setRok] = useState(2026);
   const [miesiac, setMiesiac] = useState(1);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [importOpen, setImportOpen] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.rola === "admin";
 
   const { data, isLoading } = useQuery({
     queryKey: ["/api/sales-analysis", rok, miesiac],
@@ -210,7 +413,12 @@ export default function SalesAnalysisPage() {
             {MONTHS[miesiac - 1]} {rok} | Klientow aktywnych: {totalAktywnych}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setImportOpen(true)} data-testid="button-import-sales">
+              <Upload className="w-4 h-4 mr-2" /> Import danych
+            </Button>
+          )}
           <Select value={String(miesiac)} onValueChange={(v) => setMiesiac(Number(v))}>
             <SelectTrigger className="w-[140px]" data-testid="select-month">
               <SelectValue />
@@ -226,8 +434,10 @@ export default function SalesAnalysisPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2026">2026</SelectItem>
+              <SelectItem value="2027">2027</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -427,6 +637,8 @@ export default function SalesAnalysisPage() {
           </Card>
         );
       })}
+
+      {isAdmin && <ImportSalesModal open={importOpen} onClose={() => setImportOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />}
     </div>
   );
 }

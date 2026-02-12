@@ -531,6 +531,132 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/sales-data/import", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, data } = req.body;
+      if (!rok || !miesiac || !data || !Array.isArray(data)) {
+        return res.status(400).json({ message: "Brak wymaganych danych (rok, miesiac, data)" });
+      }
+      const result = await storage.importClientSales(rok, miesiac, data);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/sales-data", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok);
+      const miesiac = Number(req.query.miesiac);
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const deleted = await storage.deleteClientSalesForMonth(rok, miesiac);
+      res.json({ deleted });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/sales-data/check", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok);
+      const miesiac = Number(req.query.miesiac);
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const { db: dbInstance } = await import("./db");
+      const { clientSales: cs } = await import("@shared/schema");
+      const { eq: eqFn, and: andFn } = await import("drizzle-orm");
+      const existing = await dbInstance.select().from(cs)
+        .where(andFn(eqFn(cs.rok, rok), eqFn(cs.miesiac, miesiac)));
+      res.json({ exists: existing.length > 0, count: existing.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/plan/import", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, data } = req.body;
+      if (!rok || !miesiac || !data || !Array.isArray(data)) {
+        return res.status(400).json({ message: "Brak wymaganych danych" });
+      }
+      const result = await storage.importMonthlyPlan(rok, miesiac, data);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/plan/monthly", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok);
+      const miesiac = Number(req.query.miesiac);
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const deleted = await storage.deleteMonthlyPlan(rok, miesiac);
+      res.json({ deleted });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/plan/check", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok);
+      const miesiac = Number(req.query.miesiac);
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const { db: dbInstance } = await import("./db");
+      const { clientSalesWeekly: csw } = await import("@shared/schema");
+      const { eq: eqFn, and: andFn } = await import("drizzle-orm");
+      const existing = await dbInstance.select().from(csw)
+        .where(andFn(eqFn(csw.rok, rok), eqFn(csw.miesiac, miesiac)));
+      res.json({ exists: existing.length > 0, count: existing.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/plan/auto-generate", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, wspolczynnik } = req.body;
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const result = await storage.autoGeneratePlan(rok, miesiac, wspolczynnik || 1.05);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/sales-targets/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { planObrotu, wykonanieObrotu } = req.body;
+      const updated = await storage.updateSalesTarget(id, { planObrotu, wykonanieObrotu });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/sales-targets", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, targets } = req.body;
+      if (!rok || !targets) return res.status(400).json({ message: "Brak rok/targets" });
+      const result = await storage.updateSalesTargetsBulk(rok, targets);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/sales-targets/sync-execution", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok } = req.body;
+      if (!rok) return res.status(400).json({ message: "Brak rok" });
+      const result = await storage.syncSalesTargetsForYear(rok);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/notes", authMiddleware, async (req, res) => {
     try {
       const notes = await storage.getNotes();

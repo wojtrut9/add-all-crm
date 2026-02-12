@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { authFetch } from "@/lib/auth";
+import { authFetch, useAuth } from "@/lib/auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +23,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, Wand2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Tooltip,
@@ -129,12 +136,269 @@ function WeekInput({ weeklyId, initialValue, placeholder, onSaved, onLocalChange
   );
 }
 
+function parsePlanCSV(content: string): Array<{klient: string; cel: number}> {
+  const lines = content.split("\n").map(l => l.replace(/\r$/, "")).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const values = line.split(",").map(v => v.trim());
+    const row: Record<string, string> = {};
+    headers.forEach((h, i) => { row[h] = values[i] || ""; });
+    return {
+      klient: row["Klient"] || row["klient"] || "",
+      cel: parseFloat(row["Cel"] || row["cel"] || "0") || 0,
+    };
+  }).filter(r => r.klient && r.cel > 0);
+}
+
+function ImportPlanModal({ open, onClose, defaultRok, defaultMiesiac }: {
+  open: boolean;
+  onClose: () => void;
+  defaultRok: number;
+  defaultMiesiac: number;
+}) {
+  const [importRok, setImportRok] = useState(defaultRok);
+  const [importMiesiac, setImportMiesiac] = useState(defaultMiesiac);
+  const [parsedData, setParsedData] = useState<Array<{klient: string; cel: number}>>([]);
+  const [fileName, setFileName] = useState("");
+  const [existsWarning, setExistsWarning] = useState(false);
+  const [existsCount, setExistsCount] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const importMutation = useMutation({
+    mutationFn: async (data: typeof parsedData) => {
+      const res = await apiRequest("POST", "/api/plan/import", { rok: importRok, miesiac: importMiesiac, data });
+      return res.json();
+    },
+    onSuccess: (result) => {
+      const notFoundMsg = result.notFound?.length > 0 ? ` Nieznalezieni: ${result.notFound.join(", ")}` : "";
+      toast({ title: `Plan na ${MONTHS[importMiesiac - 1]} ${importRok}`, description: `${result.imported} klientow, 4 tygodnie.${notFoundMsg}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/available-months"] });
+      resetAndClose();
+    },
+    onError: () => {
+      toast({ title: "Blad importu planu", variant: "destructive" });
+    },
+  });
+
+  const resetAndClose = () => {
+    setParsedData([]);
+    setFileName("");
+    setExistsWarning(false);
+    onClose();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      setParsedData(parsePlanCSV(content));
+      setExistsWarning(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    if (parsedData.length === 0) return;
+    const checkRes = await authFetch(`/api/plan/check?rok=${importRok}&miesiac=${importMiesiac}`);
+    const checkResult = await checkRes.json();
+    if (checkResult.exists && !existsWarning) {
+      setExistsWarning(true);
+      setExistsCount(checkResult.count);
+      return;
+    }
+    if (existsWarning) {
+      await apiRequest("DELETE", `/api/plan/monthly?rok=${importRok}&miesiac=${importMiesiac}`);
+    }
+    importMutation.mutate(parsedData);
+  };
+
+  const totalCel = parsedData.reduce((s, r) => s + r.cel, 0);
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Import planu z CSV</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={String(importMiesiac)} onValueChange={(v) => { setImportMiesiac(Number(v)); setExistsWarning(false); }}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => (<SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Select value={String(importRok)} onValueChange={(v) => { setImportRok(Number(v)); setExistsWarning(false); }}>
+              <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => fileRef.current?.click()} data-testid="button-upload-plan-csv">
+              <Upload className="w-4 h-4 mr-2" /> {fileName || "Wybierz plik CSV"}
+            </Button>
+            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
+          </div>
+          {existsWarning && (
+            <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="text-sm">Plan na {MONTHS[importMiesiac - 1]} {importRok} juz istnieje ({existsCount} rekordow). Kliknij ponownie aby nadpisac.</span>
+            </div>
+          )}
+          {parsedData.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Podglad: {parsedData.length} klientow, laczny CEL: {fmtPLN(totalCel)}</p>
+              <div className="overflow-auto max-h-[300px] border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Lp.</TableHead>
+                      <TableHead>Klient</TableHead>
+                      <TableHead className="text-right">CEL</TableHead>
+                      <TableHead className="text-right">Tyg. plan</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedData.slice(0, 50).map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                        <TableCell className="font-medium">{r.klient}</TableCell>
+                        <TableCell className="text-right">{fmtPLN(r.cel)}</TableCell>
+                        <TableCell className="text-right">{fmtPLN(r.cel / 4)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={resetAndClose}>Anuluj</Button>
+          <Button onClick={handleImport} disabled={parsedData.length === 0 || importMutation.isPending} data-testid="button-do-plan-import">
+            {importMutation.isPending ? "Importowanie..." : existsWarning ? "Nadpisz i importuj" : "Importuj plan"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AutoGenerateModal({ open, onClose, defaultRok, defaultMiesiac }: {
+  open: boolean;
+  onClose: () => void;
+  defaultRok: number;
+  defaultMiesiac: number;
+}) {
+  const [genRok, setGenRok] = useState(defaultRok);
+  const [genMiesiac, setGenMiesiac] = useState(defaultMiesiac);
+  const [wspolczynnik, setWspolczynnik] = useState("1.05");
+  const [existsWarning, setExistsWarning] = useState(false);
+  const { toast } = useToast();
+
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      const checkRes = await authFetch(`/api/plan/check?rok=${genRok}&miesiac=${genMiesiac}`);
+      const checkResult = await checkRes.json();
+      if (checkResult.exists && !existsWarning) {
+        setExistsWarning(true);
+        throw new Error("EXISTS");
+      }
+      if (existsWarning) {
+        await apiRequest("DELETE", `/api/plan/monthly?rok=${genRok}&miesiac=${genMiesiac}`);
+      }
+      const res = await apiRequest("POST", "/api/plan/auto-generate", { rok: genRok, miesiac: genMiesiac, wspolczynnik: parseFloat(wspolczynnik) || 1.05 });
+      return res.json();
+    },
+    onSuccess: (result) => {
+      toast({ title: `Plan na ${MONTHS[genMiesiac - 1]} ${genRok}`, description: `Wygenerowano dla ${result.generated} klientow. Pominietych: ${result.skipped}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/available-months"] });
+      setExistsWarning(false);
+      onClose();
+    },
+    onError: (err: any) => {
+      if (err.message === "EXISTS") return;
+      toast({ title: "Blad generowania planu", variant: "destructive" });
+    },
+  });
+
+  const pctLabel = ((parseFloat(wspolczynnik) || 1) - 1) * 100;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setExistsWarning(false); onClose(); } }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Generuj plan automatycznie</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={String(genMiesiac)} onValueChange={(v) => { setGenMiesiac(Number(v)); setExistsWarning(false); }}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => (<SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Select value={String(genRok)} onValueChange={(v) => { setGenRok(Number(v)); setExistsWarning(false); }}>
+              <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">Wspolczynnik wzrostu</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.01"
+                value={wspolczynnik}
+                onChange={(e) => setWspolczynnik(e.target.value)}
+                className="w-24"
+                data-testid="input-wspolczynnik"
+              />
+              <span className="text-sm text-muted-foreground">({pctLabel >= 0 ? "+" : ""}{pctLabel.toFixed(0)}%)</span>
+            </div>
+            <p className="text-xs text-muted-foreground">CEL = sprzedaz poprz. miesiaca x wspolczynnik</p>
+          </div>
+          {existsWarning && (
+            <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <span className="text-sm">Plan juz istnieje. Kliknij ponownie aby nadpisac.</span>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setExistsWarning(false); onClose(); }}>Anuluj</Button>
+          <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} data-testid="button-do-auto-generate">
+            {generateMutation.isPending ? "Generowanie..." : existsWarning ? "Nadpisz i generuj" : "Generuj plan"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function PlanPage() {
   const now = new Date();
   const [rok, setRok] = useState(now.getFullYear());
   const [miesiac, setMiesiac] = useState(now.getMonth() + 1);
   const [initialized, setInitialized] = useState(false);
   const [localWeekValues, setLocalWeekValues] = useState<Record<string, Record<number, number>>>({});
+  const [importPlanOpen, setImportPlanOpen] = useState(false);
+  const [autoGenOpen, setAutoGenOpen] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.rola === "admin";
 
   const { data: availableMonths } = useQuery({
     queryKey: ["/api/plan/available-months"],
@@ -250,7 +514,17 @@ export default function PlanPage() {
             Planowanie i realizacja tygodniowa
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin && (
+            <>
+              <Button variant="outline" onClick={() => setImportPlanOpen(true)} data-testid="button-import-plan">
+                <Upload className="w-4 h-4 mr-2" /> Import CSV
+              </Button>
+              <Button variant="outline" onClick={() => setAutoGenOpen(true)} data-testid="button-auto-gen">
+                <Wand2 className="w-4 h-4 mr-2" /> Generuj auto
+              </Button>
+            </>
+          )}
           <Button size="icon" variant="outline" onClick={goToPrev} data-testid="button-prev-month">
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -499,6 +773,13 @@ export default function PlanPage() {
           </Card>
         );
       })()}
+
+      {isAdmin && (
+        <>
+          <ImportPlanModal open={importPlanOpen} onClose={() => setImportPlanOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
+          <AutoGenerateModal open={autoGenOpen} onClose={() => setAutoGenOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
+        </>
+      )}
     </div>
   );
 }
