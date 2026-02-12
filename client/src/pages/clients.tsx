@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Search, Download, Upload, Plus, AlertTriangle, Phone,
-  MapPin, Users, Pencil, Save, X, Trash2,
+  MapPin, Users, Pencil, Save, X, Trash2, Wrench,
 } from "lucide-react";
 import type { Client } from "@shared/schema";
 
@@ -560,6 +560,23 @@ export default function ClientsPage() {
   };
 
   const isAdmin = user?.rola === "admin";
+  const [fixDone, setFixDone] = useState(false);
+
+  const fixColumnsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch("/api/clients/fix-columns", { method: "POST" });
+      if (!res.ok) throw new Error("Blad naprawy");
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Naprawiono dane", description: `Naprawiono: ${data.fixed}, OK: ${data.alreadyOk}, Nie udalo sie: ${data.couldNotFix}` });
+      setFixDone(true);
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    },
+    onError: () => {
+      toast({ title: "Blad naprawy danych", variant: "destructive" });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -585,6 +602,11 @@ export default function ClientsPage() {
           </Button>
           {isAdmin && (
             <>
+              {!fixDone && (
+                <Button variant="outline" size="sm" onClick={() => fixColumnsMutation.mutate()} disabled={fixColumnsMutation.isPending} data-testid="button-fix-columns">
+                  <Wrench className="w-4 h-4 mr-1" /> {fixColumnsMutation.isPending ? "Naprawiam..." : "Napraw dane"}
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={handleImportCSV} data-testid="button-import-csv">
                 <Upload className="w-4 h-4 mr-1" /> Importuj CSV
               </Button>

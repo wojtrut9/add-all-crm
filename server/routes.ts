@@ -196,6 +196,108 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/clients/fix-columns", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const VALID_DAYS = ["Poniedziałek", "Poniedzialek", "Wtorek", "Środa", "Sroda", "Czwartek", "Piątek", "Piatek", "Sobota", "Niedziela"];
+      const VALID_RYTM = ["1x/tydzień", "1x/tydzien", "2x/tydzień", "2x/tydzien", "1x/miesiąc", "1x/miesiac", "2x/miesiąc", "2x/miesiac", "co 3 miesiące", "co 3 miesiace", "co 2 miesiące", "co 2 miesiace", "co tydzień", "co tydzien"];
+      const VALID_CITIES = ["Warszawa", "Gdańsk", "Kraków", "Wrocław", "Poznań", "Łódź", "Gdansk", "Krakow", "Wroclaw", "Poznan", "Lodz", "Piaseczno", "Pruszków", "Pruszkow", "Legionowo", "Łomianki", "Lomianki", "Bielawa", "Mszczonów", "Mszczonow", "Mińsk", "Minsk", "Konstancin"];
+
+      const isDay = (val: string): boolean => VALID_DAYS.some(d => val.includes(d));
+      const isRytm = (val: string): boolean => VALID_RYTM.some(r => val.toLowerCase().includes(r.toLowerCase()));
+      const isCity = (val: string): boolean => VALID_CITIES.some(c => val.includes(c));
+
+      const allClients = await storage.getClients();
+      let fixed = 0, alreadyOk = 0, couldNotFix = 0;
+      const log: string[] = [];
+
+      for (const client of allClients) {
+        const dniOrig = client.dniZamowien || "";
+        if (dniOrig && isDay(dniOrig)) {
+          const rytmOrig = client.rytmKontaktu || "";
+          if (rytmOrig && isDay(rytmOrig) && !isRytm(rytmOrig)) {
+            const allFields = [
+              client.preferowanaFormaKontaktu,
+              client.zamowieniaGdzie,
+              client.dniZamowien,
+              client.rytmKontaktu,
+              client.miasto,
+              client.kraj
+            ].filter(Boolean) as string[];
+
+            const dayFields = allFields.filter(f => isDay(f));
+            const realDni = dayFields.length > 1 ? dayFields.join(",") : dayFields[0] || dniOrig;
+            const realRytm = allFields.find(f => isRytm(f));
+            const realMiasto = allFields.find(f => isCity(f));
+
+            const updates: any = {};
+            if (realDni !== dniOrig) updates.dniZamowien = realDni;
+            if (realRytm && realRytm !== rytmOrig) updates.rytmKontaktu = realRytm;
+            if (realMiasto && realMiasto !== client.miasto) updates.miasto = realMiasto;
+            updates.kraj = "Poland";
+
+            if (Object.keys(updates).length > 1) {
+              await storage.updateClient(client.id, updates);
+              log.push(`Naprawiono: ${client.klient} — dniZamowien: ${dniOrig} -> ${updates.dniZamowien || dniOrig}, rytmKontaktu: ${rytmOrig} -> ${updates.rytmKontaktu || rytmOrig}`);
+              fixed++;
+            } else {
+              alreadyOk++;
+            }
+          } else {
+            alreadyOk++;
+          }
+          continue;
+        }
+
+        if (!dniOrig) {
+          alreadyOk++;
+          continue;
+        }
+
+        const allFields = [
+          client.preferowanaFormaKontaktu,
+          client.zamowieniaGdzie,
+          client.dniZamowien,
+          client.rytmKontaktu,
+          client.miasto,
+          client.kraj
+        ].filter(Boolean) as string[];
+
+        const dayFields = allFields.filter(f => isDay(f));
+        const realDni = dayFields.length > 1 ? dayFields.join(",") : dayFields[0];
+        const realRytm = allFields.find(f => isRytm(f));
+        const realMiasto = allFields.find(f => isCity(f));
+        const realForma = allFields.find(f => ["Sms", "SMS", "Telefon"].includes(f));
+        const realGdzie = allFields.find(f => ["Skalo", "Email", "SMS", "WhatsApp", "Telefon"].includes(f) && f !== realForma);
+
+        if (realDni || realRytm) {
+          const updates: any = {
+            dniZamowien: realDni || null,
+            rytmKontaktu: realRytm || null,
+            miasto: realMiasto || null,
+            kraj: "Poland",
+          };
+          if (realForma) updates.preferowanaFormaKontaktu = realForma;
+          if (realGdzie) updates.zamowieniaGdzie = realGdzie;
+
+          await storage.updateClient(client.id, updates);
+          log.push(`Naprawiono: ${client.klient} — dniZamowien: ${dniOrig} -> ${updates.dniZamowien}, rytmKontaktu: ${client.rytmKontaktu} -> ${updates.rytmKontaktu}`);
+          fixed++;
+        } else {
+          couldNotFix++;
+          log.push(`Nie naprawiono: ${client.klient} — brak danych do naprawy`);
+        }
+      }
+
+      console.log("=== FIX COLUMNS LOG ===");
+      log.forEach(l => console.log(l));
+      console.log(`Fixed: ${fixed}, OK: ${alreadyOk}, Could not fix: ${couldNotFix}`);
+
+      res.json({ fixed, alreadyOk, couldNotFix, log });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/contacts/generate-week", authMiddleware, async (req, res) => {
     try {
       const { weekStart } = req.body;
@@ -207,13 +309,13 @@ export async function registerRoutes(
 
       let count = 0;
       const dayMap: Record<string, number> = {
-        "Poniedzialek": 0, "Poniedziałek": 0,
-        "Wtorek": 1,
-        "Sroda": 2, "Środa": 2,
-        "Czwartek": 3,
-        "Piatek": 4, "Piątek": 4,
-        "Sobota": 5,
-        "Niedziela": 6,
+        "Poniedzialek": 0, "Poniedziałek": 0, "Pon": 0, "pn": 0,
+        "Wtorek": 1, "Wt": 1,
+        "Sroda": 2, "Środa": 2, "Sr": 2, "Śr": 2,
+        "Czwartek": 3, "Czw": 3, "Cz": 3,
+        "Piatek": 4, "Piątek": 4, "Pt": 4,
+        "Sobota": 5, "Sob": 5,
+        "Niedziela": 6, "Nd": 6,
       };
 
       const wsDate = new Date(weekStart);
@@ -221,25 +323,44 @@ export async function registerRoutes(
 
       for (const client of activeClients) {
         const rytm = (client.rytmKontaktu || "").toLowerCase();
-        const dniStr = client.dniZamowien || "";
 
         let shouldGenerate = false;
-        if (rytm.includes("1x/tydz") || rytm.includes("2x/tydz")) {
+        if (rytm.includes("1x/tydz") || rytm.includes("1x tyg") || rytm === "co tydzien" || rytm === "co tydzień") {
           shouldGenerate = true;
-        } else if (rytm.includes("1x/mies")) {
+        } else if (rytm.includes("2x/tydz") || rytm.includes("2x tyg") || rytm.includes("2x w tyg")) {
+          shouldGenerate = true;
+        } else if (rytm.includes("1x/mies") || rytm.includes("1x mies") || rytm === "co miesiac" || rytm === "co miesiąc") {
           shouldGenerate = weekOfMonth === 1;
-        } else if (rytm.includes("2x/mies")) {
+        } else if (rytm.includes("2x/mies") || rytm.includes("2x mies")) {
           shouldGenerate = weekOfMonth === 1 || weekOfMonth === 3;
-        } else if (rytm.includes("co 3 mies")) {
+        } else if (rytm.includes("co 3 mies") || rytm.includes("kwartal")) {
           const monthNum = wsDate.getMonth();
           shouldGenerate = weekOfMonth === 1 && monthNum % 3 === 0;
-        } else {
+        } else if (rytm.includes("co 2 mies")) {
+          const monthNum = wsDate.getMonth();
+          shouldGenerate = weekOfMonth === 1 && monthNum % 2 === 0;
+        } else if (rytm) {
           shouldGenerate = true;
         }
 
         if (!shouldGenerate) continue;
 
-        const dni = dniStr.split(",").map(d => d.trim());
+        const dniStr = (client.dniZamowien || "").replace(/\s*i\s*/g, ",");
+        let dni = dniStr.split(",").map(d => d.trim()).filter(d => d);
+
+        if (dni.length === 0 || !dni.some(d => dayMap[d] !== undefined)) {
+          if (rytm) {
+            dni = [];
+            if (rytm.includes("2x")) {
+              dni.push("Poniedziałek", "Czwartek");
+            } else {
+              dni.push("Poniedziałek");
+            }
+          } else {
+            continue;
+          }
+        }
+
         for (const dzien of dni) {
           const dayIndex = dayMap[dzien];
           if (dayIndex === undefined || dayIndex > 4) continue;
