@@ -131,8 +131,10 @@ function MonthlySalesWidget({ stats }: { stats: any }) {
   );
 }
 
-function WeeklyOrderWidget({ data }: { data: { name: string; totalClients: number; totalContacts: number; contacted: number; ordered: number } }) {
-  const { name, totalClients, totalContacts, contacted, ordered } = data;
+function HandlerCard({ data, showDetails }: { data: any; showDetails: boolean }) {
+  const { name, totalClients, totalContacts, contacted, ordered,
+    premiumTotal, premiumOrdered, standardTotal, standardOrdered,
+    weryfikacjaTotal, weryfikacjaOrdered, activeClients, allClients, alertClients } = data;
   const ratio = totalClients > 0 ? ordered / totalClients : 0;
 
   let bgColor: string;
@@ -161,31 +163,83 @@ function WeeklyOrderWidget({ data }: { data: { name: string; totalClients: numbe
     <Card
       className="border-2"
       style={{ backgroundColor: bgColor, borderColor }}
-      data-testid={`card-weekly-orders-${name.toLowerCase()}`}
+      data-testid={`card-handler-${name.toLowerCase()}`}
     >
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4" style={{ color: accentColor }} />
-            <p className="text-sm font-medium" style={{ color: textColor }}>{name}</p>
+            <UserCheck className="w-4 h-4" style={{ color: accentColor }} />
+            <p className="text-sm font-bold" style={{ color: textColor }}>{name}</p>
           </div>
-          <Badge
-            variant="secondary"
-            className="no-default-hover-elevate no-default-active-elevate"
-            style={{ backgroundColor: accentColor, color: "#fff", border: "none" }}
-          >
-            {totalClients > 0 ? (ratio * 100).toFixed(0) : 0}%
-          </Badge>
+          <div className="flex items-center gap-2">
+            {showDetails && (
+              <Link href={`/klienci?opiekun=${name}`}>
+                <Button variant="ghost" size="sm" className="text-xs h-7 px-2" data-testid={`button-view-clients-${name.toLowerCase()}`}>
+                  Klienci <ArrowRight className="w-3 h-3 ml-1" />
+                </Button>
+              </Link>
+            )}
+            <Badge
+              variant="secondary"
+              className="no-default-hover-elevate no-default-active-elevate"
+              style={{ backgroundColor: accentColor, color: "#fff", border: "none" }}
+            >
+              {totalClients > 0 ? (ratio * 100).toFixed(0) : 0}%
+            </Badge>
+          </div>
         </div>
+
         <p className="text-sm" style={{ color: textColor }}>
           Zamówienia ten tydzień
         </p>
         <p className="text-3xl font-bold" style={{ color: textColor }} data-testid={`text-weekly-orders-${name.toLowerCase()}`}>
           {ordered} / {totalClients}
         </p>
+
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          {premiumTotal > 0 && (
+            <div className="text-center p-2 rounded-md" style={{ backgroundColor: `${accentColor}15` }}>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Crown className="w-3 h-3" style={{ color: accentColor }} />
+                <p className="text-xs" style={{ color: textColor, opacity: 0.75 }}>Premium</p>
+              </div>
+              <p className="text-lg font-bold" style={{ color: textColor }} data-testid={`text-premium-${name.toLowerCase()}`}>
+                {premiumOrdered}/{premiumTotal}
+              </p>
+            </div>
+          )}
+          {standardTotal > 0 && (
+            <div className="text-center p-2 rounded-md" style={{ backgroundColor: `${accentColor}15` }}>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Star className="w-3 h-3" style={{ color: accentColor }} />
+                <p className="text-xs" style={{ color: textColor, opacity: 0.75 }}>Standard</p>
+              </div>
+              <p className="text-lg font-bold" style={{ color: textColor }} data-testid={`text-standard-${name.toLowerCase()}`}>
+                {standardOrdered}/{standardTotal}
+              </p>
+            </div>
+          )}
+          {weryfikacjaTotal > 0 && (
+            <div className="text-center p-2 rounded-md" style={{ backgroundColor: `${accentColor}15` }}>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <ShoppingCart className="w-3 h-3" style={{ color: accentColor }} />
+                <p className="text-xs" style={{ color: textColor, opacity: 0.75 }}>Weryfikacja</p>
+              </div>
+              <p className="text-lg font-bold" style={{ color: textColor }} data-testid={`text-weryfikacja-${name.toLowerCase()}`}>
+                {weryfikacjaOrdered}/{weryfikacjaTotal}
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="text-xs space-y-0.5" style={{ color: textColor, opacity: 0.75 }}>
-          <p>Kontakty w kalendarzu: {totalContacts}</p>
-          <p>Obdzwonionych: {contacted}</p>
+          <p>Kontakty w kalendarzu: {totalContacts} | Obdzwonionych: {contacted}</p>
+          {showDetails && alertClients > 0 && (
+            <p className="flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              Alerty: {alertClients}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -265,7 +319,7 @@ export default function Dashboard() {
             </div>
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredOrders.map((wo: any) => (
-                <WeeklyOrderWidget key={wo.name} data={wo} />
+                <HandlerCard key={wo.name} data={wo} showDetails={isAdmin} />
               ))}
             </div>
           </div>
@@ -302,70 +356,6 @@ export default function Dashboard() {
         />
       </div>
 
-      {isAdmin && stats?.handlowcy && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {stats.handlowcy.map((h: any) => (
-            <Card key={h.name} data-testid={`card-handler-${h.name.toLowerCase()}`}>
-              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <UserCheck className="w-4 h-4 text-primary" />
-                  </div>
-                  <CardTitle className="text-base">{h.name}</CardTitle>
-                </div>
-                <Link href={`/klienci?opiekun=${h.name}`}>
-                  <Button variant="ghost" size="sm" data-testid={`button-view-clients-${h.name.toLowerCase()}`}>
-                    Klienci <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Klienci</p>
-                    <p className="text-xl font-bold" data-testid={`text-active-${h.name.toLowerCase()}`}>{h.activeClients}</p>
-                    <p className="text-xs text-muted-foreground">z {h.totalClients} wszystkich</p>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Crown className="w-3 h-3 text-amber-500" />
-                      <p className="text-xs text-muted-foreground">Premium</p>
-                    </div>
-                    <p className="text-xl font-bold" data-testid={`text-premium-${h.name.toLowerCase()}`}>{h.premiumClients}</p>
-                  </div>
-                  {h.standardClients > 0 && (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-blue-500" />
-                        <p className="text-xs text-muted-foreground">Standard</p>
-                      </div>
-                      <p className="text-xl font-bold" data-testid={`text-standard-${h.name.toLowerCase()}`}>{h.standardClients}</p>
-                    </div>
-                  )}
-                  {h.weryfikacjaClients > 0 && (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <ShoppingCart className="w-3 h-3 text-orange-500" />
-                        <p className="text-xs text-muted-foreground">Weryfikacja</p>
-                      </div>
-                      <p className="text-xl font-bold" data-testid={`text-weryfikacja-${h.name.toLowerCase()}`}>{h.weryfikacjaClients}</p>
-                    </div>
-                  )}
-                  {h.alertClients > 0 && (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3 text-destructive" />
-                        <p className="text-xs text-muted-foreground">Alerty</p>
-                      </div>
-                      <p className="text-xl font-bold" data-testid={`text-alerts-${h.name.toLowerCase()}`}>{h.alertClients}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
       {(isHandlowiec || isAdmin) && todayContacts && todayContacts.length > 0 && (
         <Card>

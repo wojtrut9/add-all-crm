@@ -671,42 +671,46 @@ export class DatabaseStorage implements IStorage {
       .where(and(gte(contacts.data, weekStart), lte(contacts.data, weekEnd)));
 
     const weeklyOrders = ["Gosia", "Magda"].map(name => {
-      const hClients = allClients.filter(c => c.opiekun === name && c.aktywny
+      const hAllClients = allClients.filter(c => c.opiekun === name);
+      const hClients = hAllClients.filter(c => c.aktywny
         && (c.grupaMvp?.includes("Premium") || c.grupaMvp?.includes("Standard")));
       const hContacts = weekContacts.filter(c => c.opiekun === name);
       const ordered = hContacts.filter(c => c.status === "Zamowil").length;
       const contacted = hContacts.filter(c => c.status && c.status !== "Do zrobienia").length;
+
+      const premiumClients = hAllClients.filter(c => c.grupaMvp?.includes("Premium"));
+      const standardClients = hAllClients.filter(c => c.grupaMvp?.includes("Standard"));
+      const weryfikacjaClients = hAllClients.filter(c => c.grupaMvp?.includes("Weryfikacja"));
+
+      const orderedClientIds = hContacts.filter(c => c.status === "Zamowil").map(c => c.klientId);
+      const premiumOrdered = premiumClients.filter(c => orderedClientIds.includes(c.id)).length;
+      const standardOrdered = standardClients.filter(c => orderedClientIds.includes(c.id)).length;
+      const weryfikacjaOrdered = weryfikacjaClients.filter(c => orderedClientIds.includes(c.id)).length;
+
+      const hActive = hAllClients.filter(c => c.aktywny);
+      const hAlerts = hAllClients.filter(c => (c.brakiZamowien || 0) >= 2);
+
       return {
         name,
         totalClients: hClients.length,
         totalContacts: hContacts.length,
         contacted,
         ordered,
+        premiumTotal: premiumClients.length,
+        premiumOrdered,
+        standardTotal: standardClients.length,
+        standardOrdered,
+        weryfikacjaTotal: weryfikacjaClients.length,
+        weryfikacjaOrdered,
+        activeClients: hActive.length,
+        allClients: hAllClients.length,
+        alertClients: hAlerts.length,
       };
     });
 
     let handlowcy: any[] | undefined;
     if (rola === "admin") {
-      const handlers = ["Gosia", "Magda"];
-      handlowcy = handlers.map(name => {
-        const hClients = allClients.filter(c => c.opiekun === name);
-        const hActive = hClients.filter(c => c.aktywny);
-        const hAlerts = hClients.filter(c => (c.brakiZamowien || 0) >= 2);
-        const premiumCount = hClients.filter(c => c.grupaMvp?.includes("Premium")).length;
-        const standardCount = hClients.filter(c => c.grupaMvp?.includes("Standard")).length;
-        const weryfikacjaCount = hClients.filter(c => c.grupaMvp?.includes("Weryfikacja")).length;
-        const inneCount = hClients.filter(c => c.grupaMvp === "Inne").length;
-        return {
-          name,
-          totalClients: hClients.length,
-          activeClients: hActive.length,
-          alertClients: hAlerts.length,
-          premiumClients: premiumCount,
-          standardClients: standardCount,
-          weryfikacjaClients: weryfikacjaCount,
-          inneClients: inneCount,
-        };
-      });
+      handlowcy = weeklyOrders;
     }
 
     return {
