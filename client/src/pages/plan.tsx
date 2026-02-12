@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, CalendarCheck } from "lucide-react";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, CalendarCheck, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const MONTHS = ["Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec", "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"];
@@ -361,6 +361,9 @@ export default function PlanPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] })} data-testid="button-refresh">
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} /> Odswiez
+          </Button>
           {isAdmin && (
             <Button variant="outline" onClick={() => setImportWzOpen(true)} data-testid="button-import-wz">
               <Upload className="w-4 h-4 mr-2" /> Import WZ
