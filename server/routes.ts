@@ -274,14 +274,13 @@ export async function registerRoutes(
   app.patch("/api/contacts/:id", authMiddleware, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const { status, kwota, ...rest } = req.body;
+      const { status, ...rest } = req.body;
 
       const contact = await storage.getContact(id);
       if (!contact) return res.status(404).json({ message: "Kontakt nie znaleziony" });
 
       const updateData: any = { ...rest };
       if (status) updateData.status = status;
-      if (kwota !== undefined) updateData.kwota = kwota;
 
       await storage.updateContact(id, updateData);
 
@@ -296,13 +295,12 @@ export async function registerRoutes(
         }
 
         const client = await storage.getClient(contact.clientId);
-        const kwotaValue = kwota ? String(kwota) : "0";
 
         await storage.createDelivery({
           dataDostawy: nextDay.toISOString().split("T")[0],
           clientId: contact.clientId,
           opiekun: contact.opiekun,
-          wartoscNettoWz: kwotaValue,
+          wartoscNettoWz: "0",
           platnosc: client?.warunkiPlatnosci || "do potwierdzenia",
         });
       } else if (status === "Nie zamowil") {
