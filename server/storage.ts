@@ -1309,6 +1309,19 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
     const salesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
+    const monthPrefix = `${rok}-${String(miesiac).padStart(2, '0')}%`;
+    const contactsAgg = await db.select({
+      clientId: contacts.clientId,
+      total: sql<string>`COALESCE(SUM(CAST(${contacts.kwota} AS NUMERIC)), 0)`
+    })
+    .from(contacts)
+    .where(and(
+      eq(contacts.status, "Zamowil"),
+      like(contacts.data, monthPrefix)
+    ))
+    .groupBy(contacts.clientId);
+    const contactsMap = new Map(contactsAgg.map(c => [c.clientId, Number(c.total || 0)]));
+
     const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
     const prevYear = miesiac === 1 ? rok - 1 : rok;
     const prevSales = await db.select().from(clientSales)
@@ -1323,7 +1336,9 @@ export class DatabaseStorage implements IStorage {
         if (prevSale > 0) cel = prevSale * 1.05;
       }
 
-      const realizacja = salesMap.get(client.id) || 0;
+      const wzValue = salesMap.get(client.id) || 0;
+      const contactValue = contactsMap.get(client.id) || 0;
+      const realizacja = wzValue > 0 ? wzValue : contactValue;
       const celNaDzis = dniRoboczeMiesiac > 0 ? (cel / dniRoboczeMiesiac) * dniRoboczeMiniete : 0;
       const roznica = realizacja - celNaDzis;
       const procent = celNaDzis > 0 ? (realizacja / celNaDzis) * 100 : (realizacja > 0 ? 100 : 0);

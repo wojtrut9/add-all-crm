@@ -44,6 +44,7 @@ export function AppSidebar() {
     { title: "Kalendarz", url: "/kalendarz", icon: Calendar },
     { title: "Dostawy", url: "/dostawy", icon: Truck },
     { title: "Moja sprzeda\u017c", url: "/moja-sprzedaz", icon: TrendingUp },
+    { title: "Plan miesi\u0119czny", url: "/plan", icon: Target },
     { title: "Notatki", url: "/notatki", icon: StickyNote },
   ];
 
