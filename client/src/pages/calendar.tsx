@@ -47,13 +47,12 @@ const statusDotColors: Record<string, string> = {
   "Zrobione": "bg-chart-5",
 };
 
-function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange: (id: number, status: string, kwota?: string) => void }) {
+function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange: (id: number, status: string) => void }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState(contact.status);
-  const [kwotaValue, setKwotaValue] = useState(contact.kwota || "");
 
   const handleSave = () => {
-    onStatusChange(contact.id, newStatus, kwotaValue || undefined);
+    onStatusChange(contact.id, newStatus);
     setDialogOpen(false);
   };
 
@@ -97,19 +96,6 @@ function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange
                 </SelectContent>
               </Select>
             </div>
-            {(newStatus === "Zamowil" || newStatus === "Zrobione") && (
-              <div>
-                <Label>Kwota zamowienia (PLN)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0"
-                  value={kwotaValue}
-                  onChange={(e) => setKwotaValue(e.target.value)}
-                  data-testid="input-kwota"
-                />
-              </div>
-            )}
             <div>
               <Label>Data</Label>
               <p className="text-sm">{contact.data}</p>
@@ -172,17 +158,13 @@ export default function CalendarPage() {
     },
   });
 
-  const updateContactStatus = async (id: number, status: string, kwota?: string) => {
+  const updateContactStatus = async (id: number, status: string) => {
     try {
       await authFetch(`/api/contacts/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status, kwota }),
+        body: JSON.stringify({ status }),
       });
-      if (status === "Zamowil" && (!kwota || Number(kwota) === 0)) {
-        toast({ title: "Uwaga", description: "Zamowienie bez kwoty \u2014 dostawa zostanie utworzona z kwota 0 PLN. Mozesz ja zaktualizowac pozniej." });
-      } else {
-        toast({ title: "Zaktualizowano" });
-      }
+      toast({ title: "Zaktualizowano" });
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/deliveries"] });
