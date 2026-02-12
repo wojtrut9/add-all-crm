@@ -251,13 +251,21 @@ export class DatabaseStorage implements IStorage {
       .select({
         clientId: clientSales.clientId,
         sprzedaz: clientSales.sprzedaz,
+        koszt: clientSales.koszt,
+        zysk: clientSales.zysk,
+        marza: clientSales.marza,
       })
       .from(clientSales)
       .where(and(eq(clientSales.rok, prevRok), eq(clientSales.miesiac, prevMiesiac)));
 
-    const prevSalesMap = new Map<number, number>();
+    const prevSalesMap = new Map<number, { sprzedaz: number; koszt: number; zysk: number; marza: number }>();
     for (const ps of prevSalesData) {
-      prevSalesMap.set(ps.clientId, Number(ps.sprzedaz || 0));
+      prevSalesMap.set(ps.clientId, {
+        sprzedaz: Number(ps.sprzedaz || 0),
+        koszt: Number(ps.koszt || 0),
+        zysk: Number(ps.zysk || 0),
+        marza: Number(ps.marza || 0),
+      });
     }
 
     const allClients = await db.select().from(clients);
@@ -285,6 +293,8 @@ export class DatabaseStorage implements IStorage {
       koszt: number;
       zysk: number;
       prevSprzedaz: number;
+      prevKoszt: number;
+      prevZysk: number;
       klienci: Array<{
         id: number;
         klient: string;
@@ -300,19 +310,20 @@ export class DatabaseStorage implements IStorage {
 
     const grupyMap: Record<string, GroupData> = {};
     for (const name of grupyNames) {
-      grupyMap[name] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0, prevSprzedaz: 0, klienci: [] };
+      grupyMap[name] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0, prevSprzedaz: 0, prevKoszt: 0, prevZysk: 0, klienci: [] };
     }
 
     for (const client of allClients) {
       const matchKey = matchGrupa(client.grupaMvp);
-      if (!grupyMap[matchKey]) grupyMap[matchKey] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0, prevSprzedaz: 0, klienci: [] };
+      if (!grupyMap[matchKey]) grupyMap[matchKey] = { klientow: 0, aktywnych: 0, sprzedaz: 0, koszt: 0, zysk: 0, prevSprzedaz: 0, prevKoszt: 0, prevZysk: 0, klienci: [] };
 
       const sale = salesMap.get(client.id);
       const sprzedaz = sale ? Number(sale.sprzedaz || 0) : 0;
       const koszt = sale ? Number(sale.koszt || 0) : 0;
       const zysk = sale ? Number(sale.zysk || 0) : 0;
       const marza = sale ? Number(sale.marza || 0) : 0;
-      const prevSp = prevSalesMap.get(client.id) || 0;
+      const prev = prevSalesMap.get(client.id) || { sprzedaz: 0, koszt: 0, zysk: 0, marza: 0 };
+      const prevSp = prev.sprzedaz;
 
       grupyMap[matchKey].klientow++;
       if (sprzedaz > 0) grupyMap[matchKey].aktywnych++;
@@ -320,21 +331,21 @@ export class DatabaseStorage implements IStorage {
       grupyMap[matchKey].koszt += koszt;
       grupyMap[matchKey].zysk += zysk;
       grupyMap[matchKey].prevSprzedaz += prevSp;
+      grupyMap[matchKey].prevKoszt += prev.koszt;
+      grupyMap[matchKey].prevZysk += prev.zysk;
 
-      if (sale) {
-        const zmiana = prevSp > 0 ? ((sprzedaz - prevSp) / prevSp * 100) : (sprzedaz > 0 ? 100 : null);
-        grupyMap[matchKey].klienci.push({
-          id: client.id,
-          klient: client.klient,
-          rabat: client.rabatProcent ? Number(client.rabatProcent) : null,
-          sprzedaz,
-          koszt,
-          zysk,
-          marza,
-          prevSprzedaz: prevSp,
-          zmiana,
-        });
-      }
+      const zmiana = prevSp > 0 ? ((sprzedaz - prevSp) / prevSp * 100) : (sprzedaz > 0 ? 100 : null);
+      grupyMap[matchKey].klienci.push({
+        id: client.id,
+        klient: client.klient,
+        rabat: client.rabatProcent ? Number(client.rabatProcent) : null,
+        sprzedaz,
+        koszt,
+        zysk,
+        marza,
+        prevSprzedaz: prevSp,
+        zmiana,
+      });
     }
 
     const groups = grupyNames
@@ -352,12 +363,21 @@ export class DatabaseStorage implements IStorage {
           zysk: v.zysk,
           marza: v.sprzedaz > 0 ? (v.zysk / v.sprzedaz * 100) : 0,
           prevSprzedaz: v.prevSprzedaz,
+          prevKoszt: v.prevKoszt,
+          prevZysk: v.prevZysk,
           zmiana,
           klienci: v.klienci,
         };
       });
 
-    return { groups, prevMiesiac, prevRok };
+    groups.sort((a, b) => b.sprzedaz - a.sprzedaz);
+
+    const prevTotalSales = groups.reduce((s, g) => s + g.prevSprzedaz, 0);
+    const prevTotalCost = groups.reduce((s, g) => s + g.prevKoszt, 0);
+    const prevTotalProfit = groups.reduce((s, g) => s + g.prevZysk, 0);
+    const prevTotalMarza = prevTotalSales > 0 ? (prevTotalProfit / prevTotalSales * 100) : 0;
+
+    return { groups, prevMiesiac, prevRok, prevTotalSales, prevTotalCost, prevTotalProfit, prevTotalMarza };
   }
 
   async getSalesDashboard(): Promise<any> {
