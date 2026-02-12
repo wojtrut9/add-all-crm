@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   Phone,
   ArrowRight,
+  ArrowUp,
+  ArrowDown,
   TrendingUp,
   Target,
   Crown,
@@ -22,8 +24,8 @@ import {
   ShoppingCart,
 } from "lucide-react";
 
-function StatCard({ title, value, icon: Icon, subtitle, color }: {
-  title: string; value: string | number; icon: any; subtitle?: string; color?: string;
+function StatCard({ title, value, icon: Icon, subtitle, color, extra }: {
+  title: string; value: string | number; icon: any; subtitle?: string; color?: string; extra?: string;
 }) {
   return (
     <Card>
@@ -33,6 +35,7 @@ function StatCard({ title, value, icon: Icon, subtitle, color }: {
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">{value}</p>
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+            {extra && <p className="text-xs text-muted-foreground">{extra}</p>}
           </div>
           <div className={`w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 ${color || 'bg-primary/10'}`}>
             <Icon className={`w-5 h-5 ${color === 'bg-muted' ? 'text-muted-foreground' : color ? 'text-white' : 'text-primary'}`} />
@@ -44,23 +47,40 @@ function StatCard({ title, value, icon: Icon, subtitle, color }: {
 }
 
 function formatPLN(val: number) {
-  return val.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) + " PLN";
+  return Math.round(val).toLocaleString("pl-PL") + " PLN";
 }
 
 const POLISH_MONTHS = [
-  "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-  "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+  "Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec",
+  "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"
 ];
 
-function MonthlySalesWidget({ stats }: { stats: any }) {
-  const monthSales = Number(stats?.monthSales || 0);
-  const monthPlan = Number(stats?.monthPlan || 0);
-  const workingDaysPassed = Number(stats?.workingDaysPassed || 0);
-  const expectedSales = Number(stats?.expectedSales || 0);
+function MonthlySalesWidget({ stats, isHandlowiec, userName }: { stats: any; isHandlowiec: boolean; userName?: string }) {
+  let monthSales = Number(stats?.monthSales || 0);
+  let monthPlan = Number(stats?.monthPlan || 0);
 
-  const onTrack = monthPlan === 0 || monthSales >= expectedSales;
+  if (isHandlowiec && userName) {
+    const wo = (stats?.weeklyOrders || []).find((w: any) => w.name === userName);
+    if (wo) {
+      monthSales = wo.handlowiecMonthSales || 0;
+    }
+  }
+
+  const workingDaysPassed = Number(stats?.workingDaysPassed || 0);
+  const totalWorkdays = Number(stats?.totalWorkdays || 20);
+  const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
+
+  const effectiveTempo = isHandlowiec
+    ? (workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0)
+    : Number(stats?.tempo || 0);
+  const effectivePrognoza = effectiveTempo * totalWorkdays;
+  const effectivePrognozaOnTrack = effectivePrognoza >= monthPlan;
+
+  const onTrack = monthPlan === 0 || effectivePrognozaOnTrack;
   const progressPercent = monthPlan > 0 ? Math.min((monthSales / monthPlan) * 100, 100) : 0;
   const currentMonth = POLISH_MONTHS[new Date().getMonth()];
+  const brakuje = Math.max(0, monthPlan - monthSales);
+  const nadwyzka = Math.max(0, monthSales - monthPlan);
 
   return (
     <Card
@@ -76,14 +96,14 @@ function MonthlySalesWidget({ stats }: { stats: any }) {
           className="text-base"
           style={{ color: onTrack ? "hsl(142 76% 25%)" : "hsl(0 84% 30%)" }}
         >
-          Sprzedaż miesiąca — {currentMonth}
+          {isHandlowiec ? `Twoja sprzedaz — ${currentMonth}` : `Sprzedaz miesiaca — ${currentMonth}`}
         </CardTitle>
         <Target
           className="w-5 h-5"
           style={{ color: onTrack ? "hsl(142 76% 35%)" : "hsl(0 84% 35%)" }}
         />
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <div className="text-center space-y-1">
           <p
             className="text-4xl font-bold tracking-tight"
@@ -117,15 +137,39 @@ function MonthlySalesWidget({ stats }: { stats: any }) {
         </div>
 
         <div
-          className="text-sm text-center p-2 rounded-md"
+          className="text-xs text-center p-2 rounded-md"
           style={{
             backgroundColor: onTrack ? "hsl(142 76% 90%)" : "hsl(0 84% 90%)",
             color: onTrack ? "hsl(142 76% 25%)" : "hsl(0 84% 30%)",
           }}
           data-testid="text-daily-indicator"
         >
-          Dzień {workingDaysPassed}/20 — powinno być: {formatPLN(expectedSales)}
+          <p>Dzien {workingDaysPassed}/{totalWorkdays} — powinno byc: {formatPLN(dailyTarget * workingDaysPassed)}</p>
+          <p className="mt-1">Tempo: {formatPLN(effectiveTempo)}/dzien | Prognoza: {formatPLN(effectivePrognoza)}</p>
         </div>
+
+        {isHandlowiec && monthPlan > 0 && (
+          <div
+            className="text-sm text-center font-medium p-2 rounded-md"
+            style={{
+              backgroundColor: onTrack ? "hsl(142 76% 88%)" : "hsl(0 84% 88%)",
+              color: onTrack ? "hsl(142 76% 20%)" : "hsl(0 84% 25%)",
+            }}
+            data-testid="text-motivation"
+          >
+            {monthSales >= monthPlan
+              ? `Jestes ${formatPLN(nadwyzka)} nad celem!`
+              : `Brakuje Ci ${formatPLN(brakuje)} do celu`
+            }
+          </div>
+        )}
+
+        <p
+          className="text-xs text-center font-medium"
+          style={{ color: onTrack ? "hsl(142 76% 30%)" : "hsl(0 84% 35%)" }}
+        >
+          {onTrack ? "Na dobrej drodze" : `Zagrozony — brakuje ~${formatPLN(Math.max(0, monthPlan - effectivePrognoza))}`}
+        </p>
       </CardContent>
     </Card>
   );
@@ -134,8 +178,11 @@ function MonthlySalesWidget({ stats }: { stats: any }) {
 function HandlerCard({ data, showDetails }: { data: any; showDetails: boolean }) {
   const { name, totalClients, totalContacts, contacted, ordered,
     premiumTotal, premiumOrdered, standardTotal, standardOrdered,
-    weryfikacjaTotal, weryfikacjaOrdered, activeClients, allClients, alertClients } = data;
+    weryfikacjaTotal, weryfikacjaOrdered, alertClients,
+    weekSales, prevWeekSales } = data;
   const ratio = totalClients > 0 ? ordered / totalClients : 0;
+
+  const weekChange = prevWeekSales > 0 ? ((weekSales - prevWeekSales) / prevWeekSales * 100) : 0;
 
   let bgColor: string;
   let borderColor: string;
@@ -190,7 +237,7 @@ function HandlerCard({ data, showDetails }: { data: any; showDetails: boolean })
         </div>
 
         <p className="text-sm" style={{ color: textColor }}>
-          Zamówienia ten tydzień
+          Zamowienia ten tydzien
         </p>
         <p className="text-3xl font-bold" style={{ color: textColor }} data-testid={`text-weekly-orders-${name.toLowerCase()}`}>
           {ordered} / {totalClients}
@@ -232,8 +279,17 @@ function HandlerCard({ data, showDetails }: { data: any; showDetails: boolean })
           )}
         </div>
 
-        <div className="text-xs space-y-0.5" style={{ color: textColor, opacity: 0.75 }}>
-          <p>Kontakty w kalendarzu: {totalContacts} | Obdzwonionych: {contacted}</p>
+        <div className="text-xs space-y-1" style={{ color: textColor, opacity: 0.85 }}>
+          <div className="flex items-center justify-between gap-2">
+            <span>Sprzedaz tygodnia: {formatPLN(weekSales)}</span>
+            {prevWeekSales > 0 && (
+              <span className="flex items-center gap-0.5">
+                {weekChange >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                {weekChange >= 0 ? "+" : ""}{weekChange.toFixed(0)}%
+              </span>
+            )}
+          </div>
+          <p>Kontakty: {totalContacts} | Obdzwonionych: {contacted}</p>
           {showDetails && alertClients > 0 && (
             <p className="flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
@@ -284,17 +340,25 @@ export default function Dashboard() {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Dzień dobry";
-    if (hour < 18) return "Dzień dobry";
-    return "Dobry wieczór";
+    if (hour >= 5 && hour < 18) return "Dzien dobry";
+    return "Dobry wieczor";
   };
+
+  const todayDone = todayContacts ? todayContacts.filter((c: any) => c.status && c.status !== "Do zrobienia").length : 0;
+  const todayOrdersSales = todayContacts
+    ? todayContacts.filter((c: any) => c.status === "Zamowil").reduce((s: number, c: any) => s + Number(c.kwota || 0), 0)
+    : 0;
+
+  const myWeeklyData = isHandlowiec
+    ? (stats?.weeklyOrders || []).find((wo: any) => wo.name === user?.imie)
+    : null;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-2xl font-bold">{greeting()}, {user?.imie}!</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-2xl font-bold" data-testid="text-greeting">{greeting()}, {user?.imie}!</h1>
+          <p className="text-muted-foreground text-sm" data-testid="text-date">
             {new Date().toLocaleDateString("pl-PL", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
@@ -302,7 +366,7 @@ export default function Dashboard() {
           <Link href="/kalendarz">
             <Button data-testid="button-generate-week">
               <Calendar className="w-4 h-4 mr-2" />
-              Kalendarz kontaktów
+              Kalendarz kontaktow
             </Button>
           </Link>
         )}
@@ -315,12 +379,25 @@ export default function Dashboard() {
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-1">
-              <MonthlySalesWidget stats={stats} />
+              <MonthlySalesWidget stats={stats} isHandlowiec={isHandlowiec} userName={user?.imie} />
             </div>
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredOrders.map((wo: any) => (
                 <HandlerCard key={wo.name} data={wo} showDetails={isAdmin} />
               ))}
+              {isHandlowiec && myWeeklyData && (
+                <Card className="border-2 border-primary/20">
+                  <CardContent className="p-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Twoja konwersja tygodniowa</p>
+                    <p className="text-3xl font-bold" data-testid="text-conversion">
+                      {myWeeklyData.totalContacts > 0 ? ((myWeeklyData.ordered / myWeeklyData.totalContacts) * 100).toFixed(0) : 0}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {myWeeklyData.ordered} zamowien z {myWeeklyData.totalContacts} kontaktow
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         );
@@ -328,39 +405,43 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Klienci aktywni"
-          value={stats?.activeClients || 0}
+          title="Klienci z zamowieniem"
+          value={`${stats?.uniqueOrderedClients || 0} / ${stats?.activeClients || 0}`}
           icon={Users}
-          subtitle={`z ${stats?.totalClients || 0} wszystkich`}
+          subtitle="w tym miesiacu"
         />
         <StatCard
           title="Kontakty dzisiaj"
           value={stats?.todayContacts || 0}
           icon={Phone}
-          subtitle="zaplanowane"
+          subtitle={`${stats?.todayContactsDone || 0} zrealizowanych`}
         />
         {(isAdmin || isLogistyka) && (
           <StatCard
             title="Dostawy jutro"
             value={stats?.tomorrowDeliveries || 0}
             icon={Truck}
-            subtitle="do realizacji"
+            subtitle={stats?.tomorrowDeliveriesValue > 0 ? formatPLN(stats.tomorrowDeliveriesValue) : "do realizacji"}
           />
         )}
         <StatCard
-          title="Alerty klientów"
+          title="Alerty klientow"
           value={stats?.alertClients || 0}
           icon={AlertTriangle}
-          subtitle="brak zamówień >= 2"
+          subtitle="brak zamowien >= 2"
           color={stats?.alertClients > 0 ? "bg-destructive" : "bg-muted"}
         />
       </div>
 
-
       {(isHandlowiec || isAdmin) && todayContacts && todayContacts.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-            <CardTitle className="text-base">Kontakty na dzisiaj</CardTitle>
+            <div>
+              <CardTitle className="text-base">Kontakty na dzisiaj</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1" data-testid="text-today-summary">
+                {todayDone}/{todayContacts.length} zrealizowanych | Zamowienia: {formatPLN(todayOrdersSales)}
+              </p>
+            </div>
             <Link href="/kalendarz">
               <Button variant="ghost" size="sm">
                 Zobacz wszystkie <ArrowRight className="w-3 h-3 ml-1" />
@@ -368,9 +449,9 @@ export default function Dashboard() {
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {todayContacts.slice(0, 8).map((c: any) => (
-                <div key={c.id} className="flex items-center justify-between gap-3 p-3 rounded-md bg-muted/50">
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {todayContacts.map((c: any) => (
+                <div key={c.id} className="flex items-center justify-between gap-3 p-3 rounded-md bg-muted/50" data-testid={`contact-today-${c.id}`}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{
                       backgroundColor:
@@ -386,6 +467,9 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {c.kwota && Number(c.kwota) > 0 && (
+                      <span className="text-xs font-medium">{formatPLN(Number(c.kwota))}</span>
+                    )}
                     {c.priorytet === "Pilny" && <Badge variant="destructive" className="text-xs">Pilny</Badge>}
                     {c.priorytet === "ASAP" && <Badge variant="destructive" className="text-xs">ASAP</Badge>}
                     <Badge variant="secondary" className="text-xs">{c.status}</Badge>
@@ -415,7 +499,7 @@ export default function Dashboard() {
                   <Link href="/analiza">
                     <Button variant="outline">
                       <Target className="w-4 h-4 mr-2" />
-                      Analiza sprzedaży
+                      Analiza sprzedazy
                     </Button>
                   </Link>
                   <Link href="/finanse">

@@ -621,8 +621,12 @@ export class DatabaseStorage implements IStorage {
     const today = new Date().toISOString().split("T")[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
-    const todayContactsCount = (await this.getContacts(today, today, rola === "handlowiec" ? opiekun : undefined)).length;
-    const tomorrowDeliveriesCount = (await this.getDeliveries(tomorrow)).length;
+    const todayContactsList = await this.getContacts(today, today, rola === "handlowiec" ? opiekun : undefined);
+    const todayContactsCount = todayContactsList.length;
+    const todayContactsDone = todayContactsList.filter(c => c.status && c.status !== "Do zrobienia").length;
+    const tomorrowDeliveriesList = await this.getDeliveries(tomorrow);
+    const tomorrowDeliveriesCount = tomorrowDeliveriesList.length;
+    const tomorrowDeliveriesValue = tomorrowDeliveriesList.reduce((sum, d) => sum + Number(d.wartoscNettoWz || 0), 0);
 
     const now = new Date();
     const currentTargets = await db.select().from(salesTargets)
@@ -642,20 +646,25 @@ export class DatabaseStorage implements IStorage {
       .filter(c => c.status === "Zamowil")
       .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
-    const getWorkingDaysPassed = () => {
+    const countWorkdays = (y: number, m: number, upToDay: number) => {
       let count = 0;
-      const d = new Date(year, month, 1);
-      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      while (d <= todayDate) {
-        const day = d.getDay();
-        if (day >= 1 && day <= 5) count++;
-        d.setDate(d.getDate() + 1);
+      for (let d = 1; d <= upToDay; d++) {
+        const dow = new Date(y, m, d).getDay();
+        if (dow >= 1 && dow <= 5) count++;
       }
       return count;
     };
-    const workingDaysPassed = getWorkingDaysPassed();
-    const dailyTarget = monthPlan / 20;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const totalWorkdays = countWorkdays(year, month, daysInMonth);
+    const workingDaysPassed = countWorkdays(year, month, now.getDate());
+    const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
     const expectedSales = dailyTarget * workingDaysPassed;
+    const tempo = workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0;
+    const prognoza = tempo * totalWorkdays;
+    const prognozaOnTrack = prognoza >= monthPlan;
+
+    const uniqueOrderedClients = new Set(allMonthContacts.filter(c => c.status === "Zamowil").map(c => c.clientId)).size;
+    const spadkiSprzedazy = allClients.filter(c => c.aktywny && (c as any).spadekSprzedazy).length;
 
     const mondayOfWeek = new Date(now);
     const dayOfWeek = mondayOfWeek.getDay();
@@ -667,8 +676,18 @@ export class DatabaseStorage implements IStorage {
     const weekStart = mondayOfWeek.toISOString().split("T")[0];
     const weekEnd = fridayOfWeek.toISOString().split("T")[0];
 
+    const prevMondayOfWeek = new Date(mondayOfWeek);
+    prevMondayOfWeek.setDate(prevMondayOfWeek.getDate() - 7);
+    const prevFridayOfWeek = new Date(prevMondayOfWeek);
+    prevFridayOfWeek.setDate(prevFridayOfWeek.getDate() + 4);
+    const prevWeekStart = prevMondayOfWeek.toISOString().split("T")[0];
+    const prevWeekEnd = prevFridayOfWeek.toISOString().split("T")[0];
+
     const weekContacts = await db.select().from(contacts)
       .where(and(gte(contacts.data, weekStart), lte(contacts.data, weekEnd)));
+
+    const prevWeekContacts = await db.select().from(contacts)
+      .where(and(gte(contacts.data, prevWeekStart), lte(contacts.data, prevWeekEnd)));
 
     const weeklyOrders = ["Gosia", "Magda"].map(name => {
       const hAllClients = allClients.filter(c => c.opiekun === name);
@@ -682,13 +701,29 @@ export class DatabaseStorage implements IStorage {
       const standardClients = hAllClients.filter(c => c.grupaMvp?.includes("Standard"));
       const weryfikacjaClients = hAllClients.filter(c => c.grupaMvp?.includes("Weryfikacja"));
 
-      const orderedClientIds = hContacts.filter(c => c.status === "Zamowil").map(c => c.klientId);
+      const orderedClientIds = hContacts.filter(c => c.status === "Zamowil").map(c => c.clientId);
       const premiumOrdered = premiumClients.filter(c => orderedClientIds.includes(c.id)).length;
       const standardOrdered = standardClients.filter(c => orderedClientIds.includes(c.id)).length;
       const weryfikacjaOrdered = weryfikacjaClients.filter(c => orderedClientIds.includes(c.id)).length;
 
       const hActive = hAllClients.filter(c => c.aktywny);
       const hAlerts = hAllClients.filter(c => (c.brakiZamowien || 0) >= 2);
+
+      const weekSales = hContacts
+        .filter(c => c.status === "Zamowil")
+        .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+
+      const hPrevContacts = prevWeekContacts.filter(c => c.opiekun === name);
+      const prevWeekSales = hPrevContacts
+        .filter(c => c.status === "Zamowil")
+        .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+
+      const hMonthContacts = allMonthContacts.filter(c => c.opiekun === name);
+      const handlowiecMonthSales = hMonthContacts
+        .filter(c => c.status === "Zamowil")
+        .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+      const handlowiecMonthOrdered = hMonthContacts.filter(c => c.status === "Zamowil").length;
+      const handlowiecMonthContacted = hMonthContacts.filter(c => c.status && c.status !== "Do zrobienia").length;
 
       return {
         name,
@@ -705,6 +740,11 @@ export class DatabaseStorage implements IStorage {
         activeClients: hActive.length,
         allClients: hAllClients.length,
         alertClients: hAlerts.length,
+        weekSales,
+        prevWeekSales,
+        handlowiecMonthSales,
+        handlowiecMonthOrdered,
+        handlowiecMonthContacted,
       };
     });
 
@@ -718,12 +758,19 @@ export class DatabaseStorage implements IStorage {
       activeClients,
       alertClients,
       todayContacts: todayContactsCount,
+      todayContactsDone,
       tomorrowDeliveries: tomorrowDeliveriesCount,
+      tomorrowDeliveriesValue,
       monthPlan,
       monthSales,
       workingDaysPassed,
+      totalWorkdays,
       expectedSales,
       dailyTarget,
+      tempo,
+      prognoza,
+      prognozaOnTrack,
+      uniqueOrderedClients,
       weeklyOrders,
       handlowcy,
     };
