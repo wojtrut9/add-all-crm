@@ -49,6 +49,7 @@ export interface IStorage {
   deleteCost(id: number): Promise<void>;
   getMySales(opiekun: string): Promise<any>;
   getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any>;
+  getAvailablePlanMonths(): Promise<Array<{rok: number; miesiac: number}>>;
   updateWeeklyPlan(id: number, realizacja: number): Promise<void>;
   updateWeeklyNotatki(clientId: number, rok: number, miesiac: number, notatki: string): Promise<void>;
 
@@ -491,14 +492,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any> {
-    const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
-    const prevYear = miesiac === 1 ? rok - 1 : rok;
+    const prev1Month = miesiac === 1 ? 12 : miesiac - 1;
+    const prev1Year = miesiac === 1 ? rok - 1 : rok;
+    const prev2Month = prev1Month === 1 ? 12 : prev1Month - 1;
+    const prev2Year = prev1Month === 1 ? prev1Year - 1 : prev1Year;
 
     const weeklyData = await db.select().from(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
 
     const clientIds = [...new Set(weeklyData.map(w => w.clientId))];
-    if (clientIds.length === 0) return { groups: [] };
+    if (clientIds.length === 0) return { groups: [], prev1Month, prev1Year, prev2Month, prev2Year, prevMonthTotalSales: 0 };
 
     let allClients = await db.select().from(clients);
     if (opiekun) {
@@ -506,21 +509,18 @@ export class DatabaseStorage implements IStorage {
     }
     const clientMap = new Map(allClients.map(c => [c.id, c]));
 
-    const prevSales = await db.select().from(clientSales)
-      .where(and(eq(clientSales.rok, prevYear), eq(clientSales.miesiac, prevMonth)));
-    const prevSalesMap = new Map(prevSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+    const prev1Sales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prev1Year), eq(clientSales.miesiac, prev1Month)));
+    const prev1Map = new Map(prev1Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
-    const currentSales = await db.select().from(clientSales)
-      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
-    const currentSalesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+    const prev2Sales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prev2Year), eq(clientSales.miesiac, prev2Month)));
+    const prev2Map = new Map(prev2Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
-    const sty26Sales = await db.select().from(clientSales)
-      .where(and(eq(clientSales.rok, 2026), eq(clientSales.miesiac, 1)));
-    const sty26Map = new Map(sty26Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
-
-    const gru25Sales = await db.select().from(clientSales)
-      .where(and(eq(clientSales.rok, 2025), eq(clientSales.miesiac, 12)));
-    const gru25Map = new Map(gru25Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+    const filteredClientIds = new Set(allClients.map(c => c.id));
+    const prevMonthTotalSales = prev1Sales
+      .filter(r => filteredClientIds.has(r.clientId))
+      .reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
 
     function matchGrupa(grupaMvp: string | null): string {
       const g = grupaMvp || "Inne";
@@ -536,7 +536,8 @@ export class DatabaseStorage implements IStorage {
       clientId: number;
       klient: string;
       rabat: number | null;
-      sty26: number;
+      prev1: number;
+      prev2: number;
       cel: number;
       tydz1: number;
       tydz2: number;
@@ -544,7 +545,6 @@ export class DatabaseStorage implements IStorage {
       tydz4: number;
       weeklyIds: number[];
       srTyg: number;
-      gru25: number;
       notatki: string | null;
       status: string | null;
     };
@@ -566,9 +566,9 @@ export class DatabaseStorage implements IStorage {
       if (!grupyMap[grupa]) grupyMap[grupa] = [];
 
       const cel = Number(weeks[0]?.plan || 0);
-      const sty26 = sty26Map.get(cid) || 0;
-      const gru25 = gru25Map.get(cid) || 0;
-      const srTyg = sty26 > 0 ? sty26 / 4.3 : 0;
+      const prev1Val = prev1Map.get(cid) || 0;
+      const prev2Val = prev2Map.get(cid) || 0;
+      const srTyg = prev1Val > 0 ? prev1Val / 4.3 : 0;
 
       const weekVals: Record<number, { realizacja: number; id: number }> = {};
       for (const w of weeks) {
@@ -579,15 +579,15 @@ export class DatabaseStorage implements IStorage {
         clientId: cid,
         klient: client.klient,
         rabat: client.rabatProcent ? Number(client.rabatProcent) : null,
-        sty26,
+        prev1: prev1Val,
+        prev2: prev2Val,
         cel,
         tydz1: weekVals[1]?.realizacja || 0,
         tydz2: weekVals[2]?.realizacja || 0,
         tydz3: weekVals[3]?.realizacja || 0,
         tydz4: weekVals[4]?.realizacja || 0,
         weeklyIds: [weekVals[1]?.id || 0, weekVals[2]?.id || 0, weekVals[3]?.id || 0, weekVals[4]?.id || 0],
-        srTyg: Math.round(srTyg * 100) / 100,
-        gru25,
+        srTyg: Math.round(srTyg),
         notatki: weeks[0]?.notatki || null,
         status: weeks[0]?.status || null,
       });
@@ -597,10 +597,18 @@ export class DatabaseStorage implements IStorage {
       .filter(name => grupyMap[name] && grupyMap[name].length > 0)
       .map(name => ({
         grupa: name,
-        klienci: grupyMap[name].sort((a, b) => b.sty26 - a.sty26),
+        klienci: grupyMap[name].sort((a, b) => b.prev1 - a.prev1),
       }));
 
-    return { groups };
+    return { groups, prev1Month, prev1Year, prev2Month, prev2Year, prevMonthTotalSales };
+  }
+
+  async getAvailablePlanMonths(): Promise<Array<{rok: number; miesiac: number}>> {
+    const rows = await db.selectDistinct({
+      rok: clientSalesWeekly.rok,
+      miesiac: clientSalesWeekly.miesiac,
+    }).from(clientSalesWeekly).orderBy(desc(clientSalesWeekly.rok), desc(clientSalesWeekly.miesiac));
+    return rows;
   }
 
   async updateWeeklyPlan(id: number, realizacja: number): Promise<void> {

@@ -494,10 +494,20 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/plan/available-months", authMiddleware, async (req, res) => {
+    try {
+      const months = await storage.getAvailablePlanMonths();
+      res.json(months);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/plan", authMiddleware, async (req, res) => {
     try {
-      const rok = Number(req.query.rok) || 2026;
-      const miesiac = Number(req.query.miesiac) || 2;
+      const now = new Date();
+      const rok = Number(req.query.rok) || now.getFullYear();
+      const miesiac = Number(req.query.miesiac) || (now.getMonth() + 1);
       const user = (req as any).user;
       const opiekun = user.rola === "handlowiec" ? user.imie : undefined;
       const data = await storage.getPlanData(rok, miesiac, opiekun);
