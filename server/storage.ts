@@ -74,6 +74,9 @@ export interface IStorage {
   updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void>;
   getMonthlyFixedCosts(miesiac: number): Promise<number>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
+
+  importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>, addToExisting: boolean): Promise<void>;
+  getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1236,6 +1239,134 @@ export class DatabaseStorage implements IStorage {
     }
 
     return daysImported;
+  }
+
+  async importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>, addToExisting: boolean): Promise<void> {
+    for (const row of data) {
+      const existing = await db.select().from(clientSales)
+        .where(and(
+          eq(clientSales.clientId, row.clientId),
+          eq(clientSales.rok, rok),
+          eq(clientSales.miesiac, miesiac)
+        ));
+
+      if (existing.length > 0) {
+        const newVal = addToExisting ? Number(existing[0].sprzedaz || 0) + row.sprzedaz : row.sprzedaz;
+        await db.update(clientSales)
+          .set({ sprzedaz: String(newVal) })
+          .where(eq(clientSales.id, existing[0].id));
+      } else {
+        await db.insert(clientSales).values({
+          clientId: row.clientId,
+          rok,
+          miesiac,
+          sprzedaz: String(row.sprzedaz),
+        });
+      }
+    }
+  }
+
+  async getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any> {
+    const now = new Date();
+    const isCurrentMonth = now.getFullYear() === rok && (now.getMonth() + 1) === miesiac;
+    const isPastMonth = rok < now.getFullYear() || (rok === now.getFullYear() && miesiac < (now.getMonth() + 1));
+
+    const countWorkdays = (y: number, m: number, upToDay: number) => {
+      let count = 0;
+      for (let d = 1; d <= upToDay; d++) {
+        const dow = new Date(y, m - 1, d).getDay();
+        if (dow >= 1 && dow <= 5) count++;
+      }
+      return count;
+    };
+
+    const daysInMonth = new Date(rok, miesiac, 0).getDate();
+    const dniRoboczeMiesiac = countWorkdays(rok, miesiac, daysInMonth);
+    let dniRoboczeMiniete: number;
+    if (isCurrentMonth) {
+      dniRoboczeMiniete = countWorkdays(rok, miesiac, now.getDate());
+    } else if (isPastMonth) {
+      dniRoboczeMiniete = dniRoboczeMiesiac;
+    } else {
+      dniRoboczeMiniete = 0;
+    }
+
+    let allClients = await db.select().from(clients).where(eq(clients.aktywny, true));
+    if (opiekun) {
+      allClients = allClients.filter(c => c.opiekun === opiekun);
+    }
+
+    const weeklyData = await db.select().from(clientSalesWeekly)
+      .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+    const weeklyByClient = new Map<number, number>();
+    for (const w of weeklyData) {
+      const current = weeklyByClient.get(w.clientId) || 0;
+      weeklyByClient.set(w.clientId, current + Number(w.plan || 0));
+    }
+
+    const currentSales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const salesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
+    const prevYear = miesiac === 1 ? rok - 1 : rok;
+    const prevSales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prevYear), eq(clientSales.miesiac, prevMonth)));
+    const prevMap = new Map(prevSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    const rows: any[] = [];
+    for (const client of allClients) {
+      let cel = weeklyByClient.get(client.id) || 0;
+      if (cel === 0) {
+        const prevSale = prevMap.get(client.id) || 0;
+        if (prevSale > 0) cel = prevSale * 1.05;
+      }
+
+      const realizacja = salesMap.get(client.id) || 0;
+      const celNaDzis = dniRoboczeMiesiac > 0 ? (cel / dniRoboczeMiesiac) * dniRoboczeMiniete : 0;
+      const roznica = realizacja - celNaDzis;
+      const procent = celNaDzis > 0 ? (realizacja / celNaDzis) * 100 : (realizacja > 0 ? 100 : 0);
+
+      rows.push({
+        clientId: client.id,
+        klient: client.klient,
+        opiekun: client.opiekun,
+        grupa: client.grupaMvp || "Inne",
+        cel: Math.round(cel),
+        celNaDzis: Math.round(celNaDzis),
+        realizacja: Math.round(realizacja),
+        roznica: Math.round(roznica),
+        procent: Math.round(procent * 10) / 10,
+      });
+    }
+
+    rows.sort((a, b) => b.procent - a.procent);
+
+    const sumaCel = rows.reduce((s, r) => s + r.cel, 0);
+    const sumaCelNaDzis = rows.reduce((s, r) => s + r.celNaDzis, 0);
+    const sumaRealizacja = rows.reduce((s, r) => s + r.realizacja, 0);
+    const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
+    const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
+
+    const perOpiekun: Record<string, {realizacja: number; celNaDzis: number; cel: number}> = {};
+    for (const r of rows) {
+      if (!perOpiekun[r.opiekun]) perOpiekun[r.opiekun] = {realizacja: 0, celNaDzis: 0, cel: 0};
+      perOpiekun[r.opiekun].realizacja += r.realizacja;
+      perOpiekun[r.opiekun].celNaDzis += r.celNaDzis;
+      perOpiekun[r.opiekun].cel += r.cel;
+    }
+
+    return {
+      rows,
+      dniRoboczeMiniete,
+      dniRoboczeMiesiac,
+      sumaCel,
+      sumaCelNaDzis: Math.round(sumaCelNaDzis),
+      sumaRealizacja,
+      sumaRoznica: Math.round(sumaRoznica),
+      sumaProcent: Math.round(sumaProcent * 10) / 10,
+      perOpiekun,
+    };
   }
 }
 

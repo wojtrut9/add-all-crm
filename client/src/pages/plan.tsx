@@ -1,13 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { authFetch, useAuth } from "@/lib/auth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { queryClient } from "@/lib/queryClient";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -30,128 +28,23 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, Wand2, AlertTriangle } from "lucide-react";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, CalendarCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const MONTHS = ["Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec", "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"];
-const MONTHS_SHORT = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paz", "Lis", "Gru"];
 
 function fmtPLN(val: number) {
   return Math.round(val).toLocaleString("pl-PL") + " PLN";
 }
 
-function TrendArrow({ prev1, prev2 }: { prev1: number; prev2: number }) {
-  if (prev2 === 0 && prev1 === 0) return <span className="text-muted-foreground"><ArrowRight className="w-3 h-3 inline" /></span>;
-  if (prev2 === 0) return <span className="text-green-600 dark:text-green-400"><ArrowUp className="w-3 h-3 inline" /></span>;
-  const change = ((prev1 - prev2) / prev2) * 100;
-  if (Math.abs(change) < 1) return <span className="text-muted-foreground"><ArrowRight className="w-3 h-3 inline" /></span>;
-  if (change > 0) return <span className="text-green-600 dark:text-green-400"><ArrowUp className="w-3 h-3 inline" /></span>;
-  return <span className="text-red-600 dark:text-red-400"><ArrowDown className="w-3 h-3 inline" /></span>;
+function fmtNum(val: number) {
+  return Math.round(val).toLocaleString("pl-PL");
 }
 
-function WeekInput({ weeklyId, initialValue, placeholder, onSaved, onLocalChange }: {
-  weeklyId: number;
-  initialValue: number;
-  placeholder?: string;
-  onSaved: () => void;
-  onLocalChange?: (val: number) => void;
-}) {
-  const [value, setValue] = useState(String(initialValue || ""));
-  const [dirty, setDirty] = useState(false);
-  const { toast } = useToast();
-  const isDisabled = !weeklyId || weeklyId <= 0;
+type SortKey = "klient" | "opiekun" | "cel" | "celNaDzis" | "realizacja" | "roznica" | "procent";
+type SortDir = "asc" | "desc";
 
-  const mutation = useMutation({
-    mutationFn: async (realizacja: number) => {
-      if (isDisabled) throw new Error("Brak rekordu tygodniowego");
-      await apiRequest("PATCH", `/api/plan/weekly/${weeklyId}`, { realizacja });
-    },
-    onSuccess: () => {
-      setDirty(false);
-      onSaved();
-    },
-    onError: () => {
-      toast({ title: "Blad zapisu", description: isDisabled ? "Brak rekordu w bazie" : undefined, variant: "destructive" });
-    },
-  });
-
-  const handleBlur = useCallback(() => {
-    const num = parseFloat(value) || 0;
-    if (dirty && !isDisabled) {
-      mutation.mutate(num);
-    }
-  }, [value, dirty, isDisabled]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      const num = parseFloat(value) || 0;
-      if (dirty && !isDisabled) {
-        mutation.mutate(num);
-      }
-    }
-  }, [value, dirty, isDisabled]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
-    setDirty(true);
-    if (onLocalChange) {
-      onLocalChange(parseFloat(e.target.value) || 0);
-    }
-  };
-
-  if (isDisabled) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Input
-            type="number"
-            className="w-20 h-8 text-right text-sm bg-muted/50 border-muted text-muted-foreground cursor-not-allowed"
-            value=""
-            disabled
-            data-testid={`input-week-${weeklyId}`}
-          />
-        </TooltipTrigger>
-        <TooltipContent>Brak planu</TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <Input
-      type="number"
-      step="0.01"
-      className="w-20 h-8 text-right text-sm bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
-      value={value}
-      placeholder={placeholder}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      data-testid={`input-week-${weeklyId}`}
-    />
-  );
-}
-
-function parsePlanCSV(content: string): Array<{klient: string; cel: number}> {
-  const lines = content.split("\n").map(l => l.replace(/\r$/, "")).filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const values = line.split(",").map(v => v.trim());
-    const row: Record<string, string> = {};
-    headers.forEach((h, i) => { row[h] = values[i] || ""; });
-    return {
-      klient: row["Klient"] || row["klient"] || "",
-      cel: parseFloat(row["Cel"] || row["cel"] || "0") || 0,
-    };
-  }).filter(r => r.klient && r.cel > 0);
-}
-
-function ImportPlanModal({ open, onClose, defaultRok, defaultMiesiac }: {
+function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
   open: boolean;
   onClose: () => void;
   defaultRok: number;
@@ -159,82 +52,73 @@ function ImportPlanModal({ open, onClose, defaultRok, defaultMiesiac }: {
 }) {
   const [importRok, setImportRok] = useState(defaultRok);
   const [importMiesiac, setImportMiesiac] = useState(defaultMiesiac);
-  const [parsedData, setParsedData] = useState<Array<{klient: string; cel: number}>>([]);
-  const [fileName, setFileName] = useState("");
-  const [existsWarning, setExistsWarning] = useState(false);
-  const [existsCount, setExistsCount] = useState(0);
+  const [addToExisting, setAddToExisting] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [importing, setImporting] = useState(false);
+  const [preview, setPreview] = useState<{details: Array<{name: string; value: number}>; total: number; notFound: string[]; imported: number} | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const importMutation = useMutation({
-    mutationFn: async (data: typeof parsedData) => {
-      const res = await apiRequest("POST", "/api/plan/import", { rok: importRok, miesiac: importMiesiac, data });
-      return res.json();
-    },
-    onSuccess: (result) => {
-      const notFoundMsg = result.notFound?.length > 0 ? ` Nieznalezieni: ${result.notFound.join(", ")}` : "";
-      toast({ title: `Plan na ${MONTHS[importMiesiac - 1]} ${importRok}`, description: `${result.imported} klientow, 4 tygodnie.${notFoundMsg}` });
-      queryClient.invalidateQueries({ queryKey: ["/api/plan"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/plan/available-months"] });
-      resetAndClose();
-    },
-    onError: () => {
-      toast({ title: "Blad importu planu", variant: "destructive" });
-    },
-  });
-
   const resetAndClose = () => {
-    setParsedData([]);
-    setFileName("");
-    setExistsWarning(false);
+    setResult(null);
+    setPreview(null);
+    setImporting(false);
     onClose();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const content = ev.target?.result as string;
-      setParsedData(parsePlanCSV(content));
-      setExistsWarning(false);
-    };
-    reader.readAsText(file);
-  };
 
-  const handleImport = async () => {
-    if (parsedData.length === 0) return;
-    const checkRes = await authFetch(`/api/plan/check?rok=${importRok}&miesiac=${importMiesiac}`);
-    const checkResult = await checkRes.json();
-    if (checkResult.exists && !existsWarning) {
-      setExistsWarning(true);
-      setExistsCount(checkResult.count);
-      return;
-    }
-    if (existsWarning) {
-      await apiRequest("DELETE", `/api/plan/monthly?rok=${importRok}&miesiac=${importMiesiac}`);
-    }
-    importMutation.mutate(parsedData);
-  };
+    setImporting(true);
+    setResult(null);
+    setPreview(null);
 
-  const totalCel = parsedData.reduce((s, r) => s + r.cel, 0);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("rok", String(importRok));
+    formData.append("miesiac", String(importMiesiac));
+    formData.append("addToExisting", String(addToExisting));
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/wz/import", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      setResult(data);
+      toast({
+        title: `Import WZ - ${MONTHS[importMiesiac - 1]} ${importRok}`,
+        description: `Zaimportowano ${data.imported} klientow, wartosc: ${fmtPLN(data.total)}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+    } catch (err: any) {
+      toast({ title: "Blad importu WZ", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetAndClose(); }}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Import planu z CSV</DialogTitle>
+          <DialogTitle>Import WZ (obroty z iBiznes)</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
-            <Select value={String(importMiesiac)} onValueChange={(v) => { setImportMiesiac(Number(v)); setExistsWarning(false); }}>
+            <Select value={String(importMiesiac)} onValueChange={(v) => setImportMiesiac(Number(v))}>
               <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {MONTHS.map((m, i) => (<SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>))}
               </SelectContent>
             </Select>
-            <Select value={String(importRok)} onValueChange={(v) => { setImportRok(Number(v)); setExistsWarning(false); }}>
+            <Select value={String(importRok)} onValueChange={(v) => setImportRok(Number(v))}>
               <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="2025">2025</SelectItem>
@@ -242,201 +126,116 @@ function ImportPlanModal({ open, onClose, defaultRok, defaultMiesiac }: {
                 <SelectItem value="2027">2027</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => fileRef.current?.click()} data-testid="button-upload-plan-csv">
-              <Upload className="w-4 h-4 mr-2" /> {fileName || "Wybierz plik CSV"}
+            <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={importing} data-testid="button-upload-wz">
+              <Upload className="w-4 h-4 mr-2" /> {importing ? "Importowanie..." : "Wybierz plik XLS/XLSX"}
             </Button>
-            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
+            <input ref={fileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleFileUpload} />
           </div>
-          {existsWarning && (
-            <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
-              <span className="text-sm">Plan na {MONTHS[importMiesiac - 1]} {importRok} juz istnieje ({existsCount} rekordow). Kliknij ponownie aby nadpisac.</span>
-            </div>
-          )}
-          {parsedData.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Podglad: {parsedData.length} klientow, laczny CEL: {fmtPLN(totalCel)}</p>
-              <div className="overflow-auto max-h-[300px] border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Lp.</TableHead>
-                      <TableHead>Klient</TableHead>
-                      <TableHead className="text-right">CEL</TableHead>
-                      <TableHead className="text-right">Tyg. plan</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {parsedData.slice(0, 50).map((r, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                        <TableCell className="font-medium">{r.klient}</TableCell>
-                        <TableCell className="text-right">{fmtPLN(r.cel)}</TableCell>
-                        <TableCell className="text-right">{fmtPLN(r.cel / 4)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="add-existing"
+              checked={addToExisting}
+              onCheckedChange={(v) => setAddToExisting(v === true)}
+              data-testid="checkbox-add-existing"
+            />
+            <label htmlFor="add-existing" className="text-sm text-muted-foreground cursor-pointer">
+              Dodaj do istniejacych (domyslnie: nadpisz)
+            </label>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Plik XLS/XLSX z iBiznes. Kolumna A = Typ (filtruje WZ), G = Klient, R = Wartosc netto.
+          </p>
+
+          {result && (
+            <div className="space-y-3">
+              <div className="p-3 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700">
+                <p className="text-sm font-medium">Zaimportowano: {result.imported} klientow, wartosc: {fmtPLN(result.total)}</p>
               </div>
+
+              {result.notFound?.length > 0 && (
+                <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700">
+                  <p className="text-sm font-medium mb-1">Nieznalezieni klienci ({result.notFound.length}):</p>
+                  <ul className="text-xs space-y-1">
+                    {result.notFound.map((n: string, i: number) => (
+                      <li key={i}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.details?.length > 0 && (
+                <div className="overflow-auto max-h-[250px] border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Lp.</TableHead>
+                        <TableHead>Klient</TableHead>
+                        <TableHead className="text-right">Wartosc netto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {result.details
+                        .sort((a: any, b: any) => b.value - a.value)
+                        .map((d: any, i: number) => (
+                        <TableRow key={i}>
+                          <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                          <TableCell className="font-medium">{d.name}</TableCell>
+                          <TableCell className="text-right">{fmtPLN(d.value)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={resetAndClose}>Anuluj</Button>
-          <Button onClick={handleImport} disabled={parsedData.length === 0 || importMutation.isPending} data-testid="button-do-plan-import">
-            {importMutation.isPending ? "Importowanie..." : existsWarning ? "Nadpisz i importuj" : "Importuj plan"}
-          </Button>
+          <Button variant="outline" onClick={resetAndClose}>Zamknij</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function AutoGenerateModal({ open, onClose, defaultRok, defaultMiesiac }: {
-  open: boolean;
-  onClose: () => void;
-  defaultRok: number;
-  defaultMiesiac: number;
-}) {
-  const [genRok, setGenRok] = useState(defaultRok);
-  const [genMiesiac, setGenMiesiac] = useState(defaultMiesiac);
-  const [wspolczynnik, setWspolczynnik] = useState("1.05");
-  const [existsWarning, setExistsWarning] = useState(false);
-  const { toast } = useToast();
+function getRowBgClass(procent: number, realizacja: number) {
+  if (realizacja === 0) return "bg-muted/30 italic";
+  if (procent >= 100) return "bg-green-50 dark:bg-green-900/10";
+  if (procent >= 70) return "";
+  if (procent >= 50) return "bg-yellow-50 dark:bg-yellow-900/10";
+  return "bg-red-50 dark:bg-red-900/10";
+}
 
-  const generateMutation = useMutation({
-    mutationFn: async () => {
-      const checkRes = await authFetch(`/api/plan/check?rok=${genRok}&miesiac=${genMiesiac}`);
-      const checkResult = await checkRes.json();
-      if (checkResult.exists && !existsWarning) {
-        setExistsWarning(true);
-        throw new Error("EXISTS");
-      }
-      if (existsWarning) {
-        await apiRequest("DELETE", `/api/plan/monthly?rok=${genRok}&miesiac=${genMiesiac}`);
-      }
-      const res = await apiRequest("POST", "/api/plan/auto-generate", { rok: genRok, miesiac: genMiesiac, wspolczynnik: parseFloat(wspolczynnik) || 1.05 });
-      return res.json();
-    },
-    onSuccess: (result) => {
-      toast({ title: `Plan na ${MONTHS[genMiesiac - 1]} ${genRok}`, description: `Wygenerowano dla ${result.generated} klientow. Pominietych: ${result.skipped}` });
-      queryClient.invalidateQueries({ queryKey: ["/api/plan"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/plan/available-months"] });
-      setExistsWarning(false);
-      onClose();
-    },
-    onError: (err: any) => {
-      if (err.message === "EXISTS") return;
-      toast({ title: "Blad generowania planu", variant: "destructive" });
-    },
-  });
-
-  const pctLabel = ((parseFloat(wspolczynnik) || 1) - 1) * 100;
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { setExistsWarning(false); onClose(); } }}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Generuj plan automatycznie</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Select value={String(genMiesiac)} onValueChange={(v) => { setGenMiesiac(Number(v)); setExistsWarning(false); }}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m, i) => (<SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={String(genRok)} onValueChange={(v) => { setGenRok(Number(v)); setExistsWarning(false); }}>
-              <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2026">2026</SelectItem>
-                <SelectItem value="2027">2027</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Wspolczynnik wzrostu</label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                step="0.01"
-                value={wspolczynnik}
-                onChange={(e) => setWspolczynnik(e.target.value)}
-                className="w-24"
-                data-testid="input-wspolczynnik"
-              />
-              <span className="text-sm text-muted-foreground">({pctLabel >= 0 ? "+" : ""}{pctLabel.toFixed(0)}%)</span>
-            </div>
-            <p className="text-xs text-muted-foreground">CEL = sprzedaz poprz. miesiaca x wspolczynnik</p>
-          </div>
-          {existsWarning && (
-            <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
-              <span className="text-sm">Plan juz istnieje. Kliknij ponownie aby nadpisac.</span>
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => { setExistsWarning(false); onClose(); }}>Anuluj</Button>
-          <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending} data-testid="button-do-auto-generate">
-            {generateMutation.isPending ? "Generowanie..." : existsWarning ? "Nadpisz i generuj" : "Generuj plan"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+function StatusIcon({ procent, realizacja }: { procent: number; realizacja: number }) {
+  if (realizacja === 0) return <span className="text-muted-foreground">-</span>;
+  if (procent >= 100) return <ArrowUp className="w-4 h-4 text-green-600 dark:text-green-400" />;
+  if (procent >= 90) return <ArrowRight className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
+  return <ArrowDown className="w-4 h-4 text-red-600 dark:text-red-400" />;
 }
 
 export default function PlanPage() {
   const now = new Date();
   const [rok, setRok] = useState(now.getFullYear());
   const [miesiac, setMiesiac] = useState(now.getMonth() + 1);
-  const [initialized, setInitialized] = useState(false);
-  const [localWeekValues, setLocalWeekValues] = useState<Record<string, Record<number, number>>>({});
-  const [importPlanOpen, setImportPlanOpen] = useState(false);
-  const [autoGenOpen, setAutoGenOpen] = useState(false);
+  const [importWzOpen, setImportWzOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("procent");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [filterOpiekun, setFilterOpiekun] = useState("all");
+  const [filterGrupa, setFilterGrupa] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const { user } = useAuth();
   const isAdmin = user?.rola === "admin";
 
-  const { data: availableMonths } = useQuery({
-    queryKey: ["/api/plan/available-months"],
-    queryFn: async () => {
-      const res = await authFetch("/api/plan/available-months");
-      if (!res.ok) return [];
-      return res.json();
-    },
-  });
-
-  useEffect(() => {
-    if (availableMonths && availableMonths.length > 0 && !initialized) {
-      const currentExists = availableMonths.some((m: any) => m.rok === rok && m.miesiac === miesiac);
-      if (!currentExists) {
-        setRok(availableMonths[0].rok);
-        setMiesiac(availableMonths[0].miesiac);
-      }
-      setInitialized(true);
-    }
-  }, [availableMonths, initialized]);
-
-  useEffect(() => {
-    setLocalWeekValues({});
-  }, [rok, miesiac]);
-
   const { data, isLoading } = useQuery({
-    queryKey: ["/api/plan", rok, miesiac],
+    queryKey: ["/api/plan/realization", rok, miesiac],
     queryFn: async () => {
-      const res = await authFetch(`/api/plan?rok=${rok}&miesiac=${miesiac}`);
+      const res = await authFetch(`/api/plan/realization?rok=${rok}&miesiac=${miesiac}`);
       if (!res.ok) return null;
       return res.json();
     },
   });
-
-  const handleSaved = useCallback(() => {
-    setLocalWeekValues({});
-    queryClient.invalidateQueries({ queryKey: ["/api/plan", rok, miesiac] });
-  }, [rok, miesiac]);
 
   const goToPrev = () => {
     if (miesiac === 1) { setMiesiac(12); setRok(rok - 1); }
@@ -445,6 +244,15 @@ export default function PlanPage() {
   const goToNext = () => {
     if (miesiac === 12) { setMiesiac(1); setRok(rok + 1); }
     else setMiesiac(miesiac + 1);
+  };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "klient" || key === "opiekun" ? "asc" : "desc");
+    }
   };
 
   if (isLoading) {
@@ -462,46 +270,79 @@ export default function PlanPage() {
     );
   }
 
-  const groups: any[] = data?.groups || [];
-  const prev1Month = data?.prev1Month || 1;
-  const prev1Year = data?.prev1Year || 2026;
-  const prev2Month = data?.prev2Month || 12;
-  const prev2Year = data?.prev2Year || 2025;
-  const prevMonthTotalSales = Number(data?.prevMonthTotalSales || 0);
+  const rows: any[] = data?.rows || [];
+  const dniRoboczeMiniete = data?.dniRoboczeMiniete || 0;
+  const dniRoboczeMiesiac = data?.dniRoboczeMiesiac || 0;
+  const sumaCel = data?.sumaCel || 0;
+  const sumaCelNaDzis = data?.sumaCelNaDzis || 0;
+  const sumaRealizacja = data?.sumaRealizacja || 0;
+  const sumaRoznica = data?.sumaRoznica || 0;
+  const sumaProcent = data?.sumaProcent || 0;
+  const perOpiekun: Record<string, {realizacja: number; celNaDzis: number; cel: number}> = data?.perOpiekun || {};
 
-  const prev1Label = `${MONTHS_SHORT[prev1Month - 1]} ${String(prev1Year).slice(2)}`;
-  const prev2Label = `${MONTHS_SHORT[prev2Month - 1]} ${String(prev2Year).slice(2)}`;
+  let filteredRows = rows;
+  if (filterOpiekun !== "all") {
+    filteredRows = filteredRows.filter(r => r.opiekun === filterOpiekun);
+  }
+  if (filterGrupa !== "all") {
+    filteredRows = filteredRows.filter(r => {
+      const g = (r.grupa || "").toLowerCase();
+      if (filterGrupa === "Premium") return g.includes("premium");
+      if (filterGrupa === "Standard") return g.includes("standard");
+      if (filterGrupa === "Weryfikacja") return g.includes("weryfikacja");
+      return true;
+    });
+  }
+  if (filterStatus !== "all") {
+    filteredRows = filteredRows.filter(r => {
+      if (filterStatus === "above") return r.procent >= 100;
+      if (filterStatus === "below") return r.procent < 100;
+      return true;
+    });
+  }
 
-  const allClients = groups.flatMap((g: any) => g.klienci || []);
-  const totalCel = allClients.reduce((s: number, k: any) => s + (k.cel || 0), 0);
+  const sortedRows = [...filteredRows].sort((a, b) => {
+    let aVal = a[sortKey];
+    let bVal = b[sortKey];
+    if (typeof aVal === "string") {
+      aVal = aVal.toLowerCase();
+      bVal = (bVal || "").toLowerCase();
+      return sortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+  });
 
-  const getClientWeekVal = (clientId: number, week: number, original: number) => {
-    const key = `${clientId}`;
-    if (localWeekValues[key] && localWeekValues[key][week] !== undefined) return localWeekValues[key][week];
-    return original;
+  const filteredSumaCel = filteredRows.reduce((s, r) => s + r.cel, 0);
+  const filteredSumaCelNaDzis = filteredRows.reduce((s, r) => s + r.celNaDzis, 0);
+  const filteredSumaRealizacja = filteredRows.reduce((s, r) => s + r.realizacja, 0);
+  const filteredSumaRoznica = filteredSumaRealizacja - filteredSumaCelNaDzis;
+  const filteredSumaProcent = filteredSumaCelNaDzis > 0 ? (filteredSumaRealizacja / filteredSumaCelNaDzis) * 100 : 0;
+
+  const isAbovePlan = sumaRealizacja >= sumaCelNaDzis;
+  const statusDiff = Math.abs(sumaRealizacja - sumaCelNaDzis);
+
+  const SortableHead = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
+    <TableHead
+      className={`cursor-pointer select-none hover-elevate ${className || ""}`}
+      onClick={() => handleSort(field)}
+      data-testid={`sort-${field}`}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        {sortKey === field && (
+          sortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+        )}
+      </span>
+    </TableHead>
+  );
+
+  const grupaShort = (g: string) => {
+    if (!g) return "-";
+    if (g.toLowerCase().includes("premium")) return "Premium";
+    if (g.toLowerCase().includes("standard")) return "Standard";
+    if (g.toLowerCase().includes("weryfikacja")) return "Weryf.";
+    return "Inne";
   };
-
-  const getClientSuma = (k: any) => {
-    return getClientWeekVal(k.clientId, 1, k.tydz1) + getClientWeekVal(k.clientId, 2, k.tydz2) +
-      getClientWeekVal(k.clientId, 3, k.tydz3) + getClientWeekVal(k.clientId, 4, k.tydz4);
-  };
-
-  const totalRealizacja = allClients.reduce((s: number, k: any) => s + getClientSuma(k), 0);
-  const pctRealizacji = totalCel > 0 ? (totalRealizacja / totalCel * 100) : 0;
-
-  const pctColor = pctRealizacji >= 80 ? "text-green-600 dark:text-green-400" : pctRealizacji >= 50 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400";
-  const pctBg = pctRealizacji >= 80 ? "hsl(142, 76%, 40%)" : pctRealizacji >= 50 ? "hsl(45, 85%, 45%)" : "hsl(0, 84%, 45%)";
-
-  const handleLocalChange = (clientId: number, week: number, val: number) => {
-    setLocalWeekValues(prev => ({
-      ...prev,
-      [`${clientId}`]: { ...(prev[`${clientId}`] || {}), [week]: val },
-    }));
-  };
-
-  let grandTotalPrev1 = 0, grandTotalPrev2 = 0, grandTotalCel = 0;
-  let grandTotalT1 = 0, grandTotalT2 = 0, grandTotalT3 = 0, grandTotalT4 = 0;
-  let grandTotalReal = 0;
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto overflow-auto">
@@ -511,19 +352,14 @@ export default function PlanPage() {
             <Target className="w-6 h-6" /> Plan miesieczny
           </h1>
           <p className="text-sm text-muted-foreground">
-            Planowanie i realizacja tygodniowa
+            Tracking realizacji — {MONTHS[miesiac - 1]} {rok} (dni robocze: {dniRoboczeMiniete}/{dniRoboczeMiesiac})
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {isAdmin && (
-            <>
-              <Button variant="outline" onClick={() => setImportPlanOpen(true)} data-testid="button-import-plan">
-                <Upload className="w-4 h-4 mr-2" /> Import CSV
-              </Button>
-              <Button variant="outline" onClick={() => setAutoGenOpen(true)} data-testid="button-auto-gen">
-                <Wand2 className="w-4 h-4 mr-2" /> Generuj auto
-              </Button>
-            </>
+            <Button variant="outline" onClick={() => setImportWzOpen(true)} data-testid="button-import-wz">
+              <Upload className="w-4 h-4 mr-2" /> Import WZ
+            </Button>
           )}
           <Button size="icon" variant="outline" onClick={goToPrev} data-testid="button-prev-month">
             <ChevronLeft className="w-4 h-4" />
@@ -557,229 +393,166 @@ export default function PlanPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Sprzedaz {prev1Label}</p>
-            <p className="text-xl font-bold" data-testid="text-prev-sales">{fmtPLN(prevMonthTotalSales)}</p>
+            <p className="text-sm text-muted-foreground">Cel miesiaca</p>
+            <p className="text-xl font-bold" data-testid="text-cel-miesiaca">{fmtPLN(sumaCel)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">CEL {MONTHS[miesiac - 1]}</p>
-            <p className="text-xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-cel">{fmtPLN(totalCel)}</p>
+            <p className="text-sm text-muted-foreground">Cel na dzis</p>
+            <p className="text-xl font-bold" data-testid="text-cel-na-dzis">{fmtPLN(sumaCelNaDzis)}</p>
+            <p className="text-xs text-muted-foreground">{fmtPLN(sumaCel)} / {dniRoboczeMiesiac} x {dniRoboczeMiniete}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Realizacja</p>
-            <p className="text-xl font-bold" data-testid="text-total-realizacja">{fmtPLN(totalRealizacja)}</p>
+            <p className="text-sm text-muted-foreground">Realizacja (WZ)</p>
+            <p className="text-xl font-bold" data-testid="text-realizacja">{fmtPLN(sumaRealizacja)}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">% Realizacji</p>
-            <p className={`text-3xl font-bold ${pctColor}`} data-testid="text-pct-realizacji">
-              {pctRealizacji.toFixed(1)}%
-            </p>
-            <div className="w-full h-2.5 rounded-full overflow-hidden bg-muted">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${Math.min(100, pctRealizacji)}%`, backgroundColor: pctBg }}
-              />
+        <Card className={isAbovePlan ? "border-green-400 dark:border-green-600" : "border-red-400 dark:border-red-600"}>
+          <CardContent className="p-4 text-center">
+            <p className="text-sm text-muted-foreground">Status</p>
+            <div className={`flex items-center justify-center gap-1 ${isAbovePlan ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+              {isAbovePlan ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+              <p className="text-lg font-bold" data-testid="text-status">
+                {isAbovePlan ? "Powyzej planu" : "Ponizej planu"} {isAbovePlan ? "+" : "-"}{fmtPLN(statusDiff)}
+              </p>
             </div>
+            <p className="text-sm font-medium">{sumaProcent.toFixed(1)}%</p>
           </CardContent>
         </Card>
       </div>
 
-      {groups.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Brak danych planowania dla wybranego okresu
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Select value={filterOpiekun} onValueChange={setFilterOpiekun}>
+          <SelectTrigger className="w-[140px]" data-testid="filter-opiekun">
+            <SelectValue placeholder="Opiekun" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszyscy</SelectItem>
+            <SelectItem value="Gosia">Gosia</SelectItem>
+            <SelectItem value="Magda">Magda</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterGrupa} onValueChange={setFilterGrupa}>
+          <SelectTrigger className="w-[140px]" data-testid="filter-grupa">
+            <SelectValue placeholder="Grupa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszystkie</SelectItem>
+            <SelectItem value="Premium">Premium</SelectItem>
+            <SelectItem value="Standard">Standard</SelectItem>
+            <SelectItem value="Weryfikacja">Weryfikacja</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[160px]" data-testid="filter-status">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszyscy</SelectItem>
+            <SelectItem value="above">Powyzej planu</SelectItem>
+            <SelectItem value="below">Ponizej planu</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-sm text-muted-foreground">
+          {sortedRows.length} klientow
+        </span>
+      </div>
+
+      <div className="border rounded-md overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10">#</TableHead>
+              <SortableHead label="Klient" field="klient" />
+              <SortableHead label="Opiekun" field="opiekun" />
+              <TableHead>Grupa</TableHead>
+              <SortableHead label="Cel miesiaca" field="cel" className="text-right" />
+              <SortableHead label="Cel na dzis" field="celNaDzis" className="text-right" />
+              <SortableHead label="Realizacja (WZ)" field="realizacja" className="text-right" />
+              <SortableHead label="Roznica" field="roznica" className="text-right" />
+              <SortableHead label="%" field="procent" className="text-right" />
+              <TableHead className="w-10">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedRows.map((row, idx) => (
+              <TableRow key={row.clientId} className={getRowBgClass(row.procent, row.realizacja)} data-testid={`row-plan-${row.clientId}`}>
+                <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
+                <TableCell className="font-medium">{row.klient}</TableCell>
+                <TableCell>{row.opiekun}</TableCell>
+                <TableCell>
+                  <span className="text-xs text-muted-foreground">{grupaShort(row.grupa)}</span>
+                </TableCell>
+                <TableCell className="text-right font-mono text-sm">{fmtNum(row.cel)}</TableCell>
+                <TableCell className="text-right font-mono text-sm">{fmtNum(row.celNaDzis)}</TableCell>
+                <TableCell className="text-right font-mono text-sm font-medium">{fmtNum(row.realizacja)}</TableCell>
+                <TableCell className={`text-right font-mono text-sm ${row.roznica >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  {row.roznica >= 0 ? "+" : ""}{fmtNum(row.roznica)}
+                </TableCell>
+                <TableCell className={`text-right font-mono text-sm font-medium ${row.procent >= 100 ? "text-green-600 dark:text-green-400" : row.procent >= 90 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"}`}>
+                  {row.realizacja === 0 ? "-" : `${row.procent.toFixed(1)}%`}
+                </TableCell>
+                <TableCell className="text-center">
+                  <StatusIcon procent={row.procent} realizacja={row.realizacja} />
+                </TableCell>
+              </TableRow>
+            ))}
+            <TableRow className="font-bold border-t-2">
+              <TableCell />
+              <TableCell className="text-base">RAZEM</TableCell>
+              <TableCell />
+              <TableCell />
+              <TableCell className="text-right font-mono">{fmtNum(filteredSumaCel)}</TableCell>
+              <TableCell className="text-right font-mono">{fmtNum(filteredSumaCelNaDzis)}</TableCell>
+              <TableCell className="text-right font-mono">{fmtNum(filteredSumaRealizacja)}</TableCell>
+              <TableCell className={`text-right font-mono ${filteredSumaRoznica >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                {filteredSumaRoznica >= 0 ? "+" : ""}{fmtNum(filteredSumaRoznica)}
+              </TableCell>
+              <TableCell className={`text-right font-mono ${filteredSumaProcent >= 100 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                {filteredSumaProcent.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-center">
+                <StatusIcon procent={filteredSumaProcent} realizacja={filteredSumaRealizacja || 1} />
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+
+      {Object.keys(perOpiekun).length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Object.entries(perOpiekun).map(([name, stats]) => {
+            const pct = stats.celNaDzis > 0 ? (stats.realizacja / stats.celNaDzis) * 100 : 0;
+            const isAbove = pct >= 100;
+            return (
+              <Card key={name} className={isAbove ? "border-green-300 dark:border-green-700" : "border-red-300 dark:border-red-700"}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <p className="font-bold text-lg">{name}</p>
+                      <p className="text-sm text-muted-foreground">Cel miesiaca: {fmtPLN(stats.cel)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-lg font-bold ${isAbove ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                        {pct.toFixed(1)}%
+                      </p>
+                      <p className="text-sm">
+                        Realizacja <span className="font-medium">{fmtPLN(stats.realizacja)}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">Cel na dzis: {fmtPLN(stats.celNaDzis)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
-      {groups.map((g: any, gi: number) => {
-        const klienci = g.klienci || [];
-        const groupCel = klienci.reduce((s: number, k: any) => s + (k.cel || 0), 0);
-        const groupPrev1 = klienci.reduce((s: number, k: any) => s + (k.prev1 || 0), 0);
-        const groupPrev2 = klienci.reduce((s: number, k: any) => s + (k.prev2 || 0), 0);
-        const groupT1 = klienci.reduce((s: number, k: any) => s + getClientWeekVal(k.clientId, 1, k.tydz1), 0);
-        const groupT2 = klienci.reduce((s: number, k: any) => s + getClientWeekVal(k.clientId, 2, k.tydz2), 0);
-        const groupT3 = klienci.reduce((s: number, k: any) => s + getClientWeekVal(k.clientId, 3, k.tydz3), 0);
-        const groupT4 = klienci.reduce((s: number, k: any) => s + getClientWeekVal(k.clientId, 4, k.tydz4), 0);
-        const groupReal = groupT1 + groupT2 + groupT3 + groupT4;
-        const groupDiff = groupReal - groupCel;
-        const groupPct = groupCel > 0 ? (groupReal / groupCel * 100) : 0;
-
-        grandTotalPrev1 += groupPrev1;
-        grandTotalPrev2 += groupPrev2;
-        grandTotalCel += groupCel;
-        grandTotalT1 += groupT1;
-        grandTotalT2 += groupT2;
-        grandTotalT3 += groupT3;
-        grandTotalT4 += groupT4;
-        grandTotalReal += groupReal;
-
-        return (
-          <Card key={gi}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle className="text-base">{g.grupa}</CardTitle>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary">Klientow: {klienci.length}</Badge>
-                  <Badge variant="secondary">CEL: {fmtPLN(groupCel)}</Badge>
-                  <Badge variant="secondary">{groupPct.toFixed(1)}%</Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-8">Lp.</TableHead>
-                      <TableHead className="min-w-[160px]">Klient</TableHead>
-                      <TableHead className="text-right w-16">Rabat%</TableHead>
-                      <TableHead className="text-right">{prev2Label}</TableHead>
-                      <TableHead className="text-right">{prev1Label}</TableHead>
-                      <TableHead className="text-center w-10">Trend</TableHead>
-                      <TableHead className="text-right">CEL</TableHead>
-                      <TableHead className="text-center">Tydz 1</TableHead>
-                      <TableHead className="text-center">Tydz 2</TableHead>
-                      <TableHead className="text-center">Tydz 3</TableHead>
-                      <TableHead className="text-center">Tydz 4</TableHead>
-                      <TableHead className="text-right">SUMA</TableHead>
-                      <TableHead className="text-right">Roznica</TableHead>
-                      <TableHead className="text-right">% Real.</TableHead>
-                      <TableHead className="text-right">Sr. Tyg.</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {klienci.map((k: any, ki: number) => {
-                      const suma = getClientSuma(k);
-                      const roznica = suma - (k.cel || 0);
-                      const pctReal = k.cel > 0 ? (suma / k.cel * 100) : 0;
-                      const isPrevZero = k.prev1 === 0;
-                      const isRealized = k.cel > 0 && suma >= k.cel;
-                      const isZeroReal = suma === 0;
-                      const srTygPlaceholder = k.srTyg > 0 ? String(k.srTyg) : undefined;
-
-                      let rowBg = "";
-                      if (isRealized) rowBg = "bg-green-50 dark:bg-green-950/20";
-                      else if (isZeroReal && k.cel > 0) rowBg = "bg-muted/40";
-                      else if (isPrevZero) rowBg = "bg-red-50 dark:bg-red-900/15";
-
-                      let pctClass = "text-muted-foreground";
-                      if (k.cel > 0) {
-                        if (pctReal >= 100) pctClass = "text-green-600 dark:text-green-400 font-medium";
-                        else if (pctReal >= 70) pctClass = "text-yellow-600 dark:text-yellow-400";
-                        else pctClass = "text-red-600 dark:text-red-400";
-                      }
-
-                      return (
-                        <TableRow key={ki} className={rowBg} data-testid={`row-plan-${k.clientId}`}>
-                          <TableCell className="text-muted-foreground text-sm">{ki + 1}</TableCell>
-                          <TableCell className="font-medium text-sm">{k.klient}</TableCell>
-                          <TableCell className="text-right text-sm text-muted-foreground">{k.rabat != null ? `${k.rabat}%` : "-"}</TableCell>
-                          <TableCell className="text-right text-sm text-muted-foreground">{fmtPLN(k.prev2)}</TableCell>
-                          <TableCell className="text-right text-sm">{fmtPLN(k.prev1)}</TableCell>
-                          <TableCell className="text-center"><TrendArrow prev1={k.prev1} prev2={k.prev2} /></TableCell>
-                          <TableCell className="text-right text-sm font-medium">{fmtPLN(k.cel)}</TableCell>
-                          <TableCell className="text-center">
-                            <WeekInput weeklyId={k.weeklyIds[0]} initialValue={k.tydz1} placeholder={srTygPlaceholder} onSaved={handleSaved} onLocalChange={(v) => handleLocalChange(k.clientId, 1, v)} />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <WeekInput weeklyId={k.weeklyIds[1]} initialValue={k.tydz2} placeholder={srTygPlaceholder} onSaved={handleSaved} onLocalChange={(v) => handleLocalChange(k.clientId, 2, v)} />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <WeekInput weeklyId={k.weeklyIds[2]} initialValue={k.tydz3} placeholder={srTygPlaceholder} onSaved={handleSaved} onLocalChange={(v) => handleLocalChange(k.clientId, 3, v)} />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <WeekInput weeklyId={k.weeklyIds[3]} initialValue={k.tydz4} placeholder={srTygPlaceholder} onSaved={handleSaved} onLocalChange={(v) => handleLocalChange(k.clientId, 4, v)} />
-                          </TableCell>
-                          <TableCell className="text-right text-sm font-medium">{fmtPLN(suma)}</TableCell>
-                          <TableCell className={`text-right text-sm ${roznica >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                            {roznica >= 0 ? "+" : ""}{fmtPLN(roznica)}
-                          </TableCell>
-                          <TableCell className={`text-right text-sm ${pctClass}`}>
-                            {k.cel > 0 ? `${pctReal.toFixed(1)}%` : "-"}
-                          </TableCell>
-                          <TableCell className="text-right text-sm text-muted-foreground">{k.srTyg > 0 ? fmtPLN(k.srTyg) : "-"}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    <TableRow className="font-bold bg-muted/50 border-t-2">
-                      <TableCell></TableCell>
-                      <TableCell className="text-base">RAZEM {g.grupa}</TableCell>
-                      <TableCell></TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupPrev2)}</TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupPrev1)}</TableCell>
-                      <TableCell className="text-center"><TrendArrow prev1={groupPrev1} prev2={groupPrev2} /></TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupCel)}</TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupT1)}</TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupT2)}</TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupT3)}</TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupT4)}</TableCell>
-                      <TableCell className="text-right text-base">{fmtPLN(groupReal)}</TableCell>
-                      <TableCell className={`text-right text-base ${groupDiff >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                        {groupDiff >= 0 ? "+" : ""}{fmtPLN(groupDiff)}
-                      </TableCell>
-                      <TableCell className={`text-right text-base ${groupPct >= 100 ? "text-green-600 dark:text-green-400" : groupPct >= 70 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"}`}>
-                        {groupCel > 0 ? `${groupPct.toFixed(1)}%` : "-"}
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      {groups.length > 1 && (() => {
-        const grandDiff = grandTotalReal - grandTotalCel;
-        const grandPct = grandTotalCel > 0 ? (grandTotalReal / grandTotalCel * 100) : 0;
-        return (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableBody>
-                    <TableRow className="font-bold bg-muted border-t-2">
-                      <TableCell className="w-8"></TableCell>
-                      <TableCell className="min-w-[160px] text-lg">RAZEM WSZYSTKO</TableCell>
-                      <TableCell className="w-16"></TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalPrev2)}</TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalPrev1)}</TableCell>
-                      <TableCell className="text-center"><TrendArrow prev1={grandTotalPrev1} prev2={grandTotalPrev2} /></TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalCel)}</TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalT1)}</TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalT2)}</TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalT3)}</TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalT4)}</TableCell>
-                      <TableCell className="text-right text-lg">{fmtPLN(grandTotalReal)}</TableCell>
-                      <TableCell className={`text-right text-lg ${grandDiff >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                        {grandDiff >= 0 ? "+" : ""}{fmtPLN(grandDiff)}
-                      </TableCell>
-                      <TableCell className={`text-right text-lg ${grandPct >= 100 ? "text-green-600 dark:text-green-400" : grandPct >= 70 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"}`}>
-                        {grandTotalCel > 0 ? `${grandPct.toFixed(1)}%` : "-"}
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
-
-      {isAdmin && (
-        <>
-          <ImportPlanModal open={importPlanOpen} onClose={() => setImportPlanOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
-          <AutoGenerateModal open={autoGenOpen} onClose={() => setAutoGenOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
-        </>
-      )}
+      <ImportWzModal open={importWzOpen} onClose={() => setImportWzOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
     </div>
   );
 }

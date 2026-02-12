@@ -636,16 +636,98 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/plan/weekly/:id", authMiddleware, async (req, res) => {
+  app.get("/api/plan/realization", authMiddleware, async (req, res) => {
     try {
-      const id = Number(req.params.id);
-      if (!id || id <= 0) {
-        return res.status(400).json({ message: "Nieprawidlowe ID rekordu tygodniowego. Rekord nie istnieje w bazie." });
-      }
-      const { realizacja } = req.body;
-      await storage.updateWeeklyPlan(id, Number(realizacja));
-      res.json({ success: true });
+      const now = new Date();
+      const rok = Number(req.query.rok) || now.getFullYear();
+      const miesiac = Number(req.query.miesiac) || (now.getMonth() + 1);
+      const user = (req as any).user;
+      const opiekun = user.rola === "handlowiec" ? user.imie : undefined;
+      const data = await storage.getPlanRealization(rok, miesiac, opiekun);
+      res.json(data);
     } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/wz/import", authMiddleware, adminOnly, upload.single("file"), async (req, res) => {
+    try {
+      const XLSX = await import("xlsx");
+      const file = (req as any).file;
+      if (!file) return res.status(400).json({ message: "Brak pliku" });
+
+      const rok = Number(req.body.rok);
+      const miesiac = Number(req.body.miesiac);
+      const addToExisting = req.body.addToExisting === "true";
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+
+      const workbook = XLSX.read(file.buffer, { type: "buffer" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+      const aggregated: Record<string, number> = {};
+      for (const row of rawRows) {
+        const typ = String(row[0] || "").trim();
+        if (typ !== "WZ") continue;
+        const klientName = String(row[6] || "").trim();
+        const wartoscNetto = parseFloat(String(row[17] || "0").replace(/\s/g, "").replace(",", ".")) || 0;
+        if (!klientName || wartoscNetto === 0) continue;
+        aggregated[klientName] = (aggregated[klientName] || 0) + wartoscNetto;
+      }
+
+      const allClients = await storage.getClients();
+      const clientNameMap = new Map<string, number>();
+      for (const c of allClients) {
+        clientNameMap.set(c.klient.trim().toLowerCase(), c.id);
+      }
+
+      const importData: Array<{clientId: number; sprzedaz: number}> = [];
+      const notFound: string[] = [];
+      let total = 0;
+
+      for (const [name, value] of Object.entries(aggregated)) {
+        const nameKey = name.trim().toLowerCase();
+        let clientId = clientNameMap.get(nameKey);
+
+        if (!clientId) {
+          for (const c of allClients) {
+            const cName = c.klient.trim().toLowerCase();
+            if (cName.includes(nameKey) || nameKey.includes(cName)) {
+              clientId = c.id;
+              break;
+            }
+          }
+        }
+
+        if (!clientId) {
+          const nameNorm = nameKey.replace(/[\s\-_]/g, "");
+          for (const c of allClients) {
+            const cNorm = c.klient.trim().toLowerCase().replace(/[\s\-_]/g, "");
+            if (cNorm.includes(nameNorm) || nameNorm.includes(cNorm)) {
+              clientId = c.id;
+              break;
+            }
+          }
+        }
+
+        if (!clientId) {
+          notFound.push(name);
+        } else {
+          importData.push({ clientId, sprzedaz: Math.round(value * 100) / 100 });
+          total += value;
+        }
+      }
+
+      await storage.importWzData(rok, miesiac, importData, addToExisting);
+
+      res.json({
+        imported: importData.length,
+        total: Math.round(total),
+        notFound,
+        details: Object.entries(aggregated).map(([name, value]) => ({ name, value: Math.round(value) })),
+      });
+    } catch (err: any) {
+      console.error("WZ import error:", err);
       res.status(500).json({ message: err.message });
     }
   });
