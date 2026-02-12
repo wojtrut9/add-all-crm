@@ -1300,8 +1300,9 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
     const weeklyByClient = new Map<number, number>();
     for (const w of weeklyData) {
-      const current = weeklyByClient.get(w.clientId) || 0;
-      weeklyByClient.set(w.clientId, current + Number(w.plan || 0));
+      if (!weeklyByClient.has(w.clientId)) {
+        weeklyByClient.set(w.clientId, Number(w.plan || 0));
+      }
     }
 
     const currentSales = await db.select().from(clientSales)
