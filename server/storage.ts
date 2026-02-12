@@ -488,6 +488,7 @@ export class DatabaseStorage implements IStorage {
         clientName: clients.klient,
         kwota: contacts.kwota,
         data: contacts.data,
+        status: contacts.status,
       })
       .from(contacts)
       .leftJoin(clients, eq(contacts.clientId, clients.id))
@@ -496,9 +497,102 @@ export class DatabaseStorage implements IStorage {
         eq(contacts.status, "Zamowil"),
       ))
       .orderBy(desc(contacts.data))
-      .limit(20);
+      .limit(30);
 
-    return { monthSales, prevMonthSales, monthTarget, recentOrders };
+    const monthStart = `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`;
+    const monthEnd = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${new Date(currentYear, currentMonth, 0).getDate()}`;
+
+    const allMonthContacts = await db.select().from(contacts)
+      .where(and(
+        eq(contacts.opiekun, opiekun),
+        sql`${contacts.data} >= ${monthStart}`,
+        sql`${contacts.data} <= ${monthEnd}`,
+      ));
+
+    const monthOrders = allMonthContacts.filter(c => c.status === "Zamowil");
+    const monthOrdersCount = monthOrders.length;
+    const monthOrdersTotal = monthOrders.reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+    const totalContacts = allMonthContacts.length;
+    const conversionRate = totalContacts > 0 ? (monthOrdersCount / totalContacts) * 100 : 0;
+
+    const today = now.toISOString().split("T")[0];
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - mondayOffset);
+    const weekStartStr = weekStart.toISOString().split("T")[0];
+
+    const weekContacts = allMonthContacts.filter(c => c.data >= weekStartStr && c.data <= today);
+    const weekOrders = weekContacts.filter(c => c.status === "Zamowil");
+    const weekSales = weekOrders.reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+    const weekOrdersCount = weekOrders.length;
+
+    let bestClient: { name: string; kwota: number } | null = null;
+    const clientTotals = new Map<number, { name: string; total: number }>();
+    for (const order of monthOrders) {
+      const client = myClients.find(c => c.id === order.clientId);
+      if (client) {
+        const existing = clientTotals.get(order.clientId) || { name: client.klient, total: 0 };
+        existing.total += Number(order.kwota || 0);
+        clientTotals.set(order.clientId, existing);
+      }
+    }
+    let maxTotal = 0;
+    for (const [, val] of clientTotals) {
+      if (val.total > maxTotal) {
+        maxTotal = val.total;
+        bestClient = { name: val.name, kwota: val.total };
+      }
+    }
+
+    const urgentClients = myClients
+      .filter(c => (c.brakiZamowien || 0) >= 2)
+      .map(c => ({ id: c.id, klient: c.klient, brakiZamowien: c.brakiZamowien || 0 }));
+
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+
+    const allMyContacts = await db.select().from(contacts)
+      .where(eq(contacts.opiekun, opiekun));
+
+    const lastContactByClient = new Map<number, string>();
+    for (const c of allMyContacts) {
+      const existing = lastContactByClient.get(c.clientId);
+      if (!existing || c.data > existing) {
+        lastContactByClient.set(c.clientId, c.data);
+      }
+    }
+
+    const noRecentContact = myClients
+      .filter(c => {
+        const lastDate = lastContactByClient.get(c.id);
+        if (!lastDate) return true;
+        return lastDate < sevenDaysAgoStr;
+      })
+      .filter(c => !urgentClients.some(u => u.id === c.id))
+      .map(c => ({
+        id: c.id,
+        klient: c.klient,
+        ostatniKontakt: lastContactByClient.get(c.id) || null,
+        brakiZamowien: c.brakiZamowien || 0,
+      }));
+
+    return {
+      monthSales,
+      prevMonthSales,
+      monthTarget,
+      recentOrders,
+      monthOrdersCount,
+      monthOrdersTotal,
+      conversionRate,
+      totalContacts,
+      weekSales,
+      weekOrdersCount,
+      bestClient,
+      urgentClients,
+      noRecentContact,
+    };
   }
 
   async getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any> {

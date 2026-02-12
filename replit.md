@@ -28,11 +28,12 @@ A comprehensive business CRM application for a HoReCa distribution company. Buil
 3. **Contact Calendar** - Weekly kanban view, auto-generation based on client rhythm patterns, status tracking (Do zrobienia -> Zamowil/Nie zamowil)
 4. **Deliveries** - Daily table view, auto-created when contact status = "Zamowil", driver/vehicle assignment, export to CSV
 5. **Sales Analysis** - Charts (pie, bar) by client groups, monthly breakdown with margins
-6. **Sales Dashboard** - Plan vs execution for 2026, historical trends (2021-2025)
-7. **Finance Panel** - Salaries, operational costs, fleet costs with pie chart breakdowns, month filtering, CRUD for costs with categories
-8. **Daily Analysis** - Daily sales tracking with KPI cards (fixed costs, daily cost, break-even), editable daily table with auto-calculations (margin 35.4%), cumulative P&L, month summary, auto-import from contacts
-9. **Notes** - Create/filter notes by category
-10. **Drivers/Vehicles** - CRUD management
+6. **Sales Dashboard** - Plan vs execution for 2026, historical trends (2021-2025), editable targets with bulk save/sync
+7. **My Sales (Handlowiec)** - Monthly target with colored progress bar (green/yellow/red), tempo & forecast, previous month comparison, info cards (weekly sales, conversion rate, best client, urgent alerts), orders table (last 30), clients-to-contact section (urgent + no contact >7 days)
+8. **Finance Panel** - Salaries, operational costs, fleet costs with pie chart breakdowns, month filtering, CRUD for costs with categories
+9. **Daily Analysis** - Daily sales tracking with KPI cards (fixed costs, daily cost, break-even), editable daily table with auto-calculations (margin 35.4%), cumulative P&L, month summary, auto-import from contacts
+10. **Notes** - Create/filter notes by category
+11. **Drivers/Vehicles** - CRUD management
 
 ## Database Schema (14 tables)
 users, clients, contacts, deliveries, drivers, vehicles, client_sales, client_sales_weekly, sales_targets, salaries, costs, fleet, notes, sales_history, daily_analysis
