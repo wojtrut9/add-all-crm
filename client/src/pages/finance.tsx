@@ -54,9 +54,19 @@ const MONTHS = [
 const COLORS = [
   "hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)",
   "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 45%)",
+  "hsl(190, 80%, 40%)", "hsl(10, 85%, 50%)", "hsl(130, 60%, 38%)",
+  "hsl(310, 70%, 45%)", "hsl(55, 75%, 40%)", "hsl(230, 65%, 50%)",
+  "hsl(0, 70%, 45%)", "hsl(170, 55%, 42%)", "hsl(260, 60%, 48%)",
+  "hsl(35, 80%, 43%)", "hsl(200, 75%, 42%)",
 ];
 
-const KATEGORIE = ["Wynagrodzenia", "Operacyjne", "Samochody/Flota", "Prowizje", "Inne"];
+const KATEGORIE = [
+  "Wynagrodzenia", "Operacyjne", "Samochody/Flota", "Transport",
+  "Księgowość/Doradztwo", "Media", "Ubezpieczenia", "Wysyłka/Poczta",
+  "Towary/Produkty", "Finansowanie/Raty", "IT/Oprogramowanie",
+  "Serwis/Naprawy", "Biuro/Druk", "Opłaty bankowe", "Medycyna pracy",
+  "Prowizje", "Inne",
+];
 
 type CostItem = {
   id: number;
@@ -268,7 +278,7 @@ export default function FinancePage() {
     byCategory[k].push(item);
   }
 
-  const categoryOrder = ["Wynagrodzenia", "Operacyjne", "Samochody/Flota", "Prowizje", "Inne"];
+  const categoryOrder = KATEGORIE;
   const sortedCategories = Object.keys(byCategory).sort((a, b) => {
     const ia = categoryOrder.indexOf(a);
     const ib = categoryOrder.indexOf(b);
@@ -424,12 +434,10 @@ export default function FinancePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nazwa</TableHead>
-                  <TableHead>Kategoria</TableHead>
-                  <TableHead>Dzial</TableHead>
+                  <TableHead>Kontrahent / Nazwa</TableHead>
+                  <TableHead>Nr faktury / Dział</TableHead>
                   <TableHead className="text-right">Netto</TableHead>
-                  <TableHead className="text-right">Koszt</TableHead>
-                  <TableHead>Notatka</TableHead>
+                  <TableHead className="text-right">Brutto</TableHead>
                   <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -437,20 +445,21 @@ export default function FinancePage() {
                 {sortedCategories.map(cat => {
                   const items = byCategory[cat];
                   const catTotal = items.reduce((s, i) => s + i._koszt, 0);
+                  const catNetto = items.reduce((s, i) => s + Number(i.netto || 0), 0);
                   return [
                     <TableRow key={`header-${cat}`} className="bg-muted/50">
-                      <TableCell colSpan={4} className="font-semibold text-sm">{cat}</TableCell>
+                      <TableCell className="font-semibold text-sm">{cat} ({items.length})</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell className="text-right font-semibold text-sm">{catNetto > 0 ? catNetto.toLocaleString("pl-PL") : "-"}</TableCell>
                       <TableCell className="text-right font-semibold text-sm">{catTotal.toLocaleString("pl-PL")} PLN</TableCell>
-                      <TableCell colSpan={2}></TableCell>
+                      <TableCell></TableCell>
                     </TableRow>,
                     ...items.map((item: any) => (
                       <TableRow key={`${item._type}-${item.id}`} data-testid={`row-cost-${item._type}-${item.id}`}>
-                        <TableCell className="font-medium">{item.nazwa || item.osoba || item.opis || "-"}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{item._kategoria}</TableCell>
-                        <TableCell className="text-sm">{item.dzial || item.firma || "-"}</TableCell>
+                        <TableCell className="font-medium text-sm">{item.nazwa || item.osoba || item.opis || "-"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{item._type === "cost" ? (item.firma || item.dzial || "-") : (item.dzial || item.formaZatrudnienia || item.rodzaj || "-")}</TableCell>
                         <TableCell className="text-right text-sm">{item.netto ? Number(item.netto).toLocaleString("pl-PL") : "-"}</TableCell>
-                        <TableCell className="text-right font-medium">{item._koszt.toLocaleString("pl-PL")} PLN</TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{item.notatka || item.formaZatrudnienia || item.rodzaj || "-"}</TableCell>
+                        <TableCell className="text-right font-medium text-sm">{item._koszt.toLocaleString("pl-PL")} PLN</TableCell>
                         <TableCell>
                           {item._type === "cost" && (
                             <div className="flex gap-1">
@@ -468,9 +477,10 @@ export default function FinancePage() {
                   ];
                 })}
                 <TableRow className="font-bold bg-muted">
-                  <TableCell colSpan={4}>RAZEM</TableCell>
+                  <TableCell colSpan={2}>RAZEM</TableCell>
+                  <TableCell className="text-right">{allItems.reduce((s, i) => s + Number(i.netto || 0), 0).toLocaleString("pl-PL")} PLN</TableCell>
                   <TableCell className="text-right" data-testid="text-grand-total">{totalMonthly.toLocaleString("pl-PL")} PLN</TableCell>
-                  <TableCell colSpan={2}></TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
               </TableBody>
             </Table>

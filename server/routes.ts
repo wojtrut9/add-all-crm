@@ -638,23 +638,48 @@ export async function registerRoutes(
         const dataWyst = colDataWyst >= 0 ? String(row[colDataWyst] || "") : "";
         const stawka = colStawka >= 0 ? String(row[colStawka] || "") : "";
 
-        const kontrahentName = kontrahent.split(/\s+ul\./)[0].split(/\s+al\./)[0].trim();
-        const nazwa = numer ? `${numer} - ${kontrahentName}` : kontrahentName;
+        let kontrahentName = kontrahent
+          .split(/\s+ul\./i)[0]
+          .split(/\s+al\./i)[0]
+          .split(/\s+Aleje\s/i)[0]
+          .split(/\s+Aleja\s/i)[0]
+          .split(/\s+Rondo\s/i)[0]
+          .replace(/\s*\d{2}-\d{3}\s+\w+\s*$/i, "")
+          .replace(/\s*PL\d{10,}$/i, "")
+          .replace(/\s*DE\d{9,}$/i, "")
+          .replace(/\s*\d{10,}$/i, "")
+          .replace(/\s*null,\s*\d+\s*$/i, "")
+          .replace(/SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ/gi, "Sp. z o.o.")
+          .replace(/SPÓAKA AKCYJNA ODDZIAA W POLSCE/gi, "S.A.")
+          .replace(/SPÓŁKA AKCYJNA/gi, "S.A.")
+          .replace(/\s+/g, " ")
+          .replace(/^"(.*)"$/, "$1")
+          .trim();
 
-        if (!nazwa || (netto === 0 && brutto === 0)) continue;
+        if (!kontrahentName || (netto === 0 && brutto === 0)) continue;
 
-        const numerLower = numer.toLowerCase();
-        const kontrahentLower = kontrahent.toLowerCase();
-        const isListaPlac = numerLower.includes("lista_p") || numerLower.includes("lista p");
+        const numerLower = numer.toLowerCase().replace(/_/g, " ");
+        const kontrahentLower = kontrahentName.toLowerCase();
+        const combined = `${numerLower} ${kontrahentLower}`;
+
+        const isListaPlac = numerLower.includes("lista p") || numerLower.includes("lista_p");
+        const isZUS = numerLower.includes("zus") || kontrahentLower.includes("zakład ubezpieczeń");
+        const isUS = numerLower.includes("urząd skarbowy") || numerLower.includes("urzad skarbowy") || kontrahentLower.includes("administracji skarbowej") || kontrahentLower.includes("urząd skarbowy");
+        const isSalaryRelated = isListaPlac || isZUS || isUS;
+
         const isLeasing = kontrahentLower.includes("leasing");
-        const isFleet = kontrahentLower.includes("union tank") || (isLeasing && !kontrahentLower.includes("maszyn"));
+        const isFuelCard = kontrahentLower.includes("union tank");
+        const isFleet = isFuelCard || (isLeasing && !kontrahentLower.includes("maszyn"));
 
-        if (isListaPlac) {
+        if (isSalaryRelated) {
+          let osoba = numer.replace(/_/g, " ");
+          if (isZUS) osoba = "ZUS";
+          if (isUS) osoba = "Urząd Skarbowy";
           salariesData.push({
-            osoba: numer.replace(/_/g, " "),
+            osoba,
             firma: kontrahentName,
-            dzial: "",
-            formaZatrudnienia: null,
+            dzial: isZUS || isUS ? "Obciążenia publiczne" : "Pracownicy",
+            formaZatrudnienia: isListaPlac ? "Umowa" : isZUS ? "ZUS" : "Podatek",
             netto: netto || null,
             brutto: brutto || null,
             vat: vat || null,
@@ -662,23 +687,50 @@ export async function registerRoutes(
           });
         } else if (isFleet) {
           fleetData.push({
-            opis: nazwa,
+            opis: kontrahentName,
             firma: kontrahentName,
             dzial: null,
-            rodzaj: isLeasing ? "Leasing" : "Paliwo/Flota",
+            rodzaj: isLeasing ? "Leasing" : "Paliwo",
             netto: netto || null,
             koszt: brutto || null,
           });
         } else {
+          let kategoria = "Operacyjne";
+          if (combined.includes("poczta") || combined.includes("dpd") || combined.includes("kurier") || combined.includes("przesyłk")) {
+            kategoria = "Wysyłka/Poczta";
+          } else if (combined.includes("pge") || combined.includes("energia") || combined.includes("axpo") || combined.includes("gaz") || combined.includes("woda") || combined.includes("media")) {
+            kategoria = "Media";
+          } else if (combined.includes("euler hermes") || combined.includes("ubezpiecz")) {
+            kategoria = "Ubezpieczenia";
+          } else if (combined.includes("etl") || combined.includes("doradztw") || combined.includes("księgow") || combined.includes("kancelari")) {
+            kategoria = "Księgowość/Doradztwo";
+          } else if (combined.includes("medyczn") || combined.includes("lekars") || combined.includes("przychodni")) {
+            kategoria = "Medycyna pracy";
+          } else if (combined.includes("iglotex") || combined.includes("znatury") || combined.includes("spożywcz")) {
+            kategoria = "Towary/Produkty";
+          } else if (combined.includes("transport") || combined.includes("nootoo") || combined.includes("w drogę")) {
+            kategoria = "Transport";
+          } else if (combined.includes("harmonogram") || combined.includes("pożyczk") || combined.includes("rata") || combined.includes("splat")) {
+            kategoria = "Finansowanie/Raty";
+          } else if (combined.includes("epłatn") || combined.includes("terminal") || combined.includes("płatności")) {
+            kategoria = "Opłaty bankowe";
+          } else if (combined.includes("chatgpt") || combined.includes("subscript") || combined.includes("licencj") || combined.includes("oprogramow")) {
+            kategoria = "IT/Oprogramowanie";
+          } else if (combined.includes("serwis") || combined.includes("firmatec") || combined.includes("napraw")) {
+            kategoria = "Serwis/Naprawy";
+          } else if (combined.includes("druk") || combined.includes("biurow")) {
+            kategoria = "Biuro/Druk";
+          }
+
           costsData.push({
-            nazwa,
-            firma: kontrahentName,
+            nazwa: kontrahentName,
+            firma: numer,
             dzial: null,
             rodzaj: null,
-            kategoria: "Operacyjne",
+            kategoria,
             netto: netto || null,
             koszt: brutto || null,
-            notatka: dataWyst ? `Data: ${dataWyst}, Stawka: ${stawka}` : null,
+            notatka: null,
           });
         }
       }

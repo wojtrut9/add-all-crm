@@ -434,7 +434,7 @@ export class DatabaseStorage implements IStorage {
       return items.filter((item) => {
         const am = item.aktywnyMiesiace as Record<string, boolean> | null;
         if (!am) return true;
-        return am[mKey] !== false;
+        return am[mKey] === true;
       });
     };
 
