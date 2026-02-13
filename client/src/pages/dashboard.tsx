@@ -67,7 +67,6 @@ function MonthlySalesWidget({ stats, isHandlowiec, userName, planData }: { stats
         monthSales = op.realizacja;
       }
     } else {
-      monthPlan = planData.sumaCel || 0;
       monthSales = planData.sumaRealizacja || 0;
     }
   } else if (isHandlowiec && userName) {
