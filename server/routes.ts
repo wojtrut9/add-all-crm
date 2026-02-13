@@ -574,121 +574,117 @@ export async function registerRoutes(
       const XLSX = await import("xlsx");
       const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
 
-      const salariesData: any[] = [];
       const costsData: any[] = [];
+      const salariesData: any[] = [];
       const fleetData: any[] = [];
 
-      const findSheet = (names: string[]) => {
-        for (const name of names) {
-          const found = workbook.SheetNames.find(sn => sn.toLowerCase().includes(name.toLowerCase()));
-          if (found) return workbook.Sheets[found];
-        }
-        return null;
-      };
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      if (!sheet) {
+        return res.status(400).json({ message: "Plik Excel jest pusty" });
+      }
 
-      const salSheet = findSheet(["wynagrodzeni", "salary", "salaries", "pensj", "plac"]);
-      if (salSheet) {
-        const rows: any[] = XLSX.utils.sheet_to_json(salSheet);
-        for (const row of rows) {
-          const osoba = row["Osoba"] || row["osoba"] || row["Imie"] || row["imie"] || row["Pracownik"] || row["pracownik"] || "";
-          if (!osoba) continue;
-          salariesData.push({
-            osoba,
-            firma: row["Firma"] || row["firma"] || "",
-            dzial: row["Dzial"] || row["dzial"] || row["Dział"] || "",
-            formaZatrudnienia: row["Forma"] || row["forma"] || row["Forma zatrudnienia"] || null,
-            netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
-            brutto: parseFloat(String(row["Brutto"] || row["brutto"] || 0)) || null,
-            vat: parseFloat(String(row["VAT"] || row["vat"] || row["Vat"] || 0)) || null,
-            kosztPracodawcy: parseFloat(String(row["Koszt pracodawcy"] || row["kosztPracodawcy"] || row["Koszt"] || row["koszt"] || 0)) || null,
-          });
+      const allRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      let headerRowIdx = -1;
+      let colLp = -1, colNumer = -1, colDataWyst = -1, colDataSprz = -1, colKontrahent = -1, colStawka = -1, colNetto = -1, colVat = -1, colBrutto = -1;
+
+      for (let i = 0; i < Math.min(20, allRows.length); i++) {
+        const row = allRows[i];
+        if (!row) continue;
+        const rowStr = row.map((c: any) => String(c || "").toLowerCase());
+        const hasLp = rowStr.some((c: string) => c === "lp." || c === "lp");
+        const hasNetto = rowStr.some((c: string) => c.includes("netto"));
+        const hasBrutto = rowStr.some((c: string) => c.includes("brutto"));
+        if (hasLp && hasNetto && hasBrutto) {
+          headerRowIdx = i;
+          for (let j = 0; j < row.length; j++) {
+            const h = String(row[j] || "").toLowerCase();
+            if (h === "lp." || h === "lp") colLp = j;
+            else if (h.includes("numer")) colNumer = j;
+            else if (h.includes("data wystawienia") || h === "data wyst.") colDataWyst = j;
+            else if (h.includes("data sprzeda") || h === "data sprz.") colDataSprz = j;
+            else if (h.includes("kontrahent") || h.includes("dane kontrahenta")) colKontrahent = j;
+            else if (h.includes("stawka")) colStawka = j;
+            else if (h.includes("netto")) colNetto = j;
+            else if (h.includes("vat") && !h.includes("netto") && !h.includes("brutto")) colVat = j;
+            else if (h.includes("brutto")) colBrutto = j;
+          }
+          break;
         }
       }
 
-      const costSheet = findSheet(["koszt", "operacyjn", "costs", "wydatk"]);
-      if (costSheet) {
-        const rows: any[] = XLSX.utils.sheet_to_json(costSheet);
-        for (const row of rows) {
-          const nazwa = row["Nazwa"] || row["nazwa"] || row["Opis"] || row["opis"] || "";
-          if (!nazwa) continue;
+      if (headerRowIdx === -1) {
+        return res.status(400).json({ message: "Nie rozpoznano formatu pliku. Oczekiwany format: Raport Zestawienie Zakupu VAT z kolumnami Lp., Numer, Kontrahent, Netto, VAT, Brutto." });
+      }
+
+      for (let i = headerRowIdx + 1; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (!row || row.length === 0) continue;
+
+        const lp = row[colLp];
+        if (lp === null || lp === undefined) continue;
+        const lpStr = String(lp).toLowerCase().trim();
+        if (lpStr === "" || lpStr.includes("podsumowanie")) continue;
+        if (isNaN(Number(lp))) continue;
+
+        const kontrahentCheck = colKontrahent >= 0 ? String(row[colKontrahent] || "").toLowerCase() : "";
+        if (kontrahentCheck.includes("podsumowanie")) continue;
+
+        const numer = colNumer >= 0 ? String(row[colNumer] || "") : "";
+        const kontrahent = colKontrahent >= 0 ? String(row[colKontrahent] || "") : "";
+        const netto = colNetto >= 0 ? parseFloat(String(row[colNetto] || 0)) || 0 : 0;
+        const vat = colVat >= 0 ? parseFloat(String(row[colVat] || 0)) || 0 : 0;
+        const brutto = colBrutto >= 0 ? parseFloat(String(row[colBrutto] || 0)) || 0 : 0;
+        const dataWyst = colDataWyst >= 0 ? String(row[colDataWyst] || "") : "";
+        const stawka = colStawka >= 0 ? String(row[colStawka] || "") : "";
+
+        const kontrahentName = kontrahent.split(/\s+ul\./)[0].split(/\s+al\./)[0].trim();
+        const nazwa = numer ? `${numer} - ${kontrahentName}` : kontrahentName;
+
+        if (!nazwa || (netto === 0 && brutto === 0)) continue;
+
+        const numerLower = numer.toLowerCase();
+        const kontrahentLower = kontrahent.toLowerCase();
+        const isListaPlac = numerLower.includes("lista_p") || numerLower.includes("lista p");
+        const isLeasing = kontrahentLower.includes("leasing");
+        const isFleet = kontrahentLower.includes("union tank") || (isLeasing && !kontrahentLower.includes("maszyn"));
+
+        if (isListaPlac) {
+          salariesData.push({
+            osoba: numer.replace(/_/g, " "),
+            firma: kontrahentName,
+            dzial: "",
+            formaZatrudnienia: null,
+            netto: netto || null,
+            brutto: brutto || null,
+            vat: vat || null,
+            kosztPracodawcy: brutto || null,
+          });
+        } else if (isFleet) {
+          fleetData.push({
+            opis: nazwa,
+            firma: kontrahentName,
+            dzial: null,
+            rodzaj: isLeasing ? "Leasing" : "Paliwo/Flota",
+            netto: netto || null,
+            koszt: brutto || null,
+          });
+        } else {
           costsData.push({
             nazwa,
-            firma: row["Firma"] || row["firma"] || null,
-            dzial: row["Dzial"] || row["dzial"] || row["Dział"] || null,
-            rodzaj: row["Rodzaj"] || row["rodzaj"] || null,
-            kategoria: row["Kategoria"] || row["kategoria"] || "Operacyjne",
-            netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
-            koszt: parseFloat(String(row["Koszt"] || row["koszt"] || row["Brutto"] || row["brutto"] || 0)) || null,
-            notatka: row["Notatka"] || row["notatka"] || null,
+            firma: kontrahentName,
+            dzial: null,
+            rodzaj: null,
+            kategoria: "Operacyjne",
+            netto: netto || null,
+            koszt: brutto || null,
+            notatka: dataWyst ? `Data: ${dataWyst}, Stawka: ${stawka}` : null,
           });
-        }
-      }
-
-      const fleetSheet = findSheet(["flot", "fleet", "samochod", "pojazd", "auto"]);
-      if (fleetSheet) {
-        const rows: any[] = XLSX.utils.sheet_to_json(fleetSheet);
-        for (const row of rows) {
-          const opis = row["Opis"] || row["opis"] || row["Nazwa"] || row["nazwa"] || "";
-          if (!opis) continue;
-          fleetData.push({
-            opis,
-            firma: row["Firma"] || row["firma"] || null,
-            dzial: row["Dzial"] || row["dzial"] || row["Dział"] || null,
-            rodzaj: row["Rodzaj"] || row["rodzaj"] || null,
-            netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
-            koszt: parseFloat(String(row["Koszt"] || row["koszt"] || row["Brutto"] || row["brutto"] || 0)) || null,
-          });
-        }
-      }
-
-      if (salariesData.length === 0 && costsData.length === 0 && fleetData.length === 0 && workbook.SheetNames.length > 0) {
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        if (firstSheet) {
-          const rows: any[] = XLSX.utils.sheet_to_json(firstSheet);
-          for (const row of rows) {
-            const nazwa = row["Nazwa"] || row["nazwa"] || row["Opis"] || row["opis"] || "";
-            if (!nazwa) continue;
-            const kategoria = row["Kategoria"] || row["kategoria"] || "Operacyjne";
-            const item = {
-              nazwa,
-              firma: row["Firma"] || row["firma"] || null,
-              dzial: row["Dzial"] || row["dzial"] || row["Dział"] || null,
-              rodzaj: row["Rodzaj"] || row["rodzaj"] || null,
-              kategoria,
-              netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
-              koszt: parseFloat(String(row["Koszt"] || row["koszt"] || row["Brutto"] || row["brutto"] || 0)) || null,
-              notatka: row["Notatka"] || row["notatka"] || null,
-            };
-            const kat = (kategoria || "").toLowerCase();
-            if (kat.includes("wynagrodz") || kat.includes("pensj") || kat.includes("plac") || kat.includes("salary")) {
-              salariesData.push({
-                osoba: item.nazwa,
-                firma: item.firma || "",
-                dzial: item.dzial || "",
-                formaZatrudnienia: item.rodzaj || null,
-                netto: item.netto,
-                brutto: null,
-                vat: null,
-                kosztPracodawcy: item.koszt,
-              });
-            } else if (kat.includes("flot") || kat.includes("samochod") || kat.includes("auto") || kat.includes("pojazd") || kat.includes("fleet")) {
-              fleetData.push({
-                opis: item.nazwa,
-                firma: item.firma,
-                dzial: item.dzial,
-                rodzaj: item.rodzaj,
-                netto: item.netto,
-                koszt: item.koszt,
-              });
-            } else {
-              costsData.push(item);
-            }
-          }
         }
       }
 
       if (salariesData.length === 0 && costsData.length === 0 && fleetData.length === 0) {
-        return res.status(400).json({ message: "Nie znaleziono danych do importu. Sprawdz format pliku i nazwy kolumn (Nazwa/Osoba, Koszt/Brutto, Kategoria, Firma, Dzial)." });
+        return res.status(400).json({ message: "Nie znaleziono danych do importu. Sprawdz czy plik zawiera dane faktur z kolumnami Lp., Numer, Kontrahent, Netto, Brutto." });
       }
 
       const result = await storage.importFinanceData(miesiac, salariesData, costsData, fleetData, replaceMonth);

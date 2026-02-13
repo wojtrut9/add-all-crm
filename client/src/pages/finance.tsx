@@ -622,9 +622,9 @@ export default function FinancePage() {
             </div>
             <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">Format pliku:</p>
-              <p>Plik moze zawierac arkusze: <strong>Wynagrodzenia</strong>, <strong>Koszty</strong>, <strong>Flota</strong></p>
-              <p>Lub jeden arkusz z kolumna <strong>Kategoria</strong> (Wynagrodzenia/Operacyjne/Samochody)</p>
-              <p>Kolumny: Nazwa/Osoba, Firma, Dzial, Netto, Koszt/Brutto, Kategoria, Notatka</p>
+              <p>Raport <strong>Zestawienie Zakupu VAT</strong> z iBiznes (.xls / .xlsx)</p>
+              <p>Kolumny: Lp., Numer, Data wystawienia, Dane kontrahenta, Stawka VAT, Netto, VAT, Brutto</p>
+              <p>Listy plac zostana rozpoznane automatycznie jako wynagrodzenia, leasingi jako flota.</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setImportDialogOpen(false); setImportFile(null); }} data-testid="button-cancel-import">
