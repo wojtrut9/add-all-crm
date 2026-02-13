@@ -55,24 +55,33 @@ const POLISH_MONTHS = [
   "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"
 ];
 
-function MonthlySalesWidget({ stats, isHandlowiec, userName }: { stats: any; isHandlowiec: boolean; userName?: string }) {
+function MonthlySalesWidget({ stats, isHandlowiec, userName, planData }: { stats: any; isHandlowiec: boolean; userName?: string; planData?: any }) {
   let monthSales = Number(stats?.monthSales || 0);
   let monthPlan = Number(stats?.monthPlan || 0);
 
-  if (isHandlowiec && userName) {
+  if (planData) {
+    if (isHandlowiec && userName) {
+      const op = planData.perOpiekun?.[userName];
+      if (op) {
+        monthPlan = op.cel;
+        monthSales = op.realizacja;
+      }
+    } else {
+      monthPlan = planData.sumaCel || 0;
+      monthSales = planData.sumaRealizacja || 0;
+    }
+  } else if (isHandlowiec && userName) {
     const wo = (stats?.weeklyOrders || []).find((w: any) => w.name === userName);
     if (wo) {
       monthSales = wo.handlowiecMonthSales || 0;
     }
   }
 
-  const workingDaysPassed = Number(stats?.workingDaysPassed || 0);
-  const totalWorkdays = Number(stats?.totalWorkdays || 20);
+  const workingDaysPassed = planData?.dniRoboczeMiniete ?? Number(stats?.workingDaysPassed || 0);
+  const totalWorkdays = planData?.dniRoboczeMiesiac ?? Number(stats?.totalWorkdays || 20);
   const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
 
-  const effectiveTempo = isHandlowiec
-    ? (workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0)
-    : Number(stats?.tempo || 0);
+  const effectiveTempo = workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0;
   const effectivePrognoza = effectiveTempo * totalWorkdays;
   const effectivePrognozaOnTrack = effectivePrognoza >= monthPlan;
 
@@ -323,6 +332,16 @@ export default function Dashboard() {
     },
   });
 
+  const now = new Date();
+  const { data: planData } = useQuery({
+    queryKey: ["/api/plan/realization", now.getFullYear(), now.getMonth() + 1],
+    queryFn: async () => {
+      const res = await authFetch(`/api/plan/realization?rok=${now.getFullYear()}&miesiac=${now.getMonth() + 1}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -379,7 +398,7 @@ export default function Dashboard() {
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-1">
-              <MonthlySalesWidget stats={stats} isHandlowiec={isHandlowiec} userName={user?.imie} />
+              <MonthlySalesWidget stats={stats} isHandlowiec={isHandlowiec} userName={user?.imie} planData={planData} />
             </div>
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredOrders.map((wo: any) => (
