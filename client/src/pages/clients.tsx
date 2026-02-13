@@ -82,7 +82,7 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
           <Badge variant={client.segment === "Premium" ? "default" : "secondary"} className="text-xs">
             {client.segment}
           </Badge>
-          <Badge variant={client.aktywny ? "outline" : "destructive"} className="text-xs">
+          <Badge variant={client.aktywny ? "outline" : "secondary"} className={`text-xs ${!client.aktywny ? "bg-[#e6e6e6] text-[#0f0f0f] border-transparent" : ""}`}>
             {client.status}
           </Badge>
         </div>
