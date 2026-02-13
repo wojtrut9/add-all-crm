@@ -79,7 +79,7 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <Badge variant={client.segment === "Premium" ? "default" : "secondary"} className="text-xs">
+          <Badge variant="secondary" className={`text-xs border-transparent ${client.segment === "Premium" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"}`}>
             {client.segment}
           </Badge>
           <Badge variant={client.aktywny ? "outline" : "secondary"} className={`text-xs ${!client.aktywny ? "bg-[#e6e6e6] text-[#0f0f0f] border-transparent" : ""}`}>
