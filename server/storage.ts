@@ -77,6 +77,8 @@ export interface IStorage {
 
   importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>, addToExisting: boolean): Promise<void>;
   getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
+
+  importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1383,6 +1385,91 @@ export class DatabaseStorage implements IStorage {
       sumaProcent: Math.round(sumaProcent * 10) / 10,
       perOpiekun,
     };
+  }
+  async importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}> {
+    const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+    const mKey = MONTH_KEYS[miesiac - 1];
+
+    if (replaceMonth) {
+      const allSalaries = await db.select().from(salaries);
+      for (const s of allSalaries) {
+        const am = (s.aktywnyMiesiace as Record<string, boolean>) || {};
+        if (am[mKey] !== false) {
+          am[mKey] = false;
+          await db.update(salaries).set({ aktywnyMiesiace: am }).where(eq(salaries.id, s.id));
+        }
+      }
+      const allCosts = await db.select().from(costs);
+      for (const c of allCosts) {
+        const am = (c.aktywnyMiesiace as Record<string, boolean>) || {};
+        if (am[mKey] !== false) {
+          am[mKey] = false;
+          await db.update(costs).set({ aktywnyMiesiace: am }).where(eq(costs.id, c.id));
+        }
+      }
+      const allFleet = await db.select().from(fleet);
+      for (const f of allFleet) {
+        const am = (f.aktywnyMiesiace as Record<string, boolean>) || {};
+        if (am[mKey] !== false) {
+          am[mKey] = false;
+          await db.update(fleet).set({ aktywnyMiesiace: am }).where(eq(fleet.id, f.id));
+        }
+      }
+    }
+
+    let salCount = 0;
+    for (const s of salariesData) {
+      const am: Record<string, boolean> = {};
+      am[mKey] = true;
+      await db.insert(salaries).values({
+        osoba: s.osoba || "Nieznany",
+        firma: s.firma || "",
+        dzial: s.dzial || "",
+        formaZatrudnienia: s.formaZatrudnienia || null,
+        netto: s.netto ? String(s.netto) : null,
+        brutto: s.brutto ? String(s.brutto) : null,
+        vat: s.vat ? String(s.vat) : null,
+        kosztPracodawcy: s.kosztPracodawcy ? String(s.kosztPracodawcy) : null,
+        aktywnyMiesiace: am,
+      });
+      salCount++;
+    }
+
+    let costCount = 0;
+    for (const c of costsData) {
+      const am: Record<string, boolean> = {};
+      am[mKey] = true;
+      await db.insert(costs).values({
+        nazwa: c.nazwa || "Bez nazwy",
+        firma: c.firma || null,
+        dzial: c.dzial || null,
+        rodzaj: c.rodzaj || null,
+        kategoria: c.kategoria || "Operacyjne",
+        netto: c.netto ? String(c.netto) : null,
+        koszt: c.koszt ? String(c.koszt) : null,
+        notatka: c.notatka || null,
+        aktywnyMiesiace: am,
+      });
+      costCount++;
+    }
+
+    let fleetCount = 0;
+    for (const f of fleetData) {
+      const am: Record<string, boolean> = {};
+      am[mKey] = true;
+      await db.insert(fleet).values({
+        opis: f.opis || "Bez opisu",
+        firma: f.firma || null,
+        dzial: f.dzial || null,
+        rodzaj: f.rodzaj || null,
+        netto: f.netto ? String(f.netto) : null,
+        koszt: f.koszt ? String(f.koszt) : null,
+        aktywnyMiesiace: am,
+      });
+      fleetCount++;
+    }
+
+    return { salaries: salCount, costs: costCount, fleet: fleetCount };
   }
 }
 

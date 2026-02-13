@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { authFetch } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -29,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DollarSign, TrendingUp, Users, Car, Plus, Pencil, Trash2 } from "lucide-react";
+import { DollarSign, TrendingUp, Users, Car, Plus, Pencil, Trash2, Upload, FileSpreadsheet } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -94,6 +96,12 @@ export default function FinancePage() {
   const [editingCost, setEditingCost] = useState<CostItem | null>(null);
   const [formData, setFormData] = useState<CostFormData>(emptyCostForm);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importMonth, setImportMonth] = useState(String(now.getMonth() + 1));
+  const [replaceMonth, setReplaceMonth] = useState(true);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { data, isLoading } = useQuery({
     queryKey: ["/api/finance", selectedMonth],
@@ -147,6 +155,43 @@ export default function FinancePage() {
       setDeleteConfirmId(null);
     },
   });
+
+  const importMutation = useMutation({
+    mutationFn: async ({ file, miesiac, replace }: { file: File; miesiac: string; replace: boolean }) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("miesiac", miesiac);
+      fd.append("replaceMonth", String(replace));
+
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/finance/import", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Blad importu" }));
+        throw new Error(err.message);
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/finance", importMonth] });
+      queryClient.invalidateQueries({ queryKey: ["/api/finance", selectedMonth] });
+      setImportDialogOpen(false);
+      setImportFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      toast({ title: "Import zakonczony", description: data.message });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Blad importu", description: err.message, variant: "destructive" });
+    },
+  });
+
+  function handleImportSubmit() {
+    if (!importFile) return;
+    importMutation.mutate({ file: importFile, miesiac: importMonth, replace: replaceMonth });
+  }
 
   function closeDialog() {
     setDialogOpen(false);
@@ -253,6 +298,10 @@ export default function FinancePage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold" data-testid="text-finance-title">Panel finansowy</h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)} data-testid="button-import-finance">
+            <Upload className="w-4 h-4 mr-1" />
+            Import Excel
+          </Button>
           <Label className="text-sm text-muted-foreground">Miesiac:</Label>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-[160px]" data-testid="select-month">
@@ -524,6 +573,71 @@ export default function FinancePage() {
             >
               {deleteMutation.isPending ? "Usuwanie..." : "Usun"}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={importDialogOpen} onOpenChange={(open) => { if (!open) { setImportDialogOpen(false); setImportFile(null); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5" />
+              Import danych finansowych z Excel
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Miesiac importu</Label>
+              <Select value={importMonth} onValueChange={setImportMonth}>
+                <SelectTrigger data-testid="select-import-month">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Plik Excel (.xlsx, .xls)</Label>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                data-testid="input-import-file"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="replaceMonth"
+                checked={replaceMonth}
+                onCheckedChange={(v) => setReplaceMonth(!!v)}
+                data-testid="checkbox-replace-month"
+              />
+              <Label htmlFor="replaceMonth" className="text-sm">
+                Zastap dane tego miesiaca (ukryj istniejace wpisy)
+              </Label>
+            </div>
+            <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">Format pliku:</p>
+              <p>Plik moze zawierac arkusze: <strong>Wynagrodzenia</strong>, <strong>Koszty</strong>, <strong>Flota</strong></p>
+              <p>Lub jeden arkusz z kolumna <strong>Kategoria</strong> (Wynagrodzenia/Operacyjne/Samochody)</p>
+              <p>Kolumny: Nazwa/Osoba, Firma, Dzial, Netto, Koszt/Brutto, Kategoria, Notatka</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setImportDialogOpen(false); setImportFile(null); }} data-testid="button-cancel-import">
+                Anuluj
+              </Button>
+              <Button
+                onClick={handleImportSubmit}
+                disabled={!importFile || importMutation.isPending}
+                data-testid="button-submit-import"
+              >
+                {importMutation.isPending ? "Importowanie..." : "Importuj"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

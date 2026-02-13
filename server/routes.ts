@@ -560,6 +560,147 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/finance/import", authMiddleware, adminOnly, upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Brak pliku" });
+      }
+      const miesiac = Number(req.body.miesiac);
+      const replaceMonth = req.body.replaceMonth === "true";
+      if (!miesiac || miesiac < 1 || miesiac > 12) {
+        return res.status(400).json({ message: "Nieprawidlowy miesiac" });
+      }
+
+      const XLSX = await import("xlsx");
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+
+      const salariesData: any[] = [];
+      const costsData: any[] = [];
+      const fleetData: any[] = [];
+
+      const findSheet = (names: string[]) => {
+        for (const name of names) {
+          const found = workbook.SheetNames.find(sn => sn.toLowerCase().includes(name.toLowerCase()));
+          if (found) return workbook.Sheets[found];
+        }
+        return null;
+      };
+
+      const salSheet = findSheet(["wynagrodzeni", "salary", "salaries", "pensj", "plac"]);
+      if (salSheet) {
+        const rows: any[] = XLSX.utils.sheet_to_json(salSheet);
+        for (const row of rows) {
+          const osoba = row["Osoba"] || row["osoba"] || row["Imie"] || row["imie"] || row["Pracownik"] || row["pracownik"] || "";
+          if (!osoba) continue;
+          salariesData.push({
+            osoba,
+            firma: row["Firma"] || row["firma"] || "",
+            dzial: row["Dzial"] || row["dzial"] || row["Dział"] || "",
+            formaZatrudnienia: row["Forma"] || row["forma"] || row["Forma zatrudnienia"] || null,
+            netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
+            brutto: parseFloat(String(row["Brutto"] || row["brutto"] || 0)) || null,
+            vat: parseFloat(String(row["VAT"] || row["vat"] || row["Vat"] || 0)) || null,
+            kosztPracodawcy: parseFloat(String(row["Koszt pracodawcy"] || row["kosztPracodawcy"] || row["Koszt"] || row["koszt"] || 0)) || null,
+          });
+        }
+      }
+
+      const costSheet = findSheet(["koszt", "operacyjn", "costs", "wydatk"]);
+      if (costSheet) {
+        const rows: any[] = XLSX.utils.sheet_to_json(costSheet);
+        for (const row of rows) {
+          const nazwa = row["Nazwa"] || row["nazwa"] || row["Opis"] || row["opis"] || "";
+          if (!nazwa) continue;
+          costsData.push({
+            nazwa,
+            firma: row["Firma"] || row["firma"] || null,
+            dzial: row["Dzial"] || row["dzial"] || row["Dział"] || null,
+            rodzaj: row["Rodzaj"] || row["rodzaj"] || null,
+            kategoria: row["Kategoria"] || row["kategoria"] || "Operacyjne",
+            netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
+            koszt: parseFloat(String(row["Koszt"] || row["koszt"] || row["Brutto"] || row["brutto"] || 0)) || null,
+            notatka: row["Notatka"] || row["notatka"] || null,
+          });
+        }
+      }
+
+      const fleetSheet = findSheet(["flot", "fleet", "samochod", "pojazd", "auto"]);
+      if (fleetSheet) {
+        const rows: any[] = XLSX.utils.sheet_to_json(fleetSheet);
+        for (const row of rows) {
+          const opis = row["Opis"] || row["opis"] || row["Nazwa"] || row["nazwa"] || "";
+          if (!opis) continue;
+          fleetData.push({
+            opis,
+            firma: row["Firma"] || row["firma"] || null,
+            dzial: row["Dzial"] || row["dzial"] || row["Dział"] || null,
+            rodzaj: row["Rodzaj"] || row["rodzaj"] || null,
+            netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
+            koszt: parseFloat(String(row["Koszt"] || row["koszt"] || row["Brutto"] || row["brutto"] || 0)) || null,
+          });
+        }
+      }
+
+      if (salariesData.length === 0 && costsData.length === 0 && fleetData.length === 0 && workbook.SheetNames.length > 0) {
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        if (firstSheet) {
+          const rows: any[] = XLSX.utils.sheet_to_json(firstSheet);
+          for (const row of rows) {
+            const nazwa = row["Nazwa"] || row["nazwa"] || row["Opis"] || row["opis"] || "";
+            if (!nazwa) continue;
+            const kategoria = row["Kategoria"] || row["kategoria"] || "Operacyjne";
+            const item = {
+              nazwa,
+              firma: row["Firma"] || row["firma"] || null,
+              dzial: row["Dzial"] || row["dzial"] || row["Dział"] || null,
+              rodzaj: row["Rodzaj"] || row["rodzaj"] || null,
+              kategoria,
+              netto: parseFloat(String(row["Netto"] || row["netto"] || 0)) || null,
+              koszt: parseFloat(String(row["Koszt"] || row["koszt"] || row["Brutto"] || row["brutto"] || 0)) || null,
+              notatka: row["Notatka"] || row["notatka"] || null,
+            };
+            const kat = (kategoria || "").toLowerCase();
+            if (kat.includes("wynagrodz") || kat.includes("pensj") || kat.includes("plac") || kat.includes("salary")) {
+              salariesData.push({
+                osoba: item.nazwa,
+                firma: item.firma || "",
+                dzial: item.dzial || "",
+                formaZatrudnienia: item.rodzaj || null,
+                netto: item.netto,
+                brutto: null,
+                vat: null,
+                kosztPracodawcy: item.koszt,
+              });
+            } else if (kat.includes("flot") || kat.includes("samochod") || kat.includes("auto") || kat.includes("pojazd") || kat.includes("fleet")) {
+              fleetData.push({
+                opis: item.nazwa,
+                firma: item.firma,
+                dzial: item.dzial,
+                rodzaj: item.rodzaj,
+                netto: item.netto,
+                koszt: item.koszt,
+              });
+            } else {
+              costsData.push(item);
+            }
+          }
+        }
+      }
+
+      if (salariesData.length === 0 && costsData.length === 0 && fleetData.length === 0) {
+        return res.status(400).json({ message: "Nie znaleziono danych do importu. Sprawdz format pliku i nazwy kolumn (Nazwa/Osoba, Koszt/Brutto, Kategoria, Firma, Dzial)." });
+      }
+
+      const result = await storage.importFinanceData(miesiac, salariesData, costsData, fleetData, replaceMonth);
+      res.json({
+        message: `Zaimportowano: ${result.salaries} wynagrodzen, ${result.costs} kosztow, ${result.fleet} floty`,
+        ...result,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/daily-analysis", authMiddleware, adminOnly, async (req, res) => {
     try {
       const rok = Number(req.query.rok) || new Date().getFullYear();
