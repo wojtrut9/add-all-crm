@@ -79,6 +79,7 @@ export interface IStorage {
   getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
+  importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1470,6 +1471,35 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { salaries: salCount, costs: costCount, fleet: fleetCount };
+  }
+
+  async importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}> {
+    await db.delete(costs).where(
+      and(
+        eq(costs.firma, "IMPORT_VAT"),
+        sql`aktywny_miesiace->>${mKey} = 'true'`
+      )
+    );
+
+    let imported = 0;
+    for (const c of costsData) {
+      const am: Record<string, boolean> = {};
+      am[mKey] = true;
+      await db.insert(costs).values({
+        nazwa: c.nazwa || "Bez nazwy",
+        firma: "IMPORT_VAT",
+        dzial: c.kategoria || null,
+        rodzaj: c.rodzaj || null,
+        kategoria: c.kategoria || "Inne",
+        netto: c.netto ? String(c.netto) : null,
+        koszt: c.koszt ? String(c.koszt) : null,
+        notatka: c.notatka || null,
+        aktywnyMiesiace: am,
+      });
+      imported++;
+    }
+
+    return { imported };
   }
 }
 

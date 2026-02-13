@@ -565,184 +565,157 @@ export async function registerRoutes(
       if (!req.file) {
         return res.status(400).json({ message: "Brak pliku" });
       }
-      const miesiac = Number(req.body.miesiac);
-      const replaceMonth = req.body.replaceMonth === "true";
-      if (!miesiac || miesiac < 1 || miesiac > 12) {
-        return res.status(400).json({ message: "Nieprawidlowy miesiac" });
-      }
 
       const XLSX = await import("xlsx");
       const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
 
-      const costsData: any[] = [];
-      const salariesData: any[] = [];
-      const fleetData: any[] = [];
-
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const sheetName = workbook.SheetNames.find(n => n.toLowerCase().includes("raport")) || workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
       if (!sheet) {
         return res.status(400).json({ message: "Plik Excel jest pusty" });
       }
 
       const allRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-      let headerRowIdx = -1;
-      let colLp = -1, colNumer = -1, colDataWyst = -1, colDataSprz = -1, colKontrahent = -1, colStawka = -1, colNetto = -1, colVat = -1, colBrutto = -1;
+      let detectedYear = 2026;
+      let detectedMonth = 1;
+      for (let i = 0; i < Math.min(10, allRows.length); i++) {
+        const rowText = String(allRows[i] || "");
+        const dateMatch = rowText.match(/OD\s+(\d{4})-(\d{2})-\d{2}/i);
+        if (dateMatch) {
+          detectedYear = parseInt(dateMatch[1]);
+          detectedMonth = parseInt(dateMatch[2]);
+          break;
+        }
+      }
 
+      const miesiac = Number(req.body.miesiac) || detectedMonth;
+      if (miesiac < 1 || miesiac > 12) {
+        return res.status(400).json({ message: "Nieprawidlowy miesiac" });
+      }
+
+      let headerRowIdx = -1;
       for (let i = 0; i < Math.min(20, allRows.length); i++) {
         const row = allRows[i];
         if (!row) continue;
         const rowStr = row.map((c: any) => String(c || "").toLowerCase());
-        const hasLp = rowStr.some((c: string) => c === "lp." || c === "lp");
-        const hasNetto = rowStr.some((c: string) => c.includes("netto"));
-        const hasBrutto = rowStr.some((c: string) => c.includes("brutto"));
-        if (hasLp && hasNetto && hasBrutto) {
+        if (rowStr.some((c: string) => c === "lp." || c === "lp") && rowStr.some((c: string) => c.includes("netto"))) {
           headerRowIdx = i;
-          for (let j = 0; j < row.length; j++) {
-            const h = String(row[j] || "").toLowerCase();
-            if (h === "lp." || h === "lp") colLp = j;
-            else if (h.includes("numer")) colNumer = j;
-            else if (h.includes("data wystawienia") || h === "data wyst.") colDataWyst = j;
-            else if (h.includes("data sprzeda") || h === "data sprz.") colDataSprz = j;
-            else if (h.includes("kontrahent") || h.includes("dane kontrahenta")) colKontrahent = j;
-            else if (h.includes("stawka")) colStawka = j;
-            else if (h.includes("netto")) colNetto = j;
-            else if (h.includes("vat") && !h.includes("netto") && !h.includes("brutto")) colVat = j;
-            else if (h.includes("brutto")) colBrutto = j;
-          }
           break;
         }
       }
 
       if (headerRowIdx === -1) {
-        return res.status(400).json({ message: "Nie rozpoznano formatu pliku. Oczekiwany format: Raport Zestawienie Zakupu VAT z kolumnami Lp., Numer, Kontrahent, Netto, VAT, Brutto." });
+        return res.status(400).json({ message: "Nieprawidłowy format pliku. Oczekiwany: Raport Zestawienie Zakupu VAT z iBiznes." });
       }
 
-      for (let i = headerRowIdx + 1; i < allRows.length; i++) {
-        const row = allRows[i];
-        if (!row || row.length === 0) continue;
-
-        const lp = row[colLp];
-        if (lp === null || lp === undefined) continue;
-        const lpStr = String(lp).toLowerCase().trim();
-        if (lpStr === "" || lpStr.includes("podsumowanie")) continue;
-        if (isNaN(Number(lp))) continue;
-
-        const kontrahentCheck = colKontrahent >= 0 ? String(row[colKontrahent] || "").toLowerCase() : "";
-        if (kontrahentCheck.includes("podsumowanie")) continue;
-
-        const numer = colNumer >= 0 ? String(row[colNumer] || "") : "";
-        const kontrahent = colKontrahent >= 0 ? String(row[colKontrahent] || "") : "";
-        const netto = colNetto >= 0 ? parseFloat(String(row[colNetto] || 0)) || 0 : 0;
-        const vat = colVat >= 0 ? parseFloat(String(row[colVat] || 0)) || 0 : 0;
-        const brutto = colBrutto >= 0 ? parseFloat(String(row[colBrutto] || 0)) || 0 : 0;
-        const dataWyst = colDataWyst >= 0 ? String(row[colDataWyst] || "") : "";
-        const stawka = colStawka >= 0 ? String(row[colStawka] || "") : "";
-
-        let kontrahentName = kontrahent
+      const cleanContractorName = (raw: string): string => {
+        return raw
+          .replace(/^"(.*)"$/, "$1")
+          .replace(/SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ/gi, "Sp. z o.o.")
+          .replace(/SPÓAKA AKCYJNA ODDZIAA W POLSCE/gi, "S.A.")
+          .replace(/SPÓŁKA AKCYJNA/gi, "S.A.")
           .split(/\s+ul\./i)[0]
           .split(/\s+al\./i)[0]
           .split(/\s+Aleje\s/i)[0]
           .split(/\s+Aleja\s/i)[0]
           .split(/\s+Rondo\s/i)[0]
-          .replace(/\s*\d{2}-\d{3}\s+\w+\s*$/i, "")
+          .replace(/\s*\d{2}-\d{3}\s+\S+/g, "")
           .replace(/\s*PL\d{10,}$/i, "")
           .replace(/\s*DE\d{9,}$/i, "")
           .replace(/\s*\d{10,}$/i, "")
           .replace(/\s*null,\s*\d+\s*$/i, "")
-          .replace(/SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ/gi, "Sp. z o.o.")
-          .replace(/SPÓAKA AKCYJNA ODDZIAA W POLSCE/gi, "S.A.")
-          .replace(/SPÓŁKA AKCYJNA/gi, "S.A.")
           .replace(/\s+/g, " ")
-          .replace(/^"(.*)"$/, "$1")
           .trim();
+      }
 
+      const categorize = (numer: string, kontrahent: string): string => {
+        const n = numer.toLowerCase();
+        const k = kontrahent.toLowerCase();
+
+        if (k.includes("pracownicy") || n.includes("lista_płac") || n.includes("lista_p")) return "Wynagrodzenia";
+        if (k.includes("add all adam") || k.includes("rękawek") || k.includes("rekawek") || k.includes("małgorzata rojek") || k.includes("malgorzata rojek") || k.includes("rojek") || n.includes("harmonogram_spłaty") || n.includes("harmonogram_splaty")) return "Wynagrodzenia zarząd (JDG)";
+        if (n.includes("zus") || k.includes("zakład ubezpieczeń") || k.includes("zaklad ubezpieczen")) return "ZUS";
+        if (n.includes("urząd_skarbowy") || n.includes("urzad_skarbowy") || k.includes("izba administracji skarbowej") || k.includes("urząd skarbowy")) return "Podatki (US)";
+        if (k.includes("przychodnia") || k.includes("centrum medyczne")) return "Medycyna pracy";
+        if (k.includes("pekao leasing")) return "Leasing";
+        if (k.includes("union tank")) return "Paliwo";
+        if (k.includes("nootoo") || k.includes("tarnopolska") || k.includes("żyrafa") || k.includes("latająca") || k.includes("zyrafa") || k.includes("latajaca")) return "Transport";
+        if (k.includes("euler hermes")) return "Ubezpieczenia";
+        if (k.includes("etl") || k.includes("kancelari") || k.includes("doradztw")) return "Księgowość";
+        if (k.includes("pge") || k.includes("axpo")) return "Media/Prąd";
+        if (k.includes("firmatec")) return "IT/Serwis";
+        if (k.includes("chatgpt") || k.includes("subscription") || k.includes("widziszwszystko")) return "IT/Subskrypcje";
+        if (k.includes("123drukuj") || k.includes("agdstrefa")) return "Biuro";
+        if (k.includes("dpd") || k.includes("poczta polska")) return "Wysyłka/Poczta";
+        if (k.includes("polskie epłat") || k.includes("epłatności") || k.includes("eplatnosci")) return "Płatności/Terminal";
+        if (k.includes("iglotex") || k.includes("skalo") || k.includes("znatury")) return "Towary/Produkty";
+        if (k.includes("ekoba")) return "Serwis/Naprawa";
+        return "Inne";
+      }
+
+      const importedCosts: any[] = [];
+      let totalNetto = 0;
+      let totalBrutto = 0;
+
+      for (let i = headerRowIdx + 1; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (!row || row.length === 0) continue;
+
+        const lp = row[0];
+        if (lp === null || lp === undefined) continue;
+        if (typeof lp !== "number" && isNaN(Number(lp))) continue;
+
+        const numer = String(row[1] || "");
+        const kontrahentRaw = String(row[4] || "");
+        const stawkaVat = String(row[5] || "");
+        const netto = parseFloat(String(row[6] || 0)) || 0;
+        const vatKwota = parseFloat(String(row[7] || 0)) || 0;
+        const brutto = parseFloat(String(row[8] || 0)) || 0;
+
+        const kontrahentName = cleanContractorName(kontrahentRaw);
         if (!kontrahentName || (netto === 0 && brutto === 0)) continue;
 
-        const numerLower = numer.toLowerCase().replace(/_/g, " ");
-        const kontrahentLower = kontrahentName.toLowerCase();
-        const combined = `${numerLower} ${kontrahentLower}`;
+        const kategoria = categorize(numer, kontrahentName);
 
-        const isListaPlac = numerLower.includes("lista p") || numerLower.includes("lista_p");
-        const isZUS = numerLower.includes("zus") || kontrahentLower.includes("zakład ubezpieczeń");
-        const isUS = numerLower.includes("urząd skarbowy") || numerLower.includes("urzad skarbowy") || kontrahentLower.includes("administracji skarbowej") || kontrahentLower.includes("urząd skarbowy");
-        const isSalaryRelated = isListaPlac || isZUS || isUS;
+        totalNetto += netto;
+        totalBrutto += brutto;
 
-        const isLeasing = kontrahentLower.includes("leasing");
-        const isFuelCard = kontrahentLower.includes("union tank");
-        const isFleet = isFuelCard || (isLeasing && !kontrahentLower.includes("maszyn"));
-
-        if (isSalaryRelated) {
-          let osoba = numer.replace(/_/g, " ");
-          if (isZUS) osoba = "ZUS";
-          if (isUS) osoba = "Urząd Skarbowy";
-          salariesData.push({
-            osoba,
-            firma: kontrahentName,
-            dzial: isZUS || isUS ? "Obciążenia publiczne" : "Pracownicy",
-            formaZatrudnienia: isListaPlac ? "Umowa" : isZUS ? "ZUS" : "Podatek",
-            netto: netto || null,
-            brutto: brutto || null,
-            vat: vat || null,
-            kosztPracodawcy: brutto || null,
-          });
-        } else if (isFleet) {
-          fleetData.push({
-            opis: kontrahentName,
-            firma: kontrahentName,
-            dzial: null,
-            rodzaj: isLeasing ? "Leasing" : "Paliwo",
-            netto: netto || null,
-            koszt: brutto || null,
-          });
-        } else {
-          let kategoria = "Operacyjne";
-          if (combined.includes("poczta") || combined.includes("dpd") || combined.includes("kurier") || combined.includes("przesyłk")) {
-            kategoria = "Wysyłka/Poczta";
-          } else if (combined.includes("pge") || combined.includes("energia") || combined.includes("axpo") || combined.includes("gaz") || combined.includes("woda") || combined.includes("media")) {
-            kategoria = "Media";
-          } else if (combined.includes("euler hermes") || combined.includes("ubezpiecz")) {
-            kategoria = "Ubezpieczenia";
-          } else if (combined.includes("etl") || combined.includes("doradztw") || combined.includes("księgow") || combined.includes("kancelari")) {
-            kategoria = "Księgowość/Doradztwo";
-          } else if (combined.includes("medyczn") || combined.includes("lekars") || combined.includes("przychodni")) {
-            kategoria = "Medycyna pracy";
-          } else if (combined.includes("iglotex") || combined.includes("znatury") || combined.includes("spożywcz")) {
-            kategoria = "Towary/Produkty";
-          } else if (combined.includes("transport") || combined.includes("nootoo") || combined.includes("w drogę")) {
-            kategoria = "Transport";
-          } else if (combined.includes("harmonogram") || combined.includes("pożyczk") || combined.includes("rata") || combined.includes("splat")) {
-            kategoria = "Finansowanie/Raty";
-          } else if (combined.includes("epłatn") || combined.includes("terminal") || combined.includes("płatności")) {
-            kategoria = "Opłaty bankowe";
-          } else if (combined.includes("chatgpt") || combined.includes("subscript") || combined.includes("licencj") || combined.includes("oprogramow")) {
-            kategoria = "IT/Oprogramowanie";
-          } else if (combined.includes("serwis") || combined.includes("firmatec") || combined.includes("napraw")) {
-            kategoria = "Serwis/Naprawy";
-          } else if (combined.includes("druk") || combined.includes("biurow")) {
-            kategoria = "Biuro/Druk";
-          }
-
-          costsData.push({
-            nazwa: kontrahentName,
-            firma: numer,
-            dzial: null,
-            rodzaj: null,
-            kategoria,
-            netto: netto || null,
-            koszt: brutto || null,
-            notatka: null,
-          });
-        }
+        importedCosts.push({
+          nazwa: kontrahentName,
+          firma: "IMPORT_VAT",
+          dzial: kategoria,
+          rodzaj: numer,
+          kategoria,
+          netto,
+          koszt: brutto,
+          notatka: stawkaVat || null,
+        });
       }
 
-      if (salariesData.length === 0 && costsData.length === 0 && fleetData.length === 0) {
-        return res.status(400).json({ message: "Nie znaleziono danych do importu. Sprawdz czy plik zawiera dane faktur z kolumnami Lp., Numer, Kontrahent, Netto, Brutto." });
+      if (importedCosts.length === 0) {
+        return res.status(400).json({ message: "Nieprawidłowy format pliku. Oczekiwany: Raport Zestawienie Zakupu VAT z iBiznes." });
       }
 
-      const result = await storage.importFinanceData(miesiac, salariesData, costsData, fleetData, replaceMonth);
+      const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+      const MONTH_NAMES = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
+      const mKey = MONTH_KEYS[miesiac - 1];
+
+      const result = await storage.importVATCosts(miesiac, mKey, importedCosts);
+
+      const catSummary: Record<string, number> = {};
+      for (const c of importedCosts) {
+        catSummary[c.kategoria] = (catSummary[c.kategoria] || 0) + c.koszt;
+      }
+
       res.json({
-        message: `Zaimportowano: ${result.salaries} wynagrodzen, ${result.costs} kosztow, ${result.fleet} floty`,
-        ...result,
+        message: `Zaimportowano ${importedCosts.length} pozycji kosztowych za ${MONTH_NAMES[miesiac - 1]} ${detectedYear}. Razem: ${Math.round(totalBrutto).toLocaleString("pl-PL")} PLN brutto.`,
+        imported: importedCosts.length,
+        rok: detectedYear,
+        miesiac,
+        totalNetto: Math.round(totalNetto),
+        totalBrutto: Math.round(totalBrutto),
+        categories: catSummary,
       });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
