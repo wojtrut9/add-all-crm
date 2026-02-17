@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Calendar as CalendarIcon, Plus, RefreshCw, ChevronLeft, ChevronRight,
   Phone, CheckCircle2, XCircle, Clock, Loader2, Users, Trash2, Pencil,
+  MessageSquare, Mail, UserRound,
 } from "lucide-react";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -58,6 +59,37 @@ const statusDotColors: Record<string, string> = {
   "Nie zamowil": "bg-destructive",
   "Zrobione": "bg-chart-5",
 };
+
+function ContactFormBadge({ forma }: { forma: string | null | undefined }) {
+  if (!forma) return null;
+  const lower = forma.toLowerCase();
+  let icon = null;
+  let label = forma;
+  if (lower === "telefon") {
+    icon = <Phone className="w-3 h-3" />;
+    label = "Telefon";
+  } else if (lower === "sms") {
+    icon = <MessageSquare className="w-3 h-3" />;
+    label = "SMS";
+  } else if (lower === "email" || lower.includes("@")) {
+    icon = <Mail className="w-3 h-3" />;
+    label = lower.includes("@") ? "Email" : "Email";
+  } else if (lower === "wizyta") {
+    icon = <UserRound className="w-3 h-3" />;
+    label = "Wizyta";
+  } else if (lower === "whatsapp") {
+    icon = <MessageSquare className="w-3 h-3" />;
+    label = "WhatsApp";
+  } else {
+    return null;
+  }
+  return (
+    <Badge variant="outline" className="text-xs gap-1 mt-1" data-testid="badge-contact-form">
+      {icon}
+      {label}
+    </Badge>
+  );
+}
 
 const meetingTypeBadge: Record<string, string> = {
   "Spotkanie": "default",
@@ -88,6 +120,7 @@ function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange
           </div>
           <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${statusDotColors[contact.status] || 'bg-muted-foreground'}`} />
         </div>
+        <ContactFormBadge forma={contact.preferowanaFormaKontaktu} />
         {contact.priorytet !== "Normalny" && (
           <Badge variant="destructive" className="text-xs mt-1">{contact.priorytet}</Badge>
         )}
@@ -122,6 +155,14 @@ function ContactCard({ contact, onStatusChange }: { contact: any; onStatusChange
               <Label>Typ</Label>
               <p className="text-sm">{contact.typ} | Priorytet: {contact.priorytet}</p>
             </div>
+            {contact.preferowanaFormaKontaktu && (
+              <div>
+                <Label>Preferowana forma kontaktu</Label>
+                <div className="mt-1">
+                  <ContactFormBadge forma={contact.preferowanaFormaKontaktu} />
+                </div>
+              </div>
+            )}
             {contact.notatka && (
               <div>
                 <Label>Notatka</Label>

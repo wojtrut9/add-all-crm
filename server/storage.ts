@@ -178,6 +178,7 @@ export class DatabaseStorage implements IStorage {
         notatka: contacts.notatka,
         clientName: clients.klient,
         brakiZamowien: clients.brakiZamowien,
+        preferowanaFormaKontaktu: clients.preferowanaFormaKontaktu,
       })
       .from(contacts)
       .leftJoin(clients, eq(contacts.clientId, clients.id))
