@@ -837,14 +837,24 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/wz/import", authMiddleware, adminOnly, upload.single("file"), async (req, res) => {
+  app.post("/api/wz/import", authMiddleware, upload.single("file"), async (req, res) => {
     try {
+      const user = (req as any).user;
+      if (user.rola !== "admin" && user.rola !== "handlowiec") {
+        return res.status(403).json({ message: "Brak uprawnien" });
+      }
+
       const XLSX = await import("xlsx");
       const file = (req as any).file;
       if (!file) return res.status(400).json({ message: "Brak pliku" });
 
-      const rok = Number(req.body.rok);
-      const miesiac = Number(req.body.miesiac);
+      const now = new Date();
+      let rok = Number(req.body.rok);
+      let miesiac = Number(req.body.miesiac);
+      if (user.rola === "handlowiec") {
+        rok = now.getFullYear();
+        miesiac = now.getMonth() + 1;
+      }
       const addToExisting = req.body.addToExisting === "true";
       if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
 

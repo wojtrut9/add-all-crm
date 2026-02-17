@@ -1,10 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth, authFetch } from "@/lib/auth";
+import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Target,
   ShoppingCart,
@@ -15,6 +25,9 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
+  Upload,
+  Loader2,
+  Users,
 } from "lucide-react";
 
 const formatPLN = (val: number) => {
@@ -27,6 +40,9 @@ const formatPercent = (val: number) => {
 
 export default function MySalesPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["/api/my-sales"],
@@ -34,6 +50,36 @@ export default function MySalesPage() {
       const res = await authFetch("/api/my-sales");
       if (!res.ok) return null;
       return res.json();
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const now = new Date();
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("rok", String(now.getFullYear()));
+      formData.append("miesiac", String(now.getMonth() + 1));
+      formData.append("addToExisting", "false");
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/wz/import", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Import failed");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Zaimportowano WZ",
+        description: `${data.imported} klientow, laczna sprzedaz: ${formatPLN(data.total)}${data.notFound?.length ? ` | Nieznaleziono: ${data.notFound.length}` : ""}`,
+      });
+      setImportDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/my-sales"] });
+    },
+    onError: () => {
+      toast({ title: "Blad importu WZ", variant: "destructive" });
     },
   });
 
@@ -97,7 +143,12 @@ export default function MySalesPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold" data-testid="text-page-title">Moja sprzedaz - {user?.imie}</h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-bold" data-testid="text-page-title">Moja sprzedaz - {user?.imie}</h1>
+        <Button onClick={() => setImportDialogOpen(true)} data-testid="button-import-wz">
+          <Upload className="w-4 h-4 mr-1" /> Import WZ
+        </Button>
+      </div>
 
       <Card>
         <CardContent className="p-6">
@@ -346,6 +397,94 @@ export default function MySalesPage() {
           </CardContent>
         </Card>
       )}
+
+      {(() => {
+        const salesByGroup = data?.salesByGroup || {};
+        const groupEntries = Object.entries(salesByGroup)
+          .map(([grupa, vals]: [string, any]) => ({ grupa, ...vals }))
+          .sort((a: any, b: any) => b.sprzedaz - a.sprzedaz);
+        const totalSprzedaz = groupEntries.reduce((s: number, g: any) => s + g.sprzedaz, 0);
+        const totalKlientow = groupEntries.reduce((s: number, g: any) => s + g.klientow, 0);
+
+        if (groupEntries.length === 0) return null;
+
+        return (
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-2 pb-3">
+              <Users className="w-4 h-4" />
+              <CardTitle className="text-base">Sprzedaz wg grup</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" data-testid="table-sales-by-group">
+                  <thead>
+                    <tr className="border-b bg-muted/40">
+                      <th className="text-left p-3 font-medium text-muted-foreground">Grupa</th>
+                      <th className="text-center p-3 font-medium text-muted-foreground">Klientow</th>
+                      <th className="text-right p-3 font-medium text-muted-foreground">Sprzedaz (WZ)</th>
+                      <th className="text-right p-3 font-medium text-muted-foreground">Udzial %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupEntries.map((g: any) => (
+                      <tr key={g.grupa} className="border-b last:border-0" data-testid={`row-group-${g.grupa}`}>
+                        <td className="p-3 font-medium">{g.grupa}</td>
+                        <td className="p-3 text-center">{g.klientow}</td>
+                        <td className="p-3 text-right font-semibold">{formatPLN(g.sprzedaz)}</td>
+                        <td className="p-3 text-right text-muted-foreground">
+                          {totalSprzedaz > 0 ? formatPercent((g.sprzedaz / totalSprzedaz) * 100) : "0%"}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-muted/40 font-bold">
+                      <td className="p-3">RAZEM</td>
+                      <td className="p-3 text-center">{totalKlientow}</td>
+                      <td className="p-3 text-right">{formatPLN(totalSprzedaz)}</td>
+                      <td className="p-3 text-right">100%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import pliku WZ</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Wybierz plik .xls lub .xlsx z obrotami (format &quot;Obroty&quot; z iBiznes). Dane zostana zaimportowane na biezacy miesiac.
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xls,.xlsx"
+            className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary"
+            data-testid="input-wz-file"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>Anuluj</Button>
+            <Button
+              onClick={() => {
+                const file = fileInputRef.current?.files?.[0];
+                if (!file) {
+                  toast({ title: "Wybierz plik", description: "Musisz wybrac plik .xls lub .xlsx", variant: "destructive" });
+                  return;
+                }
+                importMutation.mutate(file);
+              }}
+              disabled={importMutation.isPending}
+              data-testid="button-submit-wz-import"
+            >
+              {importMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+              Importuj
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

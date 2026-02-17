@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, gte, lte, sql, like, ilike, or, desc, asc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, like, ilike, or, desc, asc, inArray } from "drizzle-orm";
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
@@ -606,6 +606,32 @@ export class DatabaseStorage implements IStorage {
         brakiZamowien: c.brakiZamowien || 0,
       }));
 
+    const currentSalesMap = new Map<number, number>();
+    if (clientIds.length > 0) {
+      const mySalesData = await db.select().from(clientSales)
+        .where(and(
+          eq(clientSales.rok, currentYear),
+          eq(clientSales.miesiac, currentMonth),
+          inArray(clientSales.clientId, clientIds),
+        ));
+      for (const s of mySalesData) {
+        currentSalesMap.set(s.clientId, (currentSalesMap.get(s.clientId) || 0) + Number(s.sprzedaz || 0));
+      }
+    }
+
+    const salesByGroup: Record<string, { sprzedaz: number; klientow: number }> = {};
+    for (const client of myClients) {
+      const grupa = (client as any).grupaMvp || "Inne";
+      if (!salesByGroup[grupa]) {
+        salesByGroup[grupa] = { sprzedaz: 0, klientow: 0 };
+      }
+      salesByGroup[grupa].klientow += 1;
+      const sale = currentSalesMap.get(client.id);
+      if (sale) {
+        salesByGroup[grupa].sprzedaz += sale;
+      }
+    }
+
     return {
       monthSales,
       prevMonthSales,
@@ -620,6 +646,7 @@ export class DatabaseStorage implements IStorage {
       bestClient,
       urgentClients,
       noRecentContact,
+      salesByGroup,
     };
   }
 
