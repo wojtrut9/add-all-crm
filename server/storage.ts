@@ -679,6 +679,10 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(clientSales.rok, prev2Year), eq(clientSales.miesiac, prev2Month)));
     const prev2Map = new Map(prev2Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
+    const currentSales = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const currentSalesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
     const filteredClientIds = new Set(allClients.map(c => c.id));
     const prevMonthTotalSales = prev1Sales
       .filter(r => filteredClientIds.has(r.clientId))
@@ -701,6 +705,7 @@ export class DatabaseStorage implements IStorage {
       prev1: number;
       prev2: number;
       cel: number;
+      realizacjaWZ: number;
       tydz1: number;
       tydz2: number;
       tydz3: number;
@@ -737,6 +742,8 @@ export class DatabaseStorage implements IStorage {
         weekVals[w.tydzien] = { realizacja: Number(w.realizacja || 0), id: w.id };
       }
 
+      const realizacjaWZ = currentSalesMap.get(cid) || 0;
+
       grupyMap[grupa].push({
         clientId: cid,
         klient: client.klient,
@@ -744,6 +751,7 @@ export class DatabaseStorage implements IStorage {
         prev1: prev1Val,
         prev2: prev2Val,
         cel,
+        realizacjaWZ,
         tydz1: weekVals[1]?.realizacja || 0,
         tydz2: weekVals[2]?.realizacja || 0,
         tydz3: weekVals[3]?.realizacja || 0,
@@ -1400,19 +1408,6 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
     const salesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
-    const monthPrefix = `${rok}-${String(miesiac).padStart(2, '0')}%`;
-    const contactsAgg = await db.select({
-      clientId: contacts.clientId,
-      total: sql<string>`COALESCE(SUM(CAST(${contacts.kwota} AS NUMERIC)), 0)`
-    })
-    .from(contacts)
-    .where(and(
-      eq(contacts.status, "Zamowil"),
-      like(contacts.data, monthPrefix)
-    ))
-    .groupBy(contacts.clientId);
-    const contactsMap = new Map(contactsAgg.map(c => [c.clientId, Number(c.total || 0)]));
-
     const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
     const prevYear = miesiac === 1 ? rok - 1 : rok;
     const prevSales = await db.select().from(clientSales)
@@ -1427,9 +1422,7 @@ export class DatabaseStorage implements IStorage {
         if (prevSale > 0) cel = prevSale * 1.05;
       }
 
-      const wzValue = salesMap.get(client.id) || 0;
-      const contactValue = contactsMap.get(client.id) || 0;
-      const realizacja = wzValue > 0 ? wzValue : contactValue;
+      const realizacja = salesMap.get(client.id) || 0;
       const celNaDzis = dniRoboczeMiesiac > 0 ? (cel / dniRoboczeMiesiac) * dniRoboczeMiniete : 0;
       const roznica = realizacja - celNaDzis;
       const procent = celNaDzis > 0 ? (realizacja / celNaDzis) * 100 : (realizacja > 0 ? 100 : 0);

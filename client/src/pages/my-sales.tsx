@@ -77,6 +77,7 @@ export default function MySalesPage() {
       });
       setImportDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/my-sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
     },
     onError: () => {
       toast({ title: "Blad importu WZ", variant: "destructive" });

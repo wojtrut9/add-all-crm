@@ -414,7 +414,7 @@ export default function PlanPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Realizacja</p>
+            <p className="text-sm text-muted-foreground">Realizacja (WZ)</p>
             <p className="text-xl font-bold" data-testid="text-realizacja">{fmtPLN(sumaRealizacja)}</p>
           </CardContent>
         </Card>
@@ -481,7 +481,7 @@ export default function PlanPage() {
               <TableHead>Grupa</TableHead>
               <SortableHead label="Cel miesiaca" field="cel" className="text-right" />
               <SortableHead label="Cel na dzis" field="celNaDzis" className="text-right" />
-              <SortableHead label="Realizacja" field="realizacja" className="text-right" />
+              <SortableHead label="Realizacja (WZ)" field="realizacja" className="text-right" />
               <SortableHead label="Roznica" field="roznica" className="text-right" />
               <SortableHead label="%" field="procent" className="text-right" />
               <TableHead className="w-10">Status</TableHead>
