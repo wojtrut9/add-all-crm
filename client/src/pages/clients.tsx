@@ -37,9 +37,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   Search, Download, Upload, Plus, AlertTriangle, Phone,
-  MapPin, Users, Pencil, Save, X, Trash2, Wrench,
+  MapPin, Users, Pencil, Save, X, Trash2, Wrench, StickyNote, CheckCircle2,
 } from "lucide-react";
 import type { Client } from "@shared/schema";
 
@@ -85,6 +86,11 @@ function ClientCard({ client, onClick }: { client: Client; onClick: () => void }
           <Badge variant={client.aktywny ? "outline" : "secondary"} className={`text-xs ${!client.aktywny ? "bg-[#e6e6e6] text-[#0f0f0f] border-transparent" : ""}`}>
             {client.status}
           </Badge>
+          {(client as any).przekazany && (
+            <Badge variant="outline" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-transparent">
+              Przekazany
+            </Badge>
+          )}
         </div>
       </div>
     </div>
@@ -136,7 +142,32 @@ function SelectField({ label, value, onChange, options }: {
 
 function ClientDetail({ client, onClose }: { client: Client; onClose: () => void }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [editing, setEditing] = useState(false);
+
+  const { data: clientNotes = [] } = useQuery({
+    queryKey: ["/api/notes", "client", client.id],
+    queryFn: async () => {
+      const res = await authFetch("/api/notes");
+      if (!res.ok) return [];
+      const allNotes = await res.json();
+      return allNotes.filter((n: any) => n.clientId === client.id);
+    },
+  });
+
+  const przekazanyMutation = useMutation({
+    mutationFn: async (val: boolean) => {
+      return apiRequest("PATCH", `/api/clients/${client.id}`, { przekazany: val });
+    },
+    onSuccess: (_res: any, val: boolean) => {
+      toast({ title: val ? "Klient oznaczony jako przekazany" : "Oznaczenie przekazany usunięte" });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    },
+    onError: () => {
+      toast({ title: "Błąd zapisu", variant: "destructive" });
+    },
+  });
+
   const [form, setForm] = useState({
     klient: client.klient,
     opiekun: client.opiekun,
@@ -162,8 +193,11 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
     mutationFn: async (data: any) => {
       return apiRequest("PATCH", `/api/clients/${client.id}`, data);
     },
-    onSuccess: () => {
+    onSuccess: (_res: any, variables: any) => {
       toast({ title: "Zapisano zmiany" });
+      if (variables.dniZamowien !== undefined && variables.dniZamowien !== (client.dniZamowien || null)) {
+        toast({ title: "Dni zamówień zmienione", description: "Wygeneruj plan na tydzień, aby zobaczyć zmiany w kalendarzu." });
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setEditing(false);
       onClose();
@@ -326,11 +360,40 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
           <InfoRow label="Osoba kontaktowa" value={client.osobaKontaktowa || "-"} />
           <InfoRow label="Braki zamówień" value={String(client.brakiZamowien || 0)} alert={(client.brakiZamowien || 0) >= 2} />
         </div>
+        <div className="flex items-center justify-between gap-3 p-3 rounded-md border">
+          <div>
+            <p className="text-sm font-medium">Klient przekazany</p>
+            <p className="text-xs text-muted-foreground">Oznacz klienta jako przekazanego</p>
+          </div>
+          <Switch
+            checked={(client as any).przekazany || false}
+            onCheckedChange={(val) => przekazanyMutation.mutate(val)}
+            data-testid="switch-przekazany"
+          />
+        </div>
         {client.notatki && (
           <div>
-            <p className="text-sm font-medium mb-1">Notatki</p>
+            <p className="text-sm font-medium mb-1">Notatki klienta</p>
             <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md max-h-40 overflow-y-auto">
               {client.notatki}
+            </div>
+          </div>
+        )}
+        {clientNotes.length > 0 && (
+          <div>
+            <p className="text-sm font-medium mb-2 flex items-center gap-1">
+              <StickyNote className="w-4 h-4" /> Notatki powiązane ({clientNotes.length})
+            </p>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {clientNotes.map((note: any) => (
+                <div key={note.id} className="p-2 rounded-md bg-muted/50 border">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">{note.tytul}</p>
+                    <Badge variant="outline" className="text-xs">{note.kategoria}</Badge>
+                  </div>
+                  {note.tresc && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{note.tresc}</p>}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -478,6 +541,7 @@ export default function ClientsPage() {
   const [filterSegment, setFilterSegment] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterGrupa, setFilterGrupa] = useState("all");
+  const [filterPrzekazany, setFilterPrzekazany] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState("all");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -493,6 +557,16 @@ export default function ClientsPage() {
 
   const clients = clientsData || [];
 
+  const isHandlowiec = user?.rola === "handlowiec";
+  const availableGrupy = Array.from(
+    new Set(
+      clients
+        .filter(c => isHandlowiec ? c.opiekun === user?.imie : true)
+        .map(c => c.grupaMvp)
+        .filter(Boolean) as string[]
+    )
+  ).sort();
+
   const filteredClients = clients.filter((c) => {
     if (search) {
       const s = search.toLowerCase();
@@ -507,6 +581,8 @@ export default function ClientsPage() {
     if (filterSegment !== "all" && c.segment !== filterSegment) return false;
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
     if (filterGrupa !== "all" && c.grupaMvp !== filterGrupa) return false;
+    if (filterPrzekazany === "tak" && !(c as any).przekazany) return false;
+    if (filterPrzekazany === "nie" && (c as any).przekazany) return false;
 
     if (activeTab === "gosia-premium" && !(c.opiekun === "Gosia" && c.segment === "Premium")) return false;
     if (activeTab === "magda-premium" && !(c.opiekun === "Magda" && c.segment === "Premium")) return false;
@@ -672,6 +748,27 @@ export default function ClientsPage() {
             </Select>
           </>
         )}
+        <Select value={filterGrupa} onValueChange={setFilterGrupa}>
+          <SelectTrigger className="w-[180px]" data-testid="select-grupa">
+            <SelectValue placeholder="Grupa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszystkie grupy</SelectItem>
+            {availableGrupy.map(g => (
+              <SelectItem key={g} value={g}>{g}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterPrzekazany} onValueChange={setFilterPrzekazany}>
+          <SelectTrigger className="w-[160px]" data-testid="select-przekazany">
+            <SelectValue placeholder="Przekazany" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszyscy</SelectItem>
+            <SelectItem value="tak">Tylko przekazani</SelectItem>
+            <SelectItem value="nie">Tylko nieprzekazani</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Dialog open={!!selectedClient} onOpenChange={(o) => !o && setSelectedClient(null)}>

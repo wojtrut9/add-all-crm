@@ -307,6 +307,13 @@ export async function registerRoutes(
       const allClients = await storage.getClients(opiekun);
       const activeClients = allClients.filter(c => c.aktywny);
 
+      const wsDateForDelete = new Date(weekStart);
+      const weDate = new Date(wsDateForDelete);
+      weDate.setDate(weDate.getDate() + 4);
+      const fromStr = wsDateForDelete.toISOString().split("T")[0];
+      const toStr = weDate.toISOString().split("T")[0];
+      await storage.deleteUnfinishedContacts(fromStr, toStr, opiekun);
+
       let count = 0;
       const dayMap: Record<string, number> = {
         "Poniedzialek": 0, "Poniedziałek": 0, "Pon": 0, "pn": 0,
@@ -383,6 +390,21 @@ export async function registerRoutes(
             formaKontaktu: client.preferowanaFormaKontaktu || null,
           });
           count++;
+
+          if ((client.brakiZamowien || 0) > 2 && dni.indexOf(dzien) === 0) {
+            await storage.createMeeting({
+              tytul: `Alert: ${client.klient} — ${client.brakiZamowien} braków`,
+              opis: null,
+              data: dateStr,
+              godzina: null,
+              godzinaKoniec: null,
+              clientId: client.id,
+              noteId: null,
+              typ: "Alert",
+              autor: client.opiekun,
+              status: "Zaplanowane",
+            });
+          }
         }
       }
 
@@ -1032,7 +1054,93 @@ export async function registerRoutes(
   app.post("/api/notes", authMiddleware, async (req, res) => {
     try {
       const note = await storage.createNote(req.body);
+
+      if (req.body.kategoria === "Spotkanie" && req.body.dataSpotkania) {
+        await storage.createMeeting({
+          tytul: req.body.tytul,
+          opis: req.body.tresc || null,
+          data: req.body.dataSpotkania,
+          godzina: req.body.godzinaSpotkania || null,
+          godzinaKoniec: null,
+          clientId: req.body.clientId || null,
+          noteId: note.id,
+          typ: "Z notatki",
+          autor: req.body.autor,
+          status: "Zaplanowane",
+        });
+      }
+
       res.json(note);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/notes/:id", authMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updated = await storage.updateNote(id, req.body);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/notes/:id", authMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteNote(id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/meetings", authMiddleware, async (req, res) => {
+    try {
+      const { from, to } = req.query;
+      const result = await storage.getMeetings(from as string, to as string);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/meetings/:id", authMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const meeting = await storage.getMeeting(id);
+      if (!meeting) return res.status(404).json({ message: "Nie znaleziono" });
+      res.json(meeting);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/meetings", authMiddleware, async (req, res) => {
+    try {
+      const meeting = await storage.createMeeting(req.body);
+      res.json(meeting);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/meetings/:id", authMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updated = await storage.updateMeeting(id, req.body);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/meetings/:id", authMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMeeting(id);
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

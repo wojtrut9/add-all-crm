@@ -3,12 +3,13 @@ import { eq, and, gte, lte, sql, like, ilike, or, desc, asc } from "drizzle-orm"
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
-  fleet, notes, salesHistory, dailyAnalysis,
+  fleet, notes, meetings, salesHistory, dailyAnalysis,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
   type InsertDelivery, type Delivery,
   type InsertNote, type Note,
+  type InsertMeeting, type Meeting,
   type InsertSalary, type InsertCost, type InsertFleet,
   type Cost, type DailyAnalysis,
 } from "@shared/schema";
@@ -31,6 +32,7 @@ export interface IStorage {
   createContact(contact: InsertContact): Promise<Contact>;
   updateContact(id: number, data: Partial<Contact>): Promise<void>;
   getContact(id: number): Promise<Contact | undefined>;
+  deleteUnfinishedContacts(from: string, to: string, opiekun?: string): Promise<void>;
 
   getDeliveries(date: string): Promise<any[]>;
   createDelivery(delivery: InsertDelivery): Promise<Delivery>;
@@ -55,6 +57,14 @@ export interface IStorage {
 
   getNotes(autor?: string): Promise<Note[]>;
   createNote(note: InsertNote): Promise<Note>;
+  updateNote(id: number, data: Partial<InsertNote>): Promise<Note>;
+  deleteNote(id: number): Promise<void>;
+
+  getMeetings(from?: string, to?: string): Promise<Meeting[]>;
+  getMeeting(id: number): Promise<Meeting | undefined>;
+  createMeeting(meeting: InsertMeeting): Promise<Meeting>;
+  updateMeeting(id: number, data: Partial<InsertMeeting>): Promise<Meeting>;
+  deleteMeeting(id: number): Promise<void>;
 
   getDashboardStats(opiekun?: string, rola?: string): Promise<any>;
 
@@ -194,6 +204,18 @@ export class DatabaseStorage implements IStorage {
   async getContact(id: number): Promise<Contact | undefined> {
     const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));
     return contact;
+  }
+
+  async deleteUnfinishedContacts(from: string, to: string, opiekun?: string): Promise<void> {
+    const conditions = [
+      eq(contacts.status, "Do zrobienia"),
+      gte(contacts.data, from),
+      lte(contacts.data, to),
+    ];
+    if (opiekun) {
+      conditions.push(eq(contacts.opiekun, opiekun));
+    }
+    await db.delete(contacts).where(and(...conditions));
   }
 
   async getDeliveries(date: string): Promise<any[]> {
@@ -968,6 +990,44 @@ export class DatabaseStorage implements IStorage {
   async createNote(note: InsertNote): Promise<Note> {
     const [created] = await db.insert(notes).values(note).returning();
     return created;
+  }
+
+  async updateNote(id: number, data: Partial<InsertNote>): Promise<Note> {
+    const [updated] = await db.update(notes).set(data).where(eq(notes.id, id)).returning();
+    return updated;
+  }
+
+  async deleteNote(id: number): Promise<void> {
+    await db.delete(notes).where(eq(notes.id, id));
+  }
+
+  async getMeetings(from?: string, to?: string): Promise<Meeting[]> {
+    const conditions: any[] = [];
+    if (from) conditions.push(gte(meetings.data, from));
+    if (to) conditions.push(lte(meetings.data, to));
+    if (conditions.length > 0) {
+      return db.select().from(meetings).where(and(...conditions)).orderBy(asc(meetings.data));
+    }
+    return db.select().from(meetings).orderBy(asc(meetings.data));
+  }
+
+  async getMeeting(id: number): Promise<Meeting | undefined> {
+    const [m] = await db.select().from(meetings).where(eq(meetings.id, id));
+    return m;
+  }
+
+  async createMeeting(meeting: InsertMeeting): Promise<Meeting> {
+    const [created] = await db.insert(meetings).values(meeting).returning();
+    return created;
+  }
+
+  async updateMeeting(id: number, data: Partial<InsertMeeting>): Promise<Meeting> {
+    const [updated] = await db.update(meetings).set(data).where(eq(meetings.id, id)).returning();
+    return updated;
+  }
+
+  async deleteMeeting(id: number): Promise<void> {
+    await db.delete(meetings).where(eq(meetings.id, id));
   }
 
   async getDashboardStats(opiekun?: string, rola?: string): Promise<any> {

@@ -42,6 +42,7 @@ export const clients = pgTable("clients", {
   ubezpieczenieStatus: text("ubezpieczenie_status"),
   osobaKontaktowa: text("osoba_kontaktowa"),
   brakiZamowien: integer("braki_zamowien").notNull().default(0),
+  przekazany: boolean("przekazany").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -205,6 +206,25 @@ export const notes = pgTable("notes", {
 export const insertNoteSchema = createInsertSchema(notes).omit({ id: true, createdAt: true });
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
+
+export const meetings = pgTable("meetings", {
+  id: serial("id").primaryKey(),
+  tytul: text("tytul").notNull(),
+  opis: text("opis"),
+  data: text("data").notNull(),
+  godzina: text("godzina"),
+  godzinaKoniec: text("godzina_koniec"),
+  clientId: integer("client_id"),
+  noteId: integer("note_id"),
+  typ: text("typ").notNull().default("Spotkanie"),
+  autor: text("autor").notNull(),
+  status: text("status").notNull().default("Zaplanowane"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMeetingSchema = createInsertSchema(meetings).omit({ id: true, createdAt: true });
+export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
+export type Meeting = typeof meetings.$inferSelect;
 
 export const dailyAnalysis = pgTable("daily_analysis", {
   id: serial("id").primaryKey(),
