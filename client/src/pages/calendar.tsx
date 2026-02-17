@@ -173,6 +173,7 @@ export default function CalendarPage() {
   const [mainTab, setMainTab] = useState("kontakty");
   const [activeView, setActiveView] = useState("week");
 
+  const [confirmGenerate, setConfirmGenerate] = useState(false);
   const [meetingDialogOpen, setMeetingDialogOpen] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<any>(null);
   const [meetingForm, setMeetingForm] = useState({
@@ -358,7 +359,7 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2">
           {mainTab === "kontakty" && (
             <Button
-              onClick={() => generateMutation.mutate()}
+              onClick={() => setConfirmGenerate(true)}
               disabled={generateMutation.isPending}
               data-testid="button-generate-week"
             >
@@ -595,6 +596,29 @@ export default function CalendarPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmGenerate} onOpenChange={setConfirmGenerate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generowanie planu na tydzien</AlertDialogTitle>
+            <AlertDialogDescription>
+              Generowanie nowego planu usunie TYLKO niezrealizowane kontakty (status &quot;Do zrobienia&quot;) za wybrany tydzien i utworzy nowe. Kontakty ze statusami &quot;Zamowil&quot;, &quot;Nie zamowil&quot; itp. pozostana bez zmian. Kontynuowac?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-generate">Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmGenerate(false);
+                generateMutation.mutate();
+              }}
+              data-testid="button-confirm-generate"
+            >
+              Generuj
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

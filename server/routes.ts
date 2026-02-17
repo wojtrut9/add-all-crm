@@ -377,8 +377,11 @@ export async function registerRoutes(
           const dateStr = contactDate.toISOString().split("T")[0];
 
           const existing = await storage.getContacts(dateStr, dateStr, client.opiekun);
-          const alreadyExists = existing.some(c => c.clientId === client.id && c.data === dateStr);
-          if (alreadyExists) continue;
+          const existingForClient = existing.filter(c => c.clientId === client.id && c.data === dateStr);
+          if (existingForClient.length > 0) {
+            const hasNonDefault = existingForClient.some(c => c.status !== "Do zrobienia");
+            if (hasNonDefault) continue;
+          }
 
           await storage.createContact({
             clientId: client.id,
