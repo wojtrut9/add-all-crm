@@ -681,7 +681,6 @@ export async function registerRoutes(
 
       const importedCosts: any[] = [];
       let totalNetto = 0;
-      let totalBrutto = 0;
 
       for (let i = headerRowIdx + 1; i < allRows.length; i++) {
         const row = allRows[i];
@@ -692,19 +691,17 @@ export async function registerRoutes(
         if (typeof lp !== "number" && isNaN(Number(lp))) continue;
 
         const numer = String(row[1] || "");
+        const dataWystawienia = String(row[2] || "");
         const kontrahentRaw = String(row[4] || "");
         const stawkaVat = String(row[5] || "");
         const netto = parseFloat(String(row[6] || 0)) || 0;
-        const vatKwota = parseFloat(String(row[7] || 0)) || 0;
-        const brutto = parseFloat(String(row[8] || 0)) || 0;
 
         const kontrahentName = cleanContractorName(kontrahentRaw);
-        if (!kontrahentName || (netto === 0 && brutto === 0)) continue;
+        if (!kontrahentName || netto === 0) continue;
 
         const kategoria = categorize(numer, kontrahentName);
 
         totalNetto += netto;
-        totalBrutto += brutto;
 
         importedCosts.push({
           nazwa: kontrahentName,
@@ -713,13 +710,14 @@ export async function registerRoutes(
           rodzaj: numer,
           kategoria,
           netto,
-          koszt: brutto,
+          koszt: netto,
           notatka: stawkaVat || null,
+          dataWystawienia,
         });
       }
 
       if (importedCosts.length === 0) {
-        return res.status(400).json({ message: "Nieprawidłowy format pliku. Oczekiwany: Raport Zestawienie Zakupu VAT z iBiznes." });
+        return res.status(400).json({ message: "Nieprawidlowy format pliku. Oczekiwany: Raport Zestawienie Zakupu VAT z iBiznes." });
       }
 
       const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
@@ -730,16 +728,15 @@ export async function registerRoutes(
 
       const catSummary: Record<string, number> = {};
       for (const c of importedCosts) {
-        catSummary[c.kategoria] = (catSummary[c.kategoria] || 0) + c.koszt;
+        catSummary[c.kategoria] = (catSummary[c.kategoria] || 0) + c.netto;
       }
 
       res.json({
-        message: `Zaimportowano ${importedCosts.length} pozycji kosztowych za ${MONTH_NAMES[miesiac - 1]} ${detectedYear}. Razem: ${Math.round(totalBrutto).toLocaleString("pl-PL")} PLN brutto.`,
+        message: `Zaimportowano ${importedCosts.length} pozycji za ${MONTH_NAMES[miesiac - 1]} ${detectedYear}. Razem netto: ${Math.round(totalNetto).toLocaleString("pl-PL")} PLN`,
         imported: importedCosts.length,
         rok: detectedYear,
         miesiac,
         totalNetto: Math.round(totalNetto),
-        totalBrutto: Math.round(totalBrutto),
         categories: catSummary,
       });
     } catch (err: any) {
