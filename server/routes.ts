@@ -852,7 +852,6 @@ export async function registerRoutes(
         rok = now.getFullYear();
         miesiac = now.getMonth() + 1;
       }
-      const addToExisting = req.body.addToExisting === "true";
       if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
 
       const workbook = XLSX.read(file.buffer, { type: "buffer" });
@@ -912,7 +911,7 @@ export async function registerRoutes(
         }
       }
 
-      await storage.importWzData(rok, miesiac, importData, addToExisting);
+      await storage.importWzData(rok, miesiac, importData);
 
       res.json({
         imported: importData.length,

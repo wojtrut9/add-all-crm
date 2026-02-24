@@ -60,7 +60,6 @@ export default function MySalesPage() {
       formData.append("file", file);
       formData.append("rok", String(now.getFullYear()));
       formData.append("miesiac", String(now.getMonth() + 1));
-      formData.append("addToExisting", "false");
       const token = localStorage.getItem("token");
       const res = await fetch("/api/wz/import", {
         method: "POST",
@@ -72,8 +71,8 @@ export default function MySalesPage() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Zaimportowano WZ",
-        description: `${data.imported} klientow, laczna sprzedaz: ${formatPLN(data.total)}${data.notFound?.length ? ` | Nieznaleziono: ${data.notFound.length}` : ""}`,
+        title: "Zastapiono dane sprzedazowe",
+        description: `Zaimportowano ${data.imported} klientow. Laczna sprzedaz netto: ${formatPLN(data.total)}${data.notFound?.length ? ` | Nieznaleziono: ${data.notFound.length}` : ""}`,
       });
       setImportDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/my-sales"] });
@@ -456,8 +455,11 @@ export default function MySalesPage() {
           <DialogHeader>
             <DialogTitle>Import pliku WZ</DialogTitle>
           </DialogHeader>
+          <div className="rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
+            Import WZ zastapi WSZYSTKIE dane sprzedazowe za biezacy miesiac. Plik WZ powinien zawierac pelny zakres dat dla danego miesiaca.
+          </div>
           <p className="text-sm text-muted-foreground">
-            Wybierz plik .xls lub .xlsx z obrotami (format &quot;Obroty&quot; z iBiznes). Dane zostana zaimportowane na biezacy miesiac.
+            Wybierz plik .xls lub .xlsx z obrotami (format &quot;Obroty&quot; z iBiznes).
           </p>
           <input
             ref={fileInputRef}

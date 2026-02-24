@@ -5,7 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Select,
   SelectContent,
@@ -52,7 +52,6 @@ function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
 }) {
   const [importRok, setImportRok] = useState(defaultRok);
   const [importMiesiac, setImportMiesiac] = useState(defaultMiesiac);
-  const [addToExisting, setAddToExisting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<{details: Array<{name: string; value: number}>; total: number; notFound: string[]; imported: number} | null>(null);
@@ -78,8 +77,6 @@ function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
     formData.append("file", file);
     formData.append("rok", String(importRok));
     formData.append("miesiac", String(importMiesiac));
-    formData.append("addToExisting", String(addToExisting));
-
     try {
       const token = localStorage.getItem("token");
       const res = await fetch("/api/wz/import", {
@@ -92,8 +89,8 @@ function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
 
       setResult(data);
       toast({
-        title: `Import WZ - ${MONTHS[importMiesiac - 1]} ${importRok}`,
-        description: `Zaimportowano ${data.imported} klientow, wartosc: ${fmtPLN(data.total)}`,
+        title: `Zastapiono dane za ${MONTHS[importMiesiac - 1]} ${importRok}`,
+        description: `Zaimportowano ${data.imported} klientow. Laczna sprzedaz netto: ${fmtPLN(data.total)}`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
     } catch (err: any) {
@@ -132,16 +129,8 @@ function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
             <input ref={fileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleFileUpload} />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="add-existing"
-              checked={addToExisting}
-              onCheckedChange={(v) => setAddToExisting(v === true)}
-              data-testid="checkbox-add-existing"
-            />
-            <label htmlFor="add-existing" className="text-sm text-muted-foreground cursor-pointer">
-              Dodaj do istniejacych (domyslnie: nadpisz)
-            </label>
+          <div className="rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
+            Import WZ zastapi WSZYSTKIE dane sprzedazowe za wybrany miesiac. Plik WZ powinien zawierac pelny zakres dat dla danego miesiaca.
           </div>
 
           <p className="text-xs text-muted-foreground">

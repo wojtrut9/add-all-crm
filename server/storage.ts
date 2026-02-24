@@ -85,7 +85,7 @@ export interface IStorage {
   getMonthlyFixedCosts(miesiac: number): Promise<number>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 
-  importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>, addToExisting: boolean): Promise<void>;
+  importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>): Promise<void>;
   getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
@@ -1340,29 +1340,23 @@ export class DatabaseStorage implements IStorage {
     return daysImported;
   }
 
-  async importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>, addToExisting: boolean): Promise<void> {
-    for (const row of data) {
-      const existing = await db.select().from(clientSales)
+  async importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.delete(clientSales)
         .where(and(
-          eq(clientSales.clientId, row.clientId),
           eq(clientSales.rok, rok),
           eq(clientSales.miesiac, miesiac)
         ));
 
-      if (existing.length > 0) {
-        const newVal = addToExisting ? Number(existing[0].sprzedaz || 0) + row.sprzedaz : row.sprzedaz;
-        await db.update(clientSales)
-          .set({ sprzedaz: String(newVal) })
-          .where(eq(clientSales.id, existing[0].id));
-      } else {
-        await db.insert(clientSales).values({
+      for (const row of data) {
+        await tx.insert(clientSales).values({
           clientId: row.clientId,
           rok,
           miesiac,
           sprzedaz: String(row.sprzedaz),
         });
       }
-    }
+    });
   }
 
   async getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any> {
