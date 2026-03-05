@@ -39,6 +39,7 @@ export async function migrateDatabase() {
       ubezpieczenie_status TEXT,
       osoba_kontaktowa TEXT,
       braki_zamowien INTEGER NOT NULL DEFAULT 0,
+      przekazany BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMP DEFAULT NOW()
     );
 
@@ -178,6 +179,23 @@ export async function migrateDatabase() {
       miesiac INTEGER NOT NULL,
       wartosc DECIMAL NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS meetings (
+      id SERIAL PRIMARY KEY,
+      tytul TEXT NOT NULL,
+      opis TEXT,
+      data TEXT NOT NULL,
+      godzina TEXT,
+      godzina_koniec TEXT,
+      client_id INTEGER,
+      note_id INTEGER,
+      typ TEXT NOT NULL DEFAULT 'Spotkanie',
+      autor TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'Zaplanowane',
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS przekazany BOOLEAN NOT NULL DEFAULT false;
   `);
 
   console.log("Database schema ensured.");
