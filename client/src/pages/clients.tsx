@@ -40,7 +40,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   Search, Download, Upload, Plus, AlertTriangle, Phone,
-  MapPin, Users, Pencil, Save, X, Trash2, Wrench, StickyNote, CheckCircle2,
+  MapPin, Users, Pencil, Save, X, Trash2, Wrench, StickyNote,
 } from "lucide-react";
 import type { Client } from "@shared/schema";
 

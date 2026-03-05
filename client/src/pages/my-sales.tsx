@@ -30,9 +30,7 @@ import {
   Users,
 } from "lucide-react";
 
-const formatPLN = (val: number) => {
-  return Math.round(val).toLocaleString("pl-PL").replace(/,/g, " ") + " PLN";
-};
+import { formatPLN } from "@/lib/constants";
 
 const formatPercent = (val: number) => {
   return val.toFixed(1) + "%";
@@ -353,7 +351,7 @@ export default function MySalesPage() {
                         <Badge className="bg-red-600 text-white">Pilne</Badge>
                       </td>
                       <td className="p-3 text-center">
-                        <Link href="/calendar">
+                        <Link href="/kalendarz">
                           <Button size="sm" variant="outline" data-testid={`button-call-${c.id}`}>
                             <Phone className="w-3 h-3 mr-1" />
                             Zadzwon
@@ -382,7 +380,7 @@ export default function MySalesPage() {
                         </Badge>
                       </td>
                       <td className="p-3 text-center">
-                        <Link href="/calendar">
+                        <Link href="/kalendarz">
                           <Button size="sm" variant="outline" data-testid={`button-call-${c.id}`}>
                             <Phone className="w-3 h-3 mr-1" />
                             Zadzwon

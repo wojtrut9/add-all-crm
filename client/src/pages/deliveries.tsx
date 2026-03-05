@@ -106,7 +106,7 @@ export default function DeliveriesPage() {
       d.platnosc || "", d.uwagi || "", d.kilometry || "", d.wartoscNettoWz || "",
       d.winaSkalo ? "TAK" : "NIE", d.akcjaWindykacja || "brak",
     ]);
-    const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))].join("\n");
+    const csv = [headers.join(","), ...rows.map((r: string[]) => r.map((v: string) => `"${v}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

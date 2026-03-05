@@ -1,12 +1,16 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authFetch } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -37,6 +41,13 @@ import {
   ChevronRight,
   Loader2,
   FolderOpen,
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+  Sliders,
+  Building2,
+  Truck,
+  Wrench,
 } from "lucide-react";
 import {
   PieChart,
@@ -49,17 +60,13 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  RadialBarChart,
+  RadialBar,
 } from "recharts";
 
-const MONTHS = [
-  "Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec",
-  "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien",
-];
-const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+import { MONTHS_ASCII as MONTHS, formatPLN as fmtPLN } from "@/lib/constants";
 
-function fmtPLN(val: number) {
-  return Math.round(val).toLocaleString("pl-PL").replace(/,/g, " ") + " PLN";
-}
+const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
 
 const HR_CATEGORIES = ["Wynagrodzenia", "Wynagrodzenia zarząd (JDG)", "ZUS", "Podatki (US)", "Medycyna pracy"];
 const FLEET_CATEGORIES = ["Leasing", "Paliwo"];
@@ -125,7 +132,7 @@ export default function FinancePage() {
   const now = new Date();
   const rok = now.getFullYear();
   const [miesiac, setMiesiac] = useState(now.getMonth() + 1);
-  const [widok, setWidok] = useState<"rzeczywiste" | "budzet" | "porownanie">("rzeczywiste");
+  const [widok, setWidok] = useState<"rzeczywiste" | "budzet" | "porownanie" | "symulator">("rzeczywiste");
   const [importing, setImporting] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -288,6 +295,9 @@ export default function FinancePage() {
               <SelectItem value="rzeczywiste">Rzeczywiste</SelectItem>
               <SelectItem value="budzet">Budzet</SelectItem>
               <SelectItem value="porownanie">Porownanie</SelectItem>
+              <SelectItem value="symulator">
+                <span className="flex items-center gap-1.5"><Sliders className="w-3.5 h-3.5" /> Symulator</span>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -307,7 +317,11 @@ export default function FinancePage() {
         <ComparisonView grouped={grouped} totalNetto={totalNetto} />
       )}
 
-      {widok !== "porownanie" && importedCosts.length > 0 && (
+      {widok === "symulator" && (
+        <SimulatorView grouped={grouped} totalNetto={totalNetto} miesiac={MONTHS[miesiac - 1]} rok={rok} />
+      )}
+
+      {widok !== "porownanie" && widok !== "symulator" && importedCosts.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard
@@ -608,5 +622,384 @@ function BudgetOnlyView() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+const DEPARTMENTS: { id: string; name: string; icon: React.ReactNode; color: string; categories: string[] }[] = [
+  {
+    id: "hr",
+    name: "Kadry i place",
+    icon: <Users className="w-5 h-5" />,
+    color: "hsl(215, 70%, 50%)",
+    categories: ["Wynagrodzenia", "Wynagrodzenia zarząd (JDG)", "ZUS", "Podatki (US)", "Medycyna pracy"],
+  },
+  {
+    id: "flota",
+    name: "Flota",
+    icon: <Car className="w-5 h-5" />,
+    color: "hsl(145, 60%, 45%)",
+    categories: ["Leasing", "Paliwo"],
+  },
+  {
+    id: "logistyka",
+    name: "Logistyka i transport",
+    icon: <Truck className="w-5 h-5" />,
+    color: "hsl(30, 80%, 55%)",
+    categories: ["Transport"],
+  },
+  {
+    id: "biuro",
+    name: "Biuro i administracja",
+    icon: <Building2 className="w-5 h-5" />,
+    color: "hsl(280, 40%, 55%)",
+    categories: ["Ubezpieczenia", "Księgowość", "Media/Prąd", "Biuro", "Wysyłka/Poczta", "Płatności/Terminal"],
+  },
+  {
+    id: "it",
+    name: "IT i serwis",
+    icon: <Wrench className="w-5 h-5" />,
+    color: "hsl(190, 50%, 45%)",
+    categories: ["IT/Serwis", "IT/Subskrypcje", "Serwis/Naprawa"],
+  },
+  {
+    id: "inne",
+    name: "Pozostale",
+    icon: <Settings className="w-5 h-5" />,
+    color: "hsl(0, 0%, 55%)",
+    categories: ["Towary/Produkty", "Inne"],
+  },
+];
+
+type SimGrouped = Array<{ kategoria: string; total: number; items: CostItem[] }>;
+
+function SimulatorView({ grouped, totalNetto, miesiac, rok }: { grouped: SimGrouped; totalNetto: number; miesiac: string; rok: number }) {
+  const [adjustments, setAdjustments] = useState<Record<string, number>>({});
+  const [openDepts, setOpenDepts] = useState<Set<string>>(new Set(["hr", "flota"]));
+
+  const hasData = totalNetto > 0;
+
+  const baseValues = useMemo(() => {
+    const vals: Record<string, number> = {};
+    if (hasData) {
+      for (const g of grouped) {
+        vals[g.kategoria] = g.total;
+      }
+    }
+    for (const [cat, budget] of Object.entries(BUDGET_BY_CATEGORY)) {
+      if (!(cat in vals)) {
+        vals[cat] = budget;
+      }
+    }
+    return vals;
+  }, [grouped, hasData]);
+
+  const getAdjusted = useCallback((cat: string) => {
+    const base = baseValues[cat] || 0;
+    const pct = adjustments[cat] ?? 100;
+    return Math.round(base * pct / 100);
+  }, [baseValues, adjustments]);
+
+  const simData = useMemo(() => {
+    return DEPARTMENTS.map(dept => {
+      const categories = dept.categories.map(cat => ({
+        name: cat,
+        base: Math.round(baseValues[cat] || 0),
+        adjusted: getAdjusted(cat),
+        pct: adjustments[cat] ?? 100,
+      }));
+      const baseTotal = categories.reduce((s, c) => s + c.base, 0);
+      const adjustedTotal = categories.reduce((s, c) => s + c.adjusted, 0);
+      return { ...dept, categories, baseTotal, adjustedTotal };
+    });
+  }, [baseValues, adjustments, getAdjusted]);
+
+  const originalTotal = simData.reduce((s, d) => s + d.baseTotal, 0);
+  const simulatedTotal = simData.reduce((s, d) => s + d.adjustedTotal, 0);
+  const totalDelta = simulatedTotal - originalTotal;
+  const totalDeltaPct = originalTotal > 0 ? ((totalDelta / originalTotal) * 100) : 0;
+
+  const hasChanges = Object.keys(adjustments).length > 0;
+
+  const handleSlider = (cat: string, val: number) => {
+    setAdjustments(prev => {
+      if (val === 100) {
+        const next = { ...prev };
+        delete next[cat];
+        return next;
+      }
+      return { ...prev, [cat]: val };
+    });
+  };
+
+  const handleInput = (cat: string, val: string) => {
+    const base = baseValues[cat] || 0;
+    const num = parseFloat(val) || 0;
+    const pct = base > 0 ? Math.round((num / base) * 100) : 100;
+    handleSlider(cat, pct);
+  };
+
+  const reset = () => setAdjustments({});
+
+  const toggleDept = (id: string) => {
+    setOpenDepts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const pieData = simData
+    .map(d => ({ name: d.name, value: d.adjustedTotal, color: d.color }))
+    .filter(d => d.value > 0);
+
+  const barData = simData.map(d => ({
+    name: d.name.length > 12 ? d.name.slice(0, 12) + "..." : d.name,
+    Bazowe: d.baseTotal,
+    Symulowane: d.adjustedTotal,
+  }));
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-primary/20 bg-primary/[0.02]">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Sliders className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Symulator kosztow</h2>
+                <p className="text-sm text-muted-foreground">
+                  {hasData ? `Dane za ${miesiac} ${rok}` : "Dane budzetu (brak importu)"} — przesuwaj suwaki aby zobaczyc wplyw zmian
+                </p>
+              </div>
+            </div>
+            {hasChanges && (
+              <Button variant="outline" size="sm" onClick={reset}>
+                <RotateCcw className="w-4 h-4 mr-1.5" /> Reset
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">Koszty bazowe</p>
+            <p className="text-xl font-bold tabular-nums">{fmtPLN(originalTotal)}</p>
+          </CardContent>
+        </Card>
+        <Card className={hasChanges ? (totalDelta > 0 ? "border-red-500/30" : "border-green-500/30") : ""}>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">Po symulacji</p>
+            <p className="text-xl font-bold tabular-nums">{fmtPLN(simulatedTotal)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">Roznica</p>
+            <p className={`text-xl font-bold tabular-nums flex items-center gap-1.5 ${totalDelta > 0 ? "text-red-600 dark:text-red-400" : totalDelta < 0 ? "text-green-600 dark:text-green-400" : ""}`}>
+              {totalDelta > 0 ? <TrendingUp className="w-5 h-5" /> : totalDelta < 0 ? <TrendingDown className="w-5 h-5" /> : null}
+              {totalDelta > 0 ? "+" : ""}{fmtPLN(totalDelta)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">Zmiana procentowa</p>
+            <p className={`text-xl font-bold tabular-nums ${totalDeltaPct > 0 ? "text-red-600 dark:text-red-400" : totalDeltaPct < 0 ? "text-green-600 dark:text-green-400" : ""}`}>
+              {totalDeltaPct > 0 ? "+" : ""}{totalDeltaPct.toFixed(1)}%
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-muted-foreground mb-2">Struktura po symulacji</p>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="45%" innerRadius="50%" outerRadius="78%" paddingAngle={2} dataKey="value" animationDuration={400}>
+                    {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => fmtPLN(v)} />
+                  <text x="50%" y="45%" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-sm font-bold">
+                    {fmtPLN(simulatedTotal)}
+                  </text>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap gap-3 justify-center">
+              {pieData.map(d => (
+                <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: d.color }} />
+                  <span className="text-muted-foreground">{d.name}</span>
+                  <span className="font-medium">{fmtPLN(d.value)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-muted-foreground mb-2">Bazowe vs Symulowane — dzialy</p>
+            <div className="h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+                  <Tooltip formatter={(v: number) => fmtPLN(v)} />
+                  <Legend />
+                  <Bar dataKey="Bazowe" fill="hsl(220, 10%, 65%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Symulowane" fill="hsl(215, 70%, 50%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-3">
+        {simData.map(dept => (
+          <Card key={dept.id} className={openDepts.has(dept.id) ? "ring-1 ring-primary/20" : ""}>
+            <Collapsible open={openDepts.has(dept.id)} onOpenChange={() => toggleDept(dept.id)}>
+              <CollapsibleTrigger asChild>
+                <button className="w-full p-4 flex items-center justify-between text-left hover-elevate rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {openDepts.has(dept.id) ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                    <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: dept.color }} />
+                    <div style={{ color: dept.color }}>{dept.icon}</div>
+                    <div>
+                      <span className="font-semibold">{dept.name}</span>
+                      <span className="text-sm text-muted-foreground ml-2">({dept.categories.length} kategorii)</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">Bazowe</div>
+                      <div className="font-mono tabular-nums text-sm">{fmtPLN(dept.baseTotal)}</div>
+                    </div>
+                    <div className="text-right min-w-[100px]">
+                      <div className="text-xs text-muted-foreground">Symulowane</div>
+                      <div className={`font-mono tabular-nums text-sm font-bold ${dept.adjustedTotal > dept.baseTotal ? "text-red-600 dark:text-red-400" : dept.adjustedTotal < dept.baseTotal ? "text-green-600 dark:text-green-400" : ""}`}>
+                        {fmtPLN(dept.adjustedTotal)}
+                      </div>
+                    </div>
+                    {dept.adjustedTotal !== dept.baseTotal && (
+                      <Badge variant={dept.adjustedTotal > dept.baseTotal ? "destructive" : "default"} className="text-xs tabular-nums">
+                        {dept.adjustedTotal > dept.baseTotal ? "+" : ""}{fmtPLN(dept.adjustedTotal - dept.baseTotal)}
+                      </Badge>
+                    )}
+                  </div>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-4 pb-4 space-y-4">
+                  <Separator />
+                  {dept.categories.map(cat => {
+                    const delta = cat.adjusted - cat.base;
+                    const changed = cat.pct !== 100;
+                    return (
+                      <div key={cat.name} className={`p-3 rounded-lg border ${changed ? "bg-primary/[0.02] border-primary/20" : "border-transparent"}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{cat.name}</span>
+                            {changed && (
+                              <Badge variant="outline" className="text-xs tabular-nums">
+                                {cat.pct}%
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-sm">
+                            <span className="text-muted-foreground tabular-nums">{fmtPLN(cat.base)}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <Input
+                              type="number"
+                              value={cat.adjusted || ""}
+                              onChange={(e) => handleInput(cat.name, e.target.value)}
+                              className="w-28 h-8 text-right font-mono tabular-nums text-sm"
+                            />
+                            {delta !== 0 && (
+                              <span className={`text-xs font-medium tabular-nums min-w-[70px] text-right ${delta > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                                {delta > 0 ? "+" : ""}{fmtPLN(delta)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <Slider
+                          value={[cat.pct]}
+                          onValueChange={([v]) => handleSlider(cat.name, v)}
+                          min={0}
+                          max={200}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                          <span>0%</span>
+                          <span>50%</span>
+                          <span className="font-semibold">100%</span>
+                          <span>150%</span>
+                          <span>200%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="text-sm font-semibold">Suma dzialu</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground tabular-nums">{fmtPLN(dept.baseTotal)}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className={`text-sm font-bold tabular-nums ${dept.adjustedTotal > dept.baseTotal ? "text-red-600 dark:text-red-400" : dept.adjustedTotal < dept.baseTotal ? "text-green-600 dark:text-green-400" : ""}`}>
+                        {fmtPLN(dept.adjustedTotal)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="border-2">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <p className="text-lg font-bold">Podsumowanie symulacji</p>
+              <p className="text-sm text-muted-foreground">
+                {hasChanges
+                  ? `Zmodyfikowano ${Object.keys(adjustments).length} kategorii`
+                  : "Przesun suwaki w dzialach powyzej aby rozpoczac symulacje"
+                }
+              </p>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Bazowe</p>
+                <p className="text-lg font-bold tabular-nums">{fmtPLN(originalTotal)}</p>
+              </div>
+              <div className="text-2xl text-muted-foreground">→</div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Po zmianach</p>
+                <p className={`text-lg font-bold tabular-nums ${totalDelta > 0 ? "text-red-600 dark:text-red-400" : totalDelta < 0 ? "text-green-600 dark:text-green-400" : ""}`}>
+                  {fmtPLN(simulatedTotal)}
+                </p>
+              </div>
+              <div className={`text-center px-4 py-2 rounded-lg ${totalDelta > 0 ? "bg-red-500/10" : totalDelta < 0 ? "bg-green-500/10" : "bg-muted"}`}>
+                <p className="text-xs text-muted-foreground">Efekt</p>
+                <p className={`text-lg font-bold tabular-nums ${totalDelta > 0 ? "text-red-600 dark:text-red-400" : totalDelta < 0 ? "text-green-600 dark:text-green-400" : ""}`}>
+                  {totalDelta > 0 ? "+" : ""}{fmtPLN(totalDelta)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

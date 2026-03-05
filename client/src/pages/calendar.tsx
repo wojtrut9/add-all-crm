@@ -38,19 +38,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Calendar as CalendarIcon, Plus, RefreshCw, ChevronLeft, ChevronRight,
-  Phone, CheckCircle2, XCircle, Clock, Loader2, Users, Trash2, Pencil,
+  Phone, Clock, Loader2, Users, Trash2, Pencil,
   MessageSquare, Mail, UserRound,
 } from "lucide-react";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { pl } from "date-fns/locale";
-
-const statusColors: Record<string, string> = {
-  "Do zrobienia": "bg-muted text-muted-foreground",
-  "W trakcie": "bg-chart-2/20 text-foreground",
-  "Zamowil": "bg-chart-4/20 text-foreground",
-  "Nie zamowil": "bg-destructive/20 text-foreground",
-  "Zrobione": "bg-chart-5/20 text-foreground",
-};
 
 const statusDotColors: Record<string, string> = {
   "Do zrobienia": "bg-muted-foreground",

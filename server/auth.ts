@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.SESSION_SECRET || "add-all-crm-secret-key-2026";
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be set in environment variables");
+}
+const JWT_SECRET = process.env.SESSION_SECRET;
 
 export function generateToken(user: { id: number; username: string; imie: string; rola: string }): string {
   return jwt.sign(

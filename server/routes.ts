@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Server } from "http";
 import { storage } from "./storage";
 import { authMiddleware, adminOnly, generateToken, comparePassword } from "./auth";
 import { seedDatabase } from "./seed";
@@ -749,9 +749,9 @@ export async function registerRoutes(
       const rok = Number(req.query.rok) || new Date().getFullYear();
       const miesiac = Number(req.query.miesiac) || (new Date().getMonth() + 1);
       const entries = await storage.getDailyAnalysis(rok, miesiac);
-      const fixedCosts = await storage.getMonthlyFixedCosts(miesiac);
       const dniRobocze = await storage.getDniRobocze(rok, miesiac);
-      res.json({ entries, fixedCosts, dniRobocze });
+      const costBreakdown = await storage.getCostBreakdownForMonth(miesiac);
+      res.json({ entries, fixedCosts: costBreakdown.grandTotal, dniRobocze, costBreakdown });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -1087,7 +1087,7 @@ export async function registerRoutes(
 
   app.patch("/api/notes/:id", authMiddleware, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const updated = await storage.updateNote(id, req.body);
       res.json(updated);
     } catch (err: any) {
@@ -1097,7 +1097,7 @@ export async function registerRoutes(
 
   app.delete("/api/notes/:id", authMiddleware, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       await storage.deleteNote(id);
       res.json({ success: true });
     } catch (err: any) {
@@ -1107,8 +1107,9 @@ export async function registerRoutes(
 
   app.get("/api/meetings", authMiddleware, async (req, res) => {
     try {
-      const { from, to } = req.query;
-      const result = await storage.getMeetings(from as string, to as string);
+      const from = (req.query.from ?? "") as string;
+      const to = (req.query.to ?? "") as string;
+      const result = await storage.getMeetings(from, to);
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -1117,7 +1118,7 @@ export async function registerRoutes(
 
   app.get("/api/meetings/:id", authMiddleware, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const meeting = await storage.getMeeting(id);
       if (!meeting) return res.status(404).json({ message: "Nie znaleziono" });
       res.json(meeting);
@@ -1137,7 +1138,7 @@ export async function registerRoutes(
 
   app.patch("/api/meetings/:id", authMiddleware, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const updated = await storage.updateMeeting(id, req.body);
       res.json(updated);
     } catch (err: any) {
@@ -1147,7 +1148,7 @@ export async function registerRoutes(
 
   app.delete("/api/meetings/:id", authMiddleware, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       await storage.deleteMeeting(id);
       res.json({ success: true });
     } catch (err: any) {

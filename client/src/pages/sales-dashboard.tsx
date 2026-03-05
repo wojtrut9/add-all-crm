@@ -21,7 +21,7 @@ import {
   LineChart, Line,
 } from "recharts";
 
-const MONTHS = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paz", "Lis", "Gru"];
+import { MONTHS_SHORT as MONTHS } from "@/lib/constants";
 
 function EditablePlanCell({ value, onChange, onSave, editing }: { value: number; onChange: (v: number) => void; onSave: () => void; editing: boolean }) {
   if (!editing) {
@@ -58,7 +58,7 @@ export default function SalesDashboard() {
 
   const updateTargetsMutation = useMutation({
     mutationFn: async (targets: Array<{miesiac: number; planObrotu: number}>) => {
-      const res = await apiRequest("PATCH", "/api/sales-targets", { rok: 2026, targets });
+      const res = await apiRequest("PATCH", "/api/sales-targets", { rok: new Date().getFullYear(), targets });
       return res.json();
     },
     onSuccess: () => {
@@ -74,7 +74,7 @@ export default function SalesDashboard() {
 
   const syncMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/sales-targets/sync-execution", { rok: 2026 });
+      const res = await apiRequest("POST", "/api/sales-targets/sync-execution", { rok: new Date().getFullYear() });
       return res.json();
     },
     onSuccess: (result) => {

@@ -46,14 +46,7 @@ function StatCard({ title, value, icon: Icon, subtitle, color, extra }: {
   );
 }
 
-function formatPLN(val: number) {
-  return Math.round(val).toLocaleString("pl-PL") + " PLN";
-}
-
-const POLISH_MONTHS = [
-  "Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec",
-  "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"
-];
+import { formatPLN, MONTHS_ASCII as POLISH_MONTHS } from "@/lib/constants";
 
 function MonthlySalesWidget({ stats, isHandlowiec, userName, planData }: { stats: any; isHandlowiec: boolean; userName?: string; planData?: any }) {
   let monthSales = Number(stats?.monthSales || 0);

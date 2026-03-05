@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, gte, lte, sql, like, ilike, or, desc, asc, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, sql, like, or, desc, asc, inArray } from "drizzle-orm";
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
@@ -83,6 +83,13 @@ export interface IStorage {
   upsertDailyAnalysis(rok: number, miesiac: number, dzien: number, sprzedaz: string | null): Promise<DailyAnalysis>;
   updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void>;
   getMonthlyFixedCosts(miesiac: number): Promise<number>;
+  getCostBreakdownForMonth(miesiac: number): Promise<{
+    departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+    vatTotal: number;
+    fixedTotal: number;
+    grandTotal: number;
+    source: "vat_import" | "fixed_costs" | "both";
+  }>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 
   importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>): Promise<void>;
@@ -567,12 +574,12 @@ export class DatabaseStorage implements IStorage {
       }
     }
     let maxTotal = 0;
-    for (const [, val] of clientTotals) {
+    clientTotals.forEach((val) => {
       if (val.total > maxTotal) {
         maxTotal = val.total;
         bestClient = { name: val.name, kwota: val.total };
       }
-    }
+    });
 
     const urgentClients = myClients
       .filter(c => (c.brakiZamowien || 0) >= 2)
@@ -1308,6 +1315,109 @@ export class DatabaseStorage implements IStorage {
     const totalFleet = filterActive(fleetData, "koszt");
 
     return totalSalaries + totalCosts + totalFleet;
+  }
+
+  async getCostBreakdownForMonth(miesiac: number): Promise<{
+    departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+    vatTotal: number;
+    fixedTotal: number;
+    grandTotal: number;
+    source: "vat_import" | "fixed_costs";
+  }> {
+    const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+    const mKey = MONTH_KEYS[miesiac - 1];
+
+    const DEPT_MAP: Record<string, string> = {
+      "Wynagrodzenia": "Kadry i place",
+      "Wynagrodzenia zarząd (JDG)": "Kadry i place",
+      "ZUS": "Kadry i place",
+      "Podatki (US)": "Kadry i place",
+      "Medycyna pracy": "Kadry i place",
+      "Leasing": "Flota",
+      "Paliwo": "Flota",
+      "Transport": "Logistyka",
+      "Ubezpieczenia": "Biuro i administracja",
+      "Księgowość": "Biuro i administracja",
+      "Media/Prąd": "Biuro i administracja",
+      "Biuro": "Biuro i administracja",
+      "Wysyłka/Poczta": "Biuro i administracja",
+      "Płatności/Terminal": "Biuro i administracja",
+      "IT/Serwis": "IT i serwis",
+      "IT/Subskrypcje": "IT i serwis",
+      "Serwis/Naprawa": "IT i serwis",
+      "Towary/Produkty": "Pozostale",
+      "Inne": "Pozostale",
+    };
+
+    const allCosts = await db.select().from(costs);
+    const vatForMonth = allCosts.filter((c) => {
+      if (c.firma !== "IMPORT_VAT") return false;
+      const am = c.aktywnyMiesiace as Record<string, boolean> | null;
+      if (!am) return false;
+      return am[mKey] === true;
+    });
+
+    const hasVat = vatForMonth.length > 0;
+    const vatTotal = vatForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
+
+    const deptTotals: Record<string, Record<string, number>> = {};
+
+    if (hasVat) {
+      for (const c of vatForMonth) {
+        const cat = c.dzial || c.kategoria || "Inne";
+        const dept = DEPT_MAP[cat] || "Pozostale";
+        if (!deptTotals[dept]) deptTotals[dept] = {};
+        deptTotals[dept][cat] = (deptTotals[dept][cat] || 0) + Number(c.netto || 0);
+      }
+    } else {
+      const salariesData = await db.select().from(salaries);
+      const nonVatCosts = allCosts.filter(c => c.firma !== "IMPORT_VAT");
+      const fleetData = await db.select().from(fleet);
+
+      const sumActive = (items: any[], costField: string) => {
+        return items.reduce((sum: number, item: any) => {
+          const am = item.aktywnyMiesiace as Record<string, boolean> | null;
+          if (am && am[mKey] === false) return sum;
+          return sum + Number(item[costField] || 0);
+        }, 0);
+      };
+
+      const totalSalaries = sumActive(salariesData, "kosztPracodawcy");
+      const totalCosts = sumActive(nonVatCosts, "koszt");
+      const totalFleet = sumActive(fleetData, "koszt");
+
+      if (totalSalaries > 0) {
+        deptTotals["Kadry i place"] = { "Wynagrodzenia i ZUS": totalSalaries };
+      }
+      if (totalCosts > 0) {
+        deptTotals["Biuro i administracja"] = { "Koszty operacyjne": totalCosts };
+      }
+      if (totalFleet > 0) {
+        deptTotals["Flota"] = { "Koszty floty": totalFleet };
+      }
+    }
+
+    const departments = Object.entries(deptTotals)
+      .map(([name, cats]) => ({
+        name,
+        categories: Object.entries(cats)
+          .map(([catName, total]) => ({ name: catName, total: Math.round(total) }))
+          .sort((a, b) => b.total - a.total),
+        total: Math.round(Object.values(cats).reduce((s, v) => s + v, 0)),
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    const grandTotal = hasVat
+      ? Math.round(vatTotal)
+      : departments.reduce((s, d) => s + d.total, 0);
+
+    return {
+      departments,
+      vatTotal: Math.round(vatTotal),
+      fixedTotal: departments.reduce((s, d) => s + d.total, 0),
+      grandTotal,
+      source: hasVat ? "vat_import" : "fixed_costs",
+    };
   }
 
   async importDailySalesFromContacts(rok: number, miesiac: number): Promise<number> {

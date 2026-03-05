@@ -28,10 +28,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, CalendarCheck, RefreshCw } from "lucide-react";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const MONTHS = ["Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec", "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"];
+import { MONTHS_ASCII as MONTHS } from "@/lib/constants";
 
 function fmtPLN(val: number) {
   return Math.round(val).toLocaleString("pl-PL") + " PLN";

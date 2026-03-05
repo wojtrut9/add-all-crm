@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus, Star, ArrowUp, ArrowDown, ArrowRight, Upload, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Star, ArrowUp, ArrowDown, ArrowRight, Upload, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -41,8 +41,7 @@ const COLORS = [
   "hsl(190, 70%, 40%)", "hsl(0, 0%, 55%)",
 ];
 
-const MONTHS = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
-const MONTHS_SHORT = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"];
+import { MONTHS_FULL as MONTHS, MONTHS_SHORT } from "@/lib/constants";
 
 function fmtPLN(val: number) {
   return Math.round(val).toLocaleString("pl-PL") + " PLN";
@@ -318,7 +317,7 @@ function ImportSalesModal({ open, onClose, defaultRok, defaultMiesiac }: {
 }
 
 export default function SalesAnalysisPage() {
-  const [rok, setRok] = useState(2026);
+  const [rok, setRok] = useState(new Date().getFullYear());
   const [miesiac, setMiesiac] = useState(1);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [importOpen, setImportOpen] = useState(false);
