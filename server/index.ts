@@ -48,6 +48,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -73,4 +74,8 @@ app.use((req, res, next) => {
   httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
+  } catch (err) {
+    console.error("FATAL: Failed to start server:", err);
+    process.exit(1);
+  }
 })();
