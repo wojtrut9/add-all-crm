@@ -16,6 +16,10 @@ export async function registerRoutes(
   await migrateDatabase();
   await seedDatabase();
 
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok" });
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
