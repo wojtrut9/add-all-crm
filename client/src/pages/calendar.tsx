@@ -227,6 +227,17 @@ export default function CalendarPage() {
     },
   });
 
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+
+  const { data: todayContacts = [] } = useQuery({
+    queryKey: ["/api/contacts/today", todayStr],
+    queryFn: async () => {
+      const res = await authFetch(`/api/contacts?from=${todayStr}&to=${todayStr}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
   const { data: meetingsData = [] } = useQuery({
     queryKey: ["/api/meetings", weekOffset],
     queryFn: async () => {
@@ -259,6 +270,7 @@ export default function CalendarPage() {
     onSuccess: (data) => {
       toast({ title: "Plan wygenerowany", description: `Utworzono ${data.count} kontaktow` });
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contacts/today"] });
       queryClient.invalidateQueries({ queryKey: ["/api/meetings"] });
     },
     onError: () => {
@@ -274,6 +286,7 @@ export default function CalendarPage() {
       });
       toast({ title: "Zaktualizowano" });
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contacts/today"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/deliveries"] });
     } catch {
@@ -354,8 +367,6 @@ export default function CalendarPage() {
     setMeetingDialogOpen(true);
   };
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const todayContacts = contacts.filter((c: any) => c.data === todayStr);
   const dayNames = ["Poniedzialek", "Wtorek", "Sroda", "Czwartek", "Piatek"];
 
   if (isLoading) {
