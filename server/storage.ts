@@ -860,13 +860,17 @@ export class DatabaseStorage implements IStorage {
 
     let imported = 0;
     const notFound: string[] = [];
+    const toInsert: Array<{clientId: number; cel: number}> = [];
 
     for (const row of data) {
       const nameKey = row.klient.trim().toLowerCase();
       let clientId = clientNameMap.get(nameKey);
 
       if (!clientId) {
-        const found = allClients.find(c => c.klient.trim().toLowerCase().includes(nameKey) || nameKey.includes(c.klient.trim().toLowerCase()));
+        const found = allClients.find(c =>
+          c.klient.trim().toLowerCase().includes(nameKey) ||
+          nameKey.includes(c.klient.trim().toLowerCase())
+        );
         if (found) clientId = found.id;
       }
 
@@ -875,18 +879,27 @@ export class DatabaseStorage implements IStorage {
         continue;
       }
 
-      const weeklyPlan = String(row.cel / 4);
-      for (let tydzien = 1; tydzien <= 4; tydzien++) {
-        await db.insert(clientSalesWeekly).values({
-          clientId,
-          rok,
-          miesiac,
-          tydzien,
-          plan: weeklyPlan,
-          realizacja: "0",
-        });
-      }
+      toInsert.push({ clientId, cel: row.cel });
       imported++;
+    }
+
+    if (toInsert.length > 0) {
+      await db.delete(clientSalesWeekly)
+        .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+
+      for (const { clientId, cel } of toInsert) {
+        const weeklyPlan = String(cel / 4);
+        for (let tydzien = 1; tydzien <= 4; tydzien++) {
+          await db.insert(clientSalesWeekly).values({
+            clientId,
+            rok,
+            miesiac,
+            tydzien,
+            plan: weeklyPlan,
+            realizacja: "0",
+          });
+        }
+      }
     }
 
     return { imported, notFound };
@@ -985,6 +998,9 @@ export class DatabaseStorage implements IStorage {
     const prev3Sales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, prev3Year), eq(clientSales.miesiac, prev3Month)));
     const prev3Map = new Map(prev3Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    await db.delete(clientSalesWeekly)
+      .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
 
     let generated = 0;
     let skipped = 0;

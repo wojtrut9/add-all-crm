@@ -28,7 +28,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { MONTHS_ASCII as MONTHS } from "@/lib/constants";
@@ -43,6 +45,195 @@ function fmtNum(val: number) {
 
 type SortKey = "klient" | "opiekun" | "cel" | "celNaDzis" | "realizacja" | "roznica" | "procent";
 type SortDir = "asc" | "desc";
+
+function ImportPlanuModal({ open, onClose, defaultRok, defaultMiesiac }: {
+  open: boolean; onClose: () => void; defaultRok: number; defaultMiesiac: number;
+}) {
+  const [importRok, setImportRok] = useState(defaultRok);
+  const [importMiesiac, setImportMiesiac] = useState(defaultMiesiac);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const resetAndClose = () => { setResult(null); setLoading(false); onClose(); };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    setResult(null);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("rok", String(importRok));
+    formData.append("miesiac", String(importMiesiac));
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/plan/import-excel", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setResult(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+      toast({ title: `Plan ${MONTHS[importMiesiac - 1]} ${importRok} wgrany`, description: `Zaimportowano ${data.imported} klientow.` });
+    } catch (err: any) {
+      toast({ title: "Blad importu planu", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) resetAndClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Import planu z Excel</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={String(importMiesiac)} onValueChange={v => setImportMiesiac(Number(v))}>
+              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>{MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={String(importRok)} onValueChange={v => setImportRok(Number(v))}>
+              <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={loading}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> {loading ? "Importowanie..." : "Wybierz plik XLSX"}
+            </Button>
+            <input ref={fileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleFile} />
+          </div>
+          <div className="rounded-md bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-800 dark:text-blue-200">
+            Wgraj plik z arkuszem <strong>"PLAN ..."</strong> (np. <em>Analiza_Styczen2026_Plan_Luty.xlsx</em>). System automatycznie wyczyta klientow i ich cele miesięczne.
+          </div>
+          {result && (
+            <div className="space-y-2">
+              <div className="p-3 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-300">
+                <p className="text-sm font-medium">Zaimportowano: {result.imported} klientow</p>
+              </div>
+              {result.notFound?.length > 0 && (
+                <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-300">
+                  <p className="text-sm font-medium mb-1">Nieznalezieni ({result.notFound.length}):</p>
+                  <ul className="text-xs space-y-0.5">{result.notFound.map((n: string, i: number) => <li key={i}>{n}</li>)}</ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <DialogFooter><Button variant="outline" onClick={resetAndClose}>Zamknij</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GenerujPlanModal({ open, onClose, defaultRok, defaultMiesiac }: {
+  open: boolean; onClose: () => void; defaultRok: number; defaultMiesiac: number;
+}) {
+  const [rok, setRok] = useState(defaultRok);
+  const [miesiac, setMiesiac] = useState(defaultMiesiac);
+  const [wspolczynnik, setWspolczynnik] = useState(5);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
+  const prevMonthName = MONTHS[prevMonth - 1];
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/plan/auto-generate", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ rok, miesiac, wspolczynnik: 1 + wspolczynnik / 100 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setResult(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+      toast({ title: `Plan ${MONTHS[miesiac - 1]} ${rok} wygenerowany`, description: `${data.generated} klientow, wspolczynnik +${wspolczynnik}%` });
+    } catch (err: any) {
+      toast({ title: "Blad generowania", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetAndClose = () => { setResult(null); setLoading(false); onClose(); };
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) resetAndClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Generuj plan z poprzedniego miesiąca</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Generuj plan na:</Label>
+              <div className="flex gap-2">
+                <Select value={String(miesiac)} onValueChange={v => setMiesiac(Number(v))}>
+                  <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>{MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={String(rok)} onValueChange={v => setRok(Number(v))}>
+                  <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2025">2025</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
+                    <SelectItem value="2027">2027</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-md bg-muted/50 p-3 text-sm">
+            Podstawa: <strong>obroty {prevMonthName} {rok}</strong> × <strong>+{wspolczynnik}%</strong>
+          </div>
+          <div>
+            <Label className="text-sm mb-1 block">Wzrost planu (%)</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                value={wspolczynnik}
+                onChange={e => setWspolczynnik(Number(e.target.value))}
+                className="w-24"
+                min={-50}
+                max={200}
+                step={1}
+              />
+              <span className="text-sm text-muted-foreground">
+                {wspolczynnik >= 0 ? "+" : ""}{wspolczynnik}% vs poprzedni miesiąc
+              </span>
+            </div>
+          </div>
+          <div className="rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
+            Zastąpi istniejący plan {MONTHS[miesiac - 1]} {rok}. Klienci bez danych z poprzedniego miesiąca dostają plan ze średniej 2-3 miesięcy wstecz.
+          </div>
+          {result && (
+            <div className="p-3 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-300">
+              <p className="text-sm font-medium">Wygenerowano: {result.generated} klientow</p>
+              {result.skipped > 0 && <p className="text-xs text-muted-foreground">Pominięto (brak danych): {result.skipped}</p>}
+            </div>
+          )}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={resetAndClose}>Zamknij</Button>
+          <Button onClick={handleGenerate} disabled={loading}>
+            <Wand2 className="w-4 h-4 mr-2" /> {loading ? "Generowanie..." : "Generuj plan"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
   open: boolean;
@@ -209,6 +400,8 @@ export default function PlanPage() {
   const [rok, setRok] = useState(now.getFullYear());
   const [miesiac, setMiesiac] = useState(now.getMonth() + 1);
   const [importWzOpen, setImportWzOpen] = useState(false);
+  const [importPlanuOpen, setImportPlanuOpen] = useState(false);
+  const [generujPlanOpen, setGenerujPlanOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("procent");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [filterOpiekun, setFilterOpiekun] = useState("all");
@@ -353,11 +546,17 @@ export default function PlanPage() {
           <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] })} data-testid="button-refresh">
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} /> Odswiez
           </Button>
-          {isAdmin && (
+          {isAdmin && (<>
+            <Button variant="outline" onClick={() => setImportPlanuOpen(true)}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Import planu
+            </Button>
+            <Button variant="outline" onClick={() => setGenerujPlanOpen(true)}>
+              <Wand2 className="w-4 h-4 mr-2" /> Generuj plan
+            </Button>
             <Button variant="outline" onClick={() => setImportWzOpen(true)} data-testid="button-import-wz">
               <Upload className="w-4 h-4 mr-2" /> Import WZ
             </Button>
-          )}
+          </>)}
           <Button size="icon" variant="outline" onClick={goToPrev} data-testid="button-prev-month">
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -551,6 +750,8 @@ export default function PlanPage() {
         </div>
       )}
 
+      <ImportPlanuModal open={importPlanuOpen} onClose={() => setImportPlanuOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
+      <GenerujPlanModal open={generujPlanOpen} onClose={() => setGenerujPlanOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
       <ImportWzModal open={importWzOpen} onClose={() => setImportWzOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
     </div>
   );

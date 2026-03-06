@@ -970,6 +970,58 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/plan/import-excel", authMiddleware, adminOnly, upload.single("file"), async (req, res) => {
+    try {
+      const rok = Number(req.body.rok);
+      const miesiac = Number(req.body.miesiac);
+      if (!rok || !miesiac || !req.file) {
+        return res.status(400).json({ message: "Brak pliku lub rok/miesiac" });
+      }
+
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(req.file.buffer, { type: "buffer" });
+
+      const planSheet = wb.SheetNames.find(n => n.toUpperCase().includes("PLAN"));
+      if (!planSheet) {
+        return res.status(400).json({ message: "Nie znaleziono arkusza z 'PLAN' w nazwie" });
+      }
+
+      const ws = wb.Sheets[planSheet];
+      const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+      const planData: Array<{ klient: string; cel: number }> = [];
+      let klientCol = 1;
+      let celCol = 4;
+
+      for (const row of rows) {
+        const klientIdx = row.findIndex((c: any) => String(c).toLowerCase().includes("klient"));
+        if (klientIdx >= 0) {
+          klientCol = klientIdx;
+          const celIdx = row.findIndex((c: any) => String(c).trim().toUpperCase().startsWith("CEL"));
+          if (celIdx >= 0) celCol = celIdx;
+          continue;
+        }
+
+        if (typeof row[0] === "number" && row[klientCol]) {
+          const klient = String(row[klientCol]).trim();
+          const cel = Number(row[celCol]);
+          if (klient && cel > 0) {
+            planData.push({ klient, cel });
+          }
+        }
+      }
+
+      if (planData.length === 0) {
+        return res.status(400).json({ message: "Nie znaleziono danych planu w pliku" });
+      }
+
+      const result = await storage.importMonthlyPlan(rok, miesiac, planData);
+      res.json({ ...result, parsed: planData.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/plan/import", authMiddleware, adminOnly, async (req, res) => {
     try {
       const { rok, miesiac, data } = req.body;
