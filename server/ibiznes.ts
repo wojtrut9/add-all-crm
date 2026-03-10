@@ -50,10 +50,11 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   const db = getPool();
   const sinceDwy = sinceDate.replace(/-/g, ""); // "yyyyMMdd"
 
+  // WZ (Wydania Zewnętrzne) — wystawiane częściej niż faktury VAT
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT NrR, Alias, Nip, Dwy, Koszt
+    `SELECT NrR, Alias, Nip, Dwy, Koszt, Typ
      FROM addallspkazogrfaktury
-     WHERE Typ = 'VAT'
+     WHERE Typ = 'WZ'
        AND Akt != 'T'
        AND Dwy >= ?
        AND Nip IS NOT NULL AND Nip != ''
@@ -62,9 +63,10 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   );
 
   const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT NrR, Alias, Nip, Dwy, Koszt
+    `SELECT NrR, Alias, Nip, Dwy, Koszt, Typ
      FROM firmafaktury
-     WHERE Akt != 'T'
+     WHERE Typ = 'WZ'
+       AND Akt != 'T'
        AND Dwy >= ?
        AND Nip IS NOT NULL AND Nip != ''
      ORDER BY Dwy DESC`,
@@ -107,10 +109,10 @@ export async function fetchIbiznesClients(): Promise<{ nip: string; alias: strin
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
     `SELECT DISTINCT Nip, Alias FROM addallspkazogrfaktury
-     WHERE Typ = 'VAT' AND Nip IS NOT NULL AND Nip != ''
+     WHERE Typ = 'WZ' AND Nip IS NOT NULL AND Nip != ''
      UNION
      SELECT DISTINCT Nip, Alias FROM firmafaktury
-     WHERE Nip IS NOT NULL AND Nip != ''`
+     WHERE Typ = 'WZ' AND Nip IS NOT NULL AND Nip != ''`
   );
   return (rows as any[])
     .filter(r => r.Nip)
