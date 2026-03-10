@@ -106,8 +106,8 @@ function InfoRow({ label, value, alert }: { label: string; value: string; alert?
   );
 }
 
-function EditField({ label, value, onChange, type = "text", placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+function EditField({ label, value, onChange, type = "text" }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -116,7 +116,6 @@ function EditField({ label, value, onChange, type = "text", placeholder }: {
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
         data-testid={`input-edit-${label.toLowerCase().replace(/\s/g, '-')}`}
       />
     </div>
@@ -360,7 +359,6 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
           <InfoRow label="Limit kredytowy" value={client.limitKredytowy ? `${Number(client.limitKredytowy).toLocaleString("pl-PL")} PLN` : "-"} />
           <InfoRow label="Osoba kontaktowa" value={client.osobaKontaktowa || "-"} />
           <InfoRow label="Braki zamówień" value={String(client.brakiZamowien || 0)} alert={(client.brakiZamowien || 0) >= 2} />
-          <InfoRow label="NIP (iBiznes)" value={(client as any).nip || "-"} />
         </div>
         <div className="flex items-center justify-between gap-3 p-3 rounded-md border">
           <div>
@@ -425,7 +423,6 @@ function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
     limitKredytowy: "",
     osobaKontaktowa: "",
     notatki: "",
-    nip: "",
   });
 
   const createMutation = useMutation({
@@ -450,7 +447,7 @@ function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
       status: "Aktywny", telefon: "", telefonDodatkowy: "", email: "", emailDodatkowe: "",
       dniZamowien: "", rytmKontaktu: "", miasto: "", rabatProcent: "",
       warunkiPlatnosci: "", terminPlatnosciDni: "", limitKredytowy: "",
-      osobaKontaktowa: "", notatki: "", nip: "",
+      osobaKontaktowa: "", notatki: "",
     });
   };
 
@@ -511,7 +508,6 @@ function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
             <EditField label="Termin płatności (dni)" value={form.terminPlatnosciDni} onChange={(v) => setField("terminPlatnosciDni", v)} type="number" />
             <EditField label="Limit kredytowy" value={form.limitKredytowy} onChange={(v) => setField("limitKredytowy", v)} type="number" />
             <EditField label="Osoba kontaktowa" value={form.osobaKontaktowa} onChange={(v) => setField("osobaKontaktowa", v)} />
-            <EditField label="NIP (iBiznes sync)" value={form.nip} onChange={(v) => setField("nip", v)} placeholder="np. 1234567890" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Notatki</Label>

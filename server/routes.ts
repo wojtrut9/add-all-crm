@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { authMiddleware, adminOnly, generateToken, comparePassword } from "./auth";
 import { seedDatabase } from "./seed";
 import { migrateDatabase } from "./migrate";
-import { runIbiznesSync, getLastSyncStatus, getSyncLogs, testIbiznesConnection } from "./ibiznesSync";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -197,7 +196,6 @@ export async function registerRoutes(
             terminPlatnosciDni: parsed.terminPlatnosci ? Number(parsed.terminPlatnosci) : null,
             limitKredytowy: parsed.limitKredytowy || null,
             osobaKontaktowa: parsed.osobaKontaktowa || null,
-            nip: (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "") || null,
             brakiZamowien: 0,
           });
           created++;
@@ -1252,37 +1250,6 @@ export async function registerRoutes(
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
-    }
-  });
-
-  // ── iBiznes Sync ────────────────────────────────────────────────────────────
-
-  app.get("/api/ibiznes/status", authMiddleware, adminOnly, async (_req, res) => {
-    try {
-      const connected = await testIbiznesConnection();
-      const lastSync = await getLastSyncStatus();
-      res.json({ connected, lastSync });
-    } catch (err: any) {
-      res.json({ connected: false, lastSync: null, error: err.message });
-    }
-  });
-
-  app.get("/api/ibiznes/logs", authMiddleware, adminOnly, async (req, res) => {
-    try {
-      const limit = Number(req.query.limit) || 20;
-      const logs = await getSyncLogs(limit);
-      res.json(logs);
-    } catch (err: any) {
-      res.status(500).json({ message: err.message });
-    }
-  });
-
-  app.post("/api/ibiznes/sync", authMiddleware, adminOnly, async (_req, res) => {
-    try {
-      const result = await runIbiznesSync("manual");
-      res.json({ ok: true, ...result });
-    } catch (err: any) {
-      res.status(500).json({ ok: false, message: err.message });
     }
   });
 

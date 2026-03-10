@@ -196,36 +196,6 @@ export async function migrateDatabase() {
     );
 
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS przekazany BOOLEAN NOT NULL DEFAULT false;
-
-    CREATE TABLE IF NOT EXISTS ibiznes_invoices (
-      id SERIAL PRIMARY KEY,
-      nr_r TEXT NOT NULL,
-      source TEXT NOT NULL,
-      client_id INTEGER,
-      nip TEXT NOT NULL,
-      alias TEXT,
-      data_wyst TEXT NOT NULL,
-      rok INTEGER NOT NULL,
-      miesiac INTEGER NOT NULL,
-      koszt DECIMAL(12,2),
-      synced_at TIMESTAMP DEFAULT NOW(),
-      UNIQUE(nr_r, source)
-    );
-
-    CREATE TABLE IF NOT EXISTS ibiznes_sync_log (
-      id SERIAL PRIMARY KEY,
-      started_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      finished_at TIMESTAMP,
-      status TEXT NOT NULL DEFAULT 'running',
-      message TEXT,
-      invoices_synced INTEGER DEFAULT 0,
-      clients_matched INTEGER DEFAULT 0,
-      clients_unmatched INTEGER DEFAULT 0,
-      trigger TEXT DEFAULT 'cron'
-    );
-
-    ALTER TABLE clients ADD COLUMN IF NOT EXISTS nip TEXT;
-    ALTER TABLE clients ADD COLUMN IF NOT EXISTS ibiznes_alias TEXT;
   `);
 
   console.log("Database schema ensured.");
