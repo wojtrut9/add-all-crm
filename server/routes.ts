@@ -166,9 +166,10 @@ export async function registerRoutes(
         }
         if (!segment) segment = "Weryfikacja";
 
-        // Rytm kontaktu - tygodniowy lub miesięczny
-        const rytmKontaktu = row.Rytm_kontaktu || row.rytm_kontaktu ||
-          row["CZĘSTOTLIW."] || row["CZĘSTOTLIWOŚĆ MIESIĄC"] || null;
+        // Rytm kontaktu - tygodniowy lub miesięczny, normalizuj format
+        const rytmRaw = row.Rytm_kontaktu || row.rytm_kontaktu ||
+          row["CZĘSTOTLIW."] || row["CZĘSTOTLIWOŚĆ MIESIĄC"] || "";
+        const rytmKontaktu = rytmRaw ? normalizeRytm(rytmRaw) : null;
 
         try {
           await storage.createClient({
@@ -236,10 +237,24 @@ export async function registerRoutes(
       const log: string[] = [];
 
       for (const client of allClients) {
+        const updates: any = {};
+
+        // Pass 1: normalize rytmKontaktu if it's not in standard format
+        const rytmOrig = client.rytmKontaktu || "";
+        if (rytmOrig && !isRytm(rytmOrig)) {
+          const normalized = normalizeRytm(rytmOrig);
+          if (normalized !== rytmOrig && isRytm(normalized)) {
+            updates.rytmKontaktu = normalized;
+            log.push(`Znormalizowano rytm: ${client.klient} — "${rytmOrig}" -> "${normalized}"`);
+          }
+        }
+
         const dniOrig = client.dniZamowien || "";
+
+        // Pass 2: fix swapped columns (old Airtable imports)
         if (dniOrig && isDay(dniOrig)) {
-          const rytmOrig = client.rytmKontaktu || "";
-          if (rytmOrig && isDay(rytmOrig) && !isRytm(rytmOrig)) {
+          const rytmCurrent = updates.rytmKontaktu || rytmOrig;
+          if (rytmCurrent && isDay(rytmCurrent) && !isRytm(rytmCurrent)) {
             const allFields = [
               client.preferowanaFormaKontaktu,
               client.zamowieniaGdzie,
@@ -254,19 +269,15 @@ export async function registerRoutes(
             const realRytm = allFields.find(f => isRytm(f));
             const realMiasto = allFields.find(f => isCity(f));
 
-            const updates: any = {};
             if (realDni !== dniOrig) updates.dniZamowien = realDni;
-            if (realRytm && realRytm !== rytmOrig) updates.rytmKontaktu = realRytm;
+            if (realRytm && realRytm !== rytmCurrent) updates.rytmKontaktu = normalizeRytm(realRytm);
             if (realMiasto && realMiasto !== client.miasto) updates.miasto = realMiasto;
             updates.kraj = "Poland";
+          }
 
-            if (Object.keys(updates).length > 1) {
-              await storage.updateClient(client.id, updates);
-              log.push(`Naprawiono: ${client.klient} — dniZamowien: ${dniOrig} -> ${updates.dniZamowien || dniOrig}, rytmKontaktu: ${rytmOrig} -> ${updates.rytmKontaktu || rytmOrig}`);
-              fixed++;
-            } else {
-              alreadyOk++;
-            }
+          if (Object.keys(updates).length > 0) {
+            await storage.updateClient(client.id, updates);
+            fixed++;
           } else {
             alreadyOk++;
           }
@@ -274,7 +285,12 @@ export async function registerRoutes(
         }
 
         if (!dniOrig) {
-          alreadyOk++;
+          if (Object.keys(updates).length > 0) {
+            await storage.updateClient(client.id, updates);
+            fixed++;
+          } else {
+            alreadyOk++;
+          }
           continue;
         }
 
@@ -295,17 +311,18 @@ export async function registerRoutes(
         const realGdzie = allFields.find(f => ["Skalo", "Email", "SMS", "WhatsApp", "Telefon"].includes(f) && f !== realForma);
 
         if (realDni || realRytm) {
-          const updates: any = {
-            dniZamowien: realDni || null,
-            rytmKontaktu: realRytm || null,
-            miasto: realMiasto || null,
-            kraj: "Poland",
-          };
+          updates.dniZamowien = realDni || null;
+          updates.rytmKontaktu = realRytm ? normalizeRytm(realRytm) : null;
+          updates.miasto = realMiasto || null;
+          updates.kraj = "Poland";
           if (realForma) updates.preferowanaFormaKontaktu = realForma;
           if (realGdzie) updates.zamowieniaGdzie = realGdzie;
 
           await storage.updateClient(client.id, updates);
           log.push(`Naprawiono: ${client.klient} — dniZamowien: ${dniOrig} -> ${updates.dniZamowien}, rytmKontaktu: ${client.rytmKontaktu} -> ${updates.rytmKontaktu}`);
+          fixed++;
+        } else if (Object.keys(updates).length > 0) {
+          await storage.updateClient(client.id, updates);
           fixed++;
         } else {
           couldNotFix++;
@@ -1304,6 +1321,20 @@ function parseCSV(content: string): Record<string, string>[] {
   }
 
   return results;
+}
+
+function normalizeRytm(val: string): string {
+  if (!val) return val;
+  const v = val.trim().toLowerCase();
+  if (v.includes("2x") && (v.includes("tydz") || v.includes("tyg"))) return "2x/tydzień";
+  if (v.includes("1x") && (v.includes("tydz") || v.includes("tyg"))) return "1x/tydzień";
+  if (v.includes("co tydzień") || v.includes("co tydzien") || v === "cotygodniowo") return "co tydzień";
+  if (v.includes("2x") && (v.includes("mies") || v.includes("miesiąc") || v.includes("miesiac"))) return "2x/miesiąc";
+  if (v.includes("1x") && (v.includes("mies") || v.includes("miesiąc") || v.includes("miesiac"))) return "1x/miesiąc";
+  if (v.includes("co miesią") || v.includes("co miesiac") || v === "miesięcznie") return "1x/miesiąc";
+  if (v.includes("co 3 mies") || v.includes("kwartal") || v.includes("kwartał")) return "co 3 miesiące";
+  if (v.includes("co 2 mies") || v.includes("co 2 tygodnie")) return "co 2 miesiące";
+  return val;
 }
 
 function parseNotatkiFields(notatki: string): {
