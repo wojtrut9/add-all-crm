@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Target,
   Calculator,
+  RefreshCw,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -66,6 +67,7 @@ export function AppSidebar() {
     { title: "Analiza dzienna", url: "/analiza-dzienna", icon: Calculator },
     { title: "Panel finansowy", url: "/finanse", icon: DollarSign },
     { title: "Notatki", url: "/notatki", icon: StickyNote },
+    { title: "Sync iBiznes", url: "/ibiznes", icon: RefreshCw },
   ];
 
   let menuItems = handlowiecItems;

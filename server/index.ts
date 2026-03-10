@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import cron from "node-cron";
 
 const app = express();
 const httpServer = createServer(app);
@@ -74,6 +75,22 @@ app.use((req, res, next) => {
   httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
+
+  // iBiznes daily sync at 05:00
+  if (process.env.IBIZNES_DB_URL) {
+    cron.schedule("0 5 * * *", async () => {
+      log("Starting scheduled iBiznes sync", "ibiznes-cron");
+      try {
+        const { runIbiznesSync } = await import("./ibiznesSync");
+        await runIbiznesSync("cron");
+        log("Scheduled iBiznes sync completed", "ibiznes-cron");
+      } catch (err: any) {
+        log(`Scheduled iBiznes sync failed: ${err.message}`, "ibiznes-cron");
+      }
+    });
+    log("iBiznes daily sync scheduled (05:00)", "ibiznes-cron");
+  }
+
   } catch (err) {
     console.error("FATAL: Failed to start server:", err);
     process.exit(1);

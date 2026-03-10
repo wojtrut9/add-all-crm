@@ -42,6 +42,8 @@ export const clients = pgTable("clients", {
   osobaKontaktowa: text("osoba_kontaktowa"),
   brakiZamowien: integer("braki_zamowien").notNull().default(0),
   przekazany: boolean("przekazany").notNull().default(false),
+  nip: text("nip"),
+  ibiznesAlias: text("ibiznes_alias"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -248,3 +250,37 @@ export const salesHistory = pgTable("sales_history", {
 export const insertSalesHistorySchema = createInsertSchema(salesHistory).omit({ id: true });
 export type InsertSalesHistory = z.infer<typeof insertSalesHistorySchema>;
 export type SalesHistory = typeof salesHistory.$inferSelect;
+
+export const ibiznesInvoices = pgTable("ibiznes_invoices", {
+  id: serial("id").primaryKey(),
+  nrR: text("nr_r").notNull(),
+  source: text("source").notNull(), // 'sp_zoo' | 'firma'
+  clientId: integer("client_id"),
+  nip: text("nip").notNull(),
+  alias: text("alias"),
+  dataWyst: text("data_wyst").notNull(), // "yyyy-MM-dd"
+  rok: integer("rok").notNull(),
+  miesiac: integer("miesiac").notNull(),
+  koszt: decimal("koszt"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+});
+
+export const insertIbiznesInvoiceSchema = createInsertSchema(ibiznesInvoices).omit({ id: true, syncedAt: true });
+export type InsertIbiznesInvoice = z.infer<typeof insertIbiznesInvoiceSchema>;
+export type IbiznesInvoice = typeof ibiznesInvoices.$inferSelect;
+
+export const ibizneSyncLog = pgTable("ibiznes_sync_log", {
+  id: serial("id").primaryKey(),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  status: text("status").notNull().default("running"), // 'running' | 'success' | 'error'
+  message: text("message"),
+  invoicesSynced: integer("invoices_synced").default(0),
+  clientsMatched: integer("clients_matched").default(0),
+  clientsUnmatched: integer("clients_unmatched").default(0),
+  trigger: text("trigger").default("cron"), // 'cron' | 'manual'
+});
+
+export const insertIbizneSyncLogSchema = createInsertSchema(ibizneSyncLog).omit({ id: true });
+export type InsertIbizneSyncLog = z.infer<typeof insertIbizneSyncLogSchema>;
+export type IbizneSyncLog = typeof ibizneSyncLog.$inferSelect;
