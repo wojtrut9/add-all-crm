@@ -133,6 +133,7 @@ export async function registerRoutes(
       const content = req.file.buffer.toString("utf-8");
       const lines = parseCSV(content);
       let created = 0;
+      let updated = 0;
       let skipped = 0;
 
       for (const row of lines) {
@@ -140,10 +141,40 @@ export async function registerRoutes(
 
         const klientName = row.Klient || row.klient || "";
         const csvClientId = row.Client_ID || row.client_id || "";
+        const nipRaw = (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "") || null;
 
         const existing = await storage.getClientByNameOrClientId(klientName, csvClientId || undefined);
         if (existing) {
-          skipped++;
+          // Klient już istnieje — aktualizuj tylko pola które są puste lub zmieniły się w CSV
+          const updates: Record<string, any> = {};
+
+          if (nipRaw && !existing.nip) updates.nip = nipRaw;
+
+          // Aktualizuj grupę/segment jeśli puste
+          const grupaMvpCsv = row.Grupa_MVP || row.grupa_mvp || row.Grupa || null;
+          if (grupaMvpCsv && !existing.grupaMvp) updates.grupaMvp = grupaMvpCsv;
+
+          // Aktualizuj rytm jeśli pusty
+          const rytmRaw = row.Rytm_kontaktu || row.rytm_kontaktu ||
+            row["CZĘSTOTLIW."] || row["CZĘSTOTLIWOŚĆ MIESIĄC"] || "";
+          if (rytmRaw && !existing.rytmKontaktu) updates.rytmKontaktu = normalizeRytm(rytmRaw);
+
+          // Aktualizuj dni zamówień jeśli puste
+          const dniCsv = row.DNI || row["Dni_zamówień"] || row.Dni_zamowien || null;
+          if (dniCsv && !existing.dniZamowien) updates.dniZamowien = dniCsv;
+
+          // Aktualizuj telefon/email jeśli puste
+          if ((row.Telefon || row.telefon) && !existing.telefon)
+            updates.telefon = row.Telefon || row.telefon;
+          if ((row.Email || row.email) && !existing.email)
+            updates.email = row.Email || row.email;
+
+          if (Object.keys(updates).length > 0) {
+            await storage.updateClient(existing.id, updates);
+            updated++;
+          } else {
+            skipped++;
+          }
           continue;
         }
 
@@ -197,7 +228,7 @@ export async function registerRoutes(
             terminPlatnosciDni: parsed.terminPlatnosci ? Number(parsed.terminPlatnosci) : null,
             limitKredytowy: parsed.limitKredytowy || null,
             osobaKontaktowa: parsed.osobaKontaktowa || null,
-            nip: (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "") || null,
+            nip: nipRaw,
             brakiZamowien: 0,
           });
           created++;
@@ -206,7 +237,7 @@ export async function registerRoutes(
         }
       }
 
-      res.json({ created, skipped });
+      res.json({ created, updated, skipped });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

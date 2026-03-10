@@ -627,9 +627,13 @@ export default function ClientsPage() {
         });
         if (!res.ok) throw new Error("Import failed");
         const data = await res.json();
+        const parts = [];
+        if (data.created) parts.push(`Nowi: ${data.created}`);
+        if (data.updated) parts.push(`Zaktualizowano: ${data.updated}`);
+        if (data.skipped) parts.push(`Bez zmian: ${data.skipped}`);
         toast({
           title: "Import zakończony",
-          description: `Zaimportowano ${data.created} nowych klientów. Pominięto ${data.skipped} istniejących.`,
+          description: parts.join(" · "),
         });
         queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       } catch {
