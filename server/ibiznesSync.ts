@@ -10,6 +10,14 @@ function normalizeNip(nip: string | null | undefined): string {
   return nip.replace(/[-\s]/g, "").trim();
 }
 
+function normalizeAlias(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[–—-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function syncSinceDays(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -38,16 +46,25 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
     const since = syncSinceDays(90);
     const invoices = await fetchIbiznesInvoices(since);
 
-    // Build NIP → clientId map from CRM
-    const allClients = await db.select({ id: clients.id, nip: clients.nip }).from(clients);
+    // Build NIP → clientId AND alias → clientId maps from CRM
+    const allClients = await db
+      .select({ id: clients.id, nip: clients.nip, klient: clients.klient })
+      .from(clients);
+
     const nipToClientId = new Map<string, number>();
+    const aliasToClientId = new Map<string, number>();
+
     for (const c of allClients) {
       if (c.nip) nipToClientId.set(normalizeNip(c.nip), c.id);
+      if (c.klient) aliasToClientId.set(normalizeAlias(c.klient), c.id);
     }
 
-    // Upsert each invoice
+    // Upsert each invoice — match by NIP first, then by alias name
     for (const inv of invoices) {
-      const clientId = nipToClientId.get(inv.nip) ?? null;
+      let clientId = nipToClientId.get(inv.nip) ?? null;
+      if (!clientId && inv.alias) {
+        clientId = aliasToClientId.get(normalizeAlias(inv.alias)) ?? null;
+      }
       if (clientId) clientsMatched++;
       else unmatchedNips.add(inv.nip);
 
