@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database } from "lucide-react";
+import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 
 function formatDate(val: string | null | undefined) {
@@ -63,6 +63,22 @@ export default function IbizneSyncPage() {
     },
     onError: (err: any) => {
       toast({ title: "Błąd synchronizacji", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const clearNipMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch("/api/clients/clear-nip", { method: "POST" });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || "Błąd czyszczenia");
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "NIPy wyczyszczone", description: "Wszystkie wartości NIP zostały usunięte z bazy." });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Błąd", description: err.message, variant: "destructive" });
     },
   });
 
@@ -151,6 +167,29 @@ export default function IbizneSyncPage() {
               {lastSync.message}
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Danger zone */}
+      <Card className="border-red-200 dark:border-red-900">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base text-red-600 dark:text-red-400">Narzędzia naprawcze</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Wyczyść wszystkie NIPy</p>
+            <p className="text-xs text-muted-foreground">Usuwa pole NIP u wszystkich klientów — użyj gdy NIPy zostały błędnie wgrane.</p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => { if (confirm("Na pewno wyczyścić wszystkie NIPy?")) clearNipMutation.mutate(); }}
+            disabled={clearNipMutation.isPending}
+            className="gap-2 shrink-0"
+          >
+            <Trash2 className="w-4 h-4" />
+            {clearNipMutation.isPending ? "Czyszczę..." : "Wyczyść NIPy"}
+          </Button>
         </CardContent>
       </Card>
 
