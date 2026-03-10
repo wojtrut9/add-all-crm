@@ -141,14 +141,8 @@ export async function registerRoutes(
 
         const klientName = row.Klient || row.klient || "";
         const csvClientId = row.Client_ID || row.client_id || "";
-        // NIP z kolumny lub wyciągnięty z notatek (format "NIP: 1234567890")
-        const nipFromCol = (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "");
-        const nipFromNotatki = (() => {
-          const notatki = row.Notatki || row.notatki || row["NOTATKA"] || row.OPIS || "";
-          const m = notatki.match(/NIP[:\s]+(\d{10})/i);
-          return m ? m[1] : "";
-        })();
-        const nipRaw = nipFromCol || nipFromNotatki || null;
+        // NIP tylko z dedykowanej kolumny NIP
+        const nipRaw = (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "") || null;
 
         const existing = await storage.getClientByNameOrClientId(klientName, csvClientId || undefined);
         if (existing) {
@@ -1313,6 +1307,18 @@ export async function registerRoutes(
       res.json(logs);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/clear-nip", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { clients } = await import("../shared/schema");
+      const { sql } = await import("drizzle-orm");
+      await db.execute(sql`UPDATE clients SET nip = NULL, ibiznes_alias = NULL WHERE nip IS NOT NULL`);
+      res.json({ ok: true, message: "NIPy wyczyszczone" });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
     }
   });
 
