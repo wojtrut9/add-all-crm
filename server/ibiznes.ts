@@ -43,45 +43,49 @@ function parseIbiznesDate(dwy: string | null): string | null {
 }
 
 /**
- * Fetch invoices from both Sp. z o.o. and sole-proprietorship tables.
- * sinceDate = "yyyy-MM-dd"
+ * Fetch WZ (Wydania Zewnętrzne) from spec tables, grouped by document number.
+ * Joins with klienci table to get NIP per Alias.
+ * Both sp. z o.o. and JDG.
  */
 export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesInvoiceRow[]> {
   const db = getPool();
-  const sinceDwy = sinceDate.replace(/-/g, ""); // "yyyyMMdd"
+  const sinceDwy = sinceDate.replace(/-/g, "");
 
-  // WZ (Wydania Zewnętrzne) — wystawiane częściej niż faktury VAT
+  // Sp. z o.o.: WZ from spec joined with klienci for NIP
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT NrR, Alias, Nip, Dwy, Koszt, Typ
-     FROM addallspkazogrfaktury
-     WHERE Typ = 'WZ'
-       AND Akt != 'T'
-       AND Dwy >= ?
-       AND Nip IS NOT NULL AND Nip != ''
-     ORDER BY Dwy DESC`,
+    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt, k.NIP
+     FROM addallspkazogrspec s
+     LEFT JOIN addallspkazogrklienci k ON k.Alias = s.Alias
+     WHERE s.Typ = 'WZ'
+       AND s.Data >= ?
+     GROUP BY s.NrR, s.Alias, s.Data, k.NIP
+     ORDER BY s.Data DESC`,
     [sinceDwy]
   );
 
+  // JDG: WZ from firmaspec joined with firmaklienci for NIP
   const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT NrR, Alias, Nip, Dwy, Koszt, Typ
-     FROM firmafaktury
-     WHERE Typ = 'WZ'
-       AND Akt != 'T'
-       AND Dwy >= ?
-       AND Nip IS NOT NULL AND Nip != ''
-     ORDER BY Dwy DESC`,
+    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt, k.NIP
+     FROM firmaspec s
+     LEFT JOIN firmaklienci k ON k.Alias = s.Alias
+     WHERE s.Typ = 'WZ'
+       AND s.Data >= ?
+     GROUP BY s.NrR, s.Alias, s.Data, k.NIP
+     ORDER BY s.Data DESC`,
     [sinceDwy]
   );
 
   const result: IbiznesInvoiceRow[] = [];
 
   for (const row of spZooRows as any[]) {
-    const date = parseIbiznesDate(row.Dwy);
+    const date = parseIbiznesDate(row.Data);
     if (!date) continue;
+    const nip = normalizeNip(row.NIP);
+    if (!nip) continue;
     result.push({
       nrR: String(row.NrR),
       alias: row.Alias || null,
-      nip: normalizeNip(row.Nip),
+      nip,
       dataWyst: date,
       koszt: Number(row.Koszt) || 0,
       source: "sp_zoo",
@@ -89,12 +93,14 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   }
 
   for (const row of firmaRows as any[]) {
-    const date = parseIbiznesDate(row.Dwy);
+    const date = parseIbiznesDate(row.Data);
     if (!date) continue;
+    const nip = normalizeNip(row.NIP);
+    if (!nip) continue;
     result.push({
       nrR: String(row.NrR),
       alias: row.Alias || null,
-      nip: normalizeNip(row.Nip),
+      nip,
       dataWyst: date,
       koszt: Number(row.Koszt) || 0,
       source: "firma",
@@ -108,13 +114,13 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
 export async function fetchIbiznesClients(): Promise<{ nip: string; alias: string }[]> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT DISTINCT Nip, Alias FROM addallspkazogrfaktury
-     WHERE Typ = 'WZ' AND Nip IS NOT NULL AND Nip != ''
+    `SELECT Alias, NIP FROM addallspkazogrklienci
+     WHERE NIP IS NOT NULL AND NIP != ''
      UNION
-     SELECT DISTINCT Nip, Alias FROM firmafaktury
-     WHERE Typ = 'WZ' AND Nip IS NOT NULL AND Nip != ''`
+     SELECT Alias, NIP FROM firmaklienci
+     WHERE NIP IS NOT NULL AND NIP != ''`
   );
   return (rows as any[])
-    .filter(r => r.Nip)
-    .map(r => ({ nip: normalizeNip(r.Nip), alias: String(r.Alias || "") }));
+    .filter(r => r.NIP)
+    .map(r => ({ nip: normalizeNip(r.NIP), alias: String(r.Alias || "") }));
 }
