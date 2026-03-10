@@ -225,7 +225,7 @@ export async function registerRoutes(
   app.post("/api/clients/fix-columns", authMiddleware, adminOnly, async (req, res) => {
     try {
       const VALID_DAYS = ["Poniedziałek", "Poniedzialek", "Wtorek", "Środa", "Sroda", "Czwartek", "Piątek", "Piatek", "Sobota", "Niedziela"];
-      const VALID_RYTM = ["1x/tydzień", "1x/tydzien", "2x/tydzień", "2x/tydzien", "1x/miesiąc", "1x/miesiac", "2x/miesiąc", "2x/miesiac", "co 3 miesiące", "co 3 miesiace", "co 2 miesiące", "co 2 miesiace", "co tydzień", "co tydzien"];
+      const VALID_RYTM = ["1x/tydzień", "1x/tydzien", "2x/tydzień", "2x/tydzien", "1x/miesiąc", "1x/miesiac", "2x/miesiąc", "2x/miesiac", "co 3 miesiące", "co 3 miesiace", "co 2 miesiące", "co 2 miesiace", "co tydzień", "co tydzien", "co 2 tygodnie", "co 2 tyg"];
       const VALID_CITIES = ["Warszawa", "Gdańsk", "Kraków", "Wrocław", "Poznań", "Łódź", "Gdansk", "Krakow", "Wroclaw", "Poznan", "Lodz", "Piaseczno", "Pruszków", "Pruszkow", "Legionowo", "Łomianki", "Lomianki", "Bielawa", "Mszczonów", "Mszczonow", "Mińsk", "Minsk", "Konstancin"];
 
       const isDay = (val: string): boolean => VALID_DAYS.some(d => val.includes(d));
@@ -378,9 +378,12 @@ export async function registerRoutes(
           shouldGenerate = true;
         } else if (rytm.includes("2x/tydz") || rytm.includes("2x tyg") || rytm.includes("2x w tyg")) {
           shouldGenerate = true;
-        } else if (rytm.includes("1x/mies") || rytm.includes("1x mies") || rytm === "co miesiac" || rytm === "co miesiąc") {
+        } else if (rytm.includes("co 2 tygodnie") || rytm.includes("co 2 tyg")) {
+          // every 2 weeks: weeks 1 and 3 of the month
+          shouldGenerate = weekOfMonth === 1 || weekOfMonth === 3;
+        } else if (rytm.includes("1x/mies") || rytm.includes("1x mies") || rytm === "co miesiac" || rytm === "co miesiąc" || rytm.includes("1x/miesiąc")) {
           shouldGenerate = weekOfMonth === 1;
-        } else if (rytm.includes("2x/mies") || rytm.includes("2x mies")) {
+        } else if (rytm.includes("2x/mies") || rytm.includes("2x mies") || rytm.includes("2x/miesiąc")) {
           shouldGenerate = weekOfMonth === 1 || weekOfMonth === 3;
         } else if (rytm.includes("co 3 mies") || rytm.includes("kwartal")) {
           const monthNum = wsDate.getMonth();
@@ -1325,15 +1328,44 @@ function parseCSV(content: string): Record<string, string>[] {
 
 function normalizeRytm(val: string): string {
   if (!val) return val;
-  const v = val.trim().toLowerCase();
-  if (v.includes("2x") && (v.includes("tydz") || v.includes("tyg"))) return "2x/tydzień";
-  if (v.includes("1x") && (v.includes("tydz") || v.includes("tyg"))) return "1x/tydzień";
-  if (v.includes("co tydzień") || v.includes("co tydzien") || v === "cotygodniowo") return "co tydzień";
-  if (v.includes("2x") && (v.includes("mies") || v.includes("miesiąc") || v.includes("miesiac"))) return "2x/miesiąc";
-  if (v.includes("1x") && (v.includes("mies") || v.includes("miesiąc") || v.includes("miesiac"))) return "1x/miesiąc";
+  const v = val.trim().toLowerCase().replace(/\s+/g, " ");
+
+  // Check multi-month intervals FIRST (before single-month checks)
+  // "raz na 3 miesiące" / "co kwartał" / "1 raz na 3 miesiące"
+  if (v.includes("3 mies") || v.includes("na 3") || v.includes("kwartal") || v.includes("kwartał")) return "co 3 miesiące";
+
+  // "raz na 2 miesiące" / "co 2 miesiące" (not "co 2 tygodnie" - handled below)
+  if ((v.includes("na 2 mies") || v.includes("co 2 mies")) && v.includes("mies")) return "co 2 miesiące";
+
+  // "co 2 tygodnie" / "co 2 tyg" / "CO 2 TYG" = every 2 weeks
+  if ((v.includes("co 2") || v.includes("co2")) && (v.includes("tyg") || v.includes("tydz"))) return "co 2 tygodnie";
+
+  // "2 razy w tygodniu" / "2 razy w tyg" / "2 raz w tyg" / "2x tydzień"
+  const is2xWeekly = (v.includes("2 raz") || v.includes("2x") || v.includes("2 x")) &&
+    (v.includes("tydz") || v.includes("tyg") || v.includes("tygo"));
+  if (is2xWeekly) return "2x/tydzień";
+
+  // "1 raz w tygodniu" / "1 raz w tyg" / "1x tydzień"
+  const is1xWeekly = (v.includes("1 raz") || v.includes("1x") || v.includes("1 x") || v.includes("1raz")) &&
+    (v.includes("tydz") || v.includes("tyg") || v.includes("tygo"));
+  if (is1xWeekly) return "1x/tydzień";
+
+  // "co tydzień" / "cotygodniowo"
+  if (v === "co tydzień" || v === "co tydzien" || v === "cotygodniowo" || v === "co tydz") return "co tydzień";
+
+  // "2 razy w miesiącu" / "2 raz w miesiącu" / "2x miesiąc"
+  const is2xMonthly = (v.includes("2 raz") || v.includes("2x") || v.includes("2 x")) &&
+    (v.includes("mies") || v.includes("miesiąc") || v.includes("miesiac"));
+  if (is2xMonthly) return "2x/miesiąc";
+
+  // "1 raz w miesiącu" / "1x miesiąc"
+  const is1xMonthly = (v.includes("1 raz") || v.includes("1x") || v.includes("1 x") || v.includes("1raz")) &&
+    (v.includes("mies") || v.includes("miesiąc") || v.includes("miesiac"));
+  if (is1xMonthly) return "1x/miesiąc";
+
+  // "co miesiąc" / "miesięcznie"
   if (v.includes("co miesią") || v.includes("co miesiac") || v === "miesięcznie") return "1x/miesiąc";
-  if (v.includes("co 3 mies") || v.includes("kwartal") || v.includes("kwartał")) return "co 3 miesiące";
-  if (v.includes("co 2 mies") || v.includes("co 2 tygodnie")) return "co 2 miesiące";
+
   return val;
 }
 
