@@ -146,29 +146,50 @@ export async function registerRoutes(
           continue;
         }
 
-        const notatki = row.Notatki || row.notatki || "";
+        const notatki = row.Notatki || row.notatki || row["NOTATKA"] || row.OPIS || "";
         const parsed = parseNotatkiFields(notatki);
+
+        // Opiekun - obsługuje stare i nowe nazwy kolumn
+        const opiekun = row.Opiekun || row.opiekun || row.Opiekun_import || "Weryfikacja";
+
+        // Grupa - obsługuje stare i nowe nazwy kolumn
+        const grupaMvp = row.Grupa_MVP || row.grupa_mvp || row.Grupa || null;
+
+        // Segment - derive from Grupa if not explicit
+        let segment = row.Segment || row.segment || "";
+        if (!segment && grupaMvp) {
+          const g = grupaMvp.toLowerCase();
+          if (g.includes("premium") || g.includes("top")) segment = "Premium";
+          else if (g.includes("standard")) segment = "Standard";
+          else if (g.includes("weryfikacja")) segment = "Weryfikacja";
+          else segment = "Inne";
+        }
+        if (!segment) segment = "Weryfikacja";
+
+        // Rytm kontaktu - tygodniowy lub miesięczny
+        const rytmKontaktu = row.Rytm_kontaktu || row.rytm_kontaktu ||
+          row["CZĘSTOTLIW."] || row["CZĘSTOTLIWOŚĆ MIESIĄC"] || null;
 
         try {
           await storage.createClient({
             klient: klientName,
             clientId: csvClientId || `C${Date.now()}`,
-            opiekun: row.Opiekun || row.opiekun || "Weryfikacja",
-            segment: row.Segment || row.segment || "Weryfikacja",
-            grupaMvp: row.Grupa_MVP || row.grupa_mvp || null,
+            opiekun,
+            segment,
+            grupaMvp,
             status: row.Status || row.status || "Aktywny",
-            aktywny: row.Aktywny === "1" || row.aktywny === "1" || row.Aktywny === "true",
+            aktywny: row.Aktywny === "0" || row.aktywny === "false" ? false : true,
             telefon: row.Telefon || row.telefon || null,
-            telefonDodatkowy: row.Telefon_dodatkowy || row.telefon_dodatkowy || null,
+            telefonDodatkowy: row["Telefon dodatkowy"] || row.Telefon_dodatkowy || row.telefon_dodatkowy || null,
             email: row.Email || row.email || null,
-            emailDodatkowe: row.Email_dodatkowe || row.email_dodatkowe || null,
-            preferowanaFormaKontaktu: row.Preferowana_forma_kontaktu || null,
-            zamowieniaGdzie: row.Zamówienia_gdzie || row.Zamowienia_gdzie || null,
-            dniZamowien: row.Dni_zamówień || row.Dni_zamowien || null,
-            rytmKontaktu: row.Rytm_kontaktu || row.rytm_kontaktu || null,
+            emailDodatkowe: row["Email dodatkowe"] || row.Email_dodatkowe || row.email_dodatkowe || null,
+            preferowanaFormaKontaktu: row["FORMA KONTAKTU"] || row.Preferowana_forma_kontaktu || null,
+            zamowieniaGdzie: row["ZAMÓWIENIA GDZIE"] || row.Zamówienia_gdzie || row.Zamowienia_gdzie || null,
+            dniZamowien: row.DNI || row["Dni_zamówień"] || row.Dni_zamowien || null,
+            rytmKontaktu,
             miasto: row.Miasto || row.miasto || null,
             kraj: row.Kraj || row.kraj || null,
-            notatki: notatki,
+            notatki,
             rabatProcent: parsed.rabat || null,
             warunkiPlatnosci: parsed.warunkiPlatnosci || null,
             terminPlatnosciDni: parsed.terminPlatnosci ? Number(parsed.terminPlatnosci) : null,
@@ -1216,6 +1237,9 @@ export async function registerRoutes(
 }
 
 function parseCSV(content: string): Record<string, string>[] {
+  // Strip BOM
+  if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+
   const lines: string[] = [];
   let current = "";
   let inQuotes = false;
@@ -1240,7 +1264,10 @@ function parseCSV(content: string): Record<string, string>[] {
 
   if (lines.length < 2) return [];
 
-  const headers = lines[0].replace(/\r$/, "").split(",").map(h => h.replace(/^"|"$/g, "").trim());
+  // Auto-detect delimiter: semicolon or comma
+  const firstLine = lines[0].replace(/\r$/, "");
+  const delimiter = firstLine.split(";").length > firstLine.split(",").length ? ";" : ",";
+  const headers = firstLine.split(delimiter).map(h => h.replace(/^"|"$/g, "").trim());
   const results: Record<string, string>[] = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -1260,7 +1287,7 @@ function parseCSV(content: string): Record<string, string>[] {
         } else {
           inQ = !inQ;
         }
-      } else if (c === "," && !inQ) {
+      } else if (c === delimiter && !inQ) {
         values.push(val);
         val = "";
       } else {
