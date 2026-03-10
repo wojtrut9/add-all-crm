@@ -141,14 +141,22 @@ export async function registerRoutes(
 
         const klientName = row.Klient || row.klient || "";
         const csvClientId = row.Client_ID || row.client_id || "";
-        const nipRaw = (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "") || null;
+        // NIP z kolumny lub wyciągnięty z notatek (format "NIP: 1234567890")
+        const nipFromCol = (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "");
+        const nipFromNotatki = (() => {
+          const notatki = row.Notatki || row.notatki || row["NOTATKA"] || row.OPIS || "";
+          const m = notatki.match(/NIP[:\s]+(\d{10})/i);
+          return m ? m[1] : "";
+        })();
+        const nipRaw = nipFromCol || nipFromNotatki || null;
 
         const existing = await storage.getClientByNameOrClientId(klientName, csvClientId || undefined);
         if (existing) {
           // Klient już istnieje — aktualizuj tylko pola które są puste lub zmieniły się w CSV
           const updates: Record<string, any> = {};
 
-          if (nipRaw && !existing.nip) updates.nip = nipRaw;
+          // Zawsze aktualizuj NIP jeśli CSV go ma (niezależnie od tego co jest w bazie)
+          if (nipRaw) updates.nip = nipRaw;
 
           // Aktualizuj grupę/segment jeśli puste
           const grupaMvpCsv = row.Grupa_MVP || row.grupa_mvp || row.Grupa || null;
