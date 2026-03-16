@@ -226,6 +226,21 @@ export async function migrateDatabase() {
 
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS nip TEXT;
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS ibiznes_alias TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS pelna_firma_nazwa TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS adres TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS kod_pocztowy TEXT;
+
+    CREATE TABLE IF NOT EXISTS client_contacts (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      imie TEXT NOT NULL,
+      rola TEXT,
+      telefon TEXT,
+      email TEXT,
+      notatka TEXT,
+      is_primary BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
   `);
 
   console.log("Database schema ensured.");

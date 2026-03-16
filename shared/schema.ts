@@ -18,6 +18,7 @@ export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
   klient: text("klient").notNull(),
   clientId: text("client_id").notNull().unique(),
+  pelnaFirmaNazwa: text("pelna_firma_nazwa"),
   opiekun: text("opiekun").notNull(),
   segment: text("segment").notNull(),
   grupaMvp: text("grupa_mvp"),
@@ -31,7 +32,9 @@ export const clients = pgTable("clients", {
   zamowieniaGdzie: text("zamowienia_gdzie"),
   dniZamowien: text("dni_zamowien"),
   rytmKontaktu: text("rytm_kontaktu"),
+  adres: text("adres"),
   miasto: text("miasto"),
+  kodPocztowy: text("kod_pocztowy"),
   kraj: text("kraj"),
   notatki: text("notatki"),
   rabatProcent: decimal("rabat_procent"),
@@ -47,9 +50,25 @@ export const clients = pgTable("clients", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const clientContacts = pgTable("client_contacts", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  imie: text("imie").notNull(),
+  rola: text("rola"),
+  telefon: text("telefon"),
+  email: text("email"),
+  notatka: text("notatka"),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true, createdAt: true });
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
+
+export const insertClientContactSchema = createInsertSchema(clientContacts).omit({ id: true, createdAt: true });
+export type InsertClientContact = z.infer<typeof insertClientContactSchema>;
+export type ClientContact = typeof clientContacts.$inferSelect;
 
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),

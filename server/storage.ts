@@ -3,7 +3,7 @@ import { eq, and, gte, lte, sql, like, or, desc, asc, inArray } from "drizzle-or
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
-  fleet, notes, meetings, salesHistory, dailyAnalysis,
+  fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -12,6 +12,7 @@ import {
   type InsertMeeting, type Meeting,
   type InsertSalary, type InsertCost, type InsertFleet,
   type Cost, type DailyAnalysis,
+  type ClientContact, type InsertClientContact,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -26,6 +27,11 @@ export interface IStorage {
   updateClient(id: number, data: Partial<Client>): Promise<void>;
   deleteClient(id: number): Promise<void>;
   getNextClientId(): Promise<string>;
+
+  getClientContacts(clientId: number): Promise<ClientContact[]>;
+  createClientContact(contact: InsertClientContact): Promise<ClientContact>;
+  updateClientContact(id: number, data: Partial<ClientContact>): Promise<void>;
+  deleteClientContact(id: number): Promise<void>;
 
   getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]>;
   getContactsForToday(opiekun?: string): Promise<any[]>;
@@ -163,6 +169,27 @@ export class DatabaseStorage implements IStorage {
     }
     const next = maxNum + 1;
     return `C${String(next).padStart(3, "0")}`;
+  }
+
+  async getClientContacts(clientId: number): Promise<ClientContact[]> {
+    return db
+      .select()
+      .from(clientContacts)
+      .where(eq(clientContacts.clientId, clientId))
+      .orderBy(desc(clientContacts.isPrimary), asc(clientContacts.createdAt));
+  }
+
+  async createClientContact(contact: InsertClientContact): Promise<ClientContact> {
+    const [created] = await db.insert(clientContacts).values(contact).returning();
+    return created;
+  }
+
+  async updateClientContact(id: number, data: Partial<ClientContact>): Promise<void> {
+    await db.update(clientContacts).set(data).where(eq(clientContacts.id, id));
+  }
+
+  async deleteClientContact(id: number): Promise<void> {
+    await db.delete(clientContacts).where(eq(clientContacts.id, id));
   }
 
   async getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]> {

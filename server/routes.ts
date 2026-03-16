@@ -126,6 +126,46 @@ export async function registerRoutes(
     }
   });
 
+  // --- Client Contacts (knowledge base) ---
+  app.get("/api/clients/:id/contacts", authMiddleware, async (req, res) => {
+    try {
+      const contacts = await storage.getClientContacts(Number(req.params.id));
+      res.json(contacts);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/:id/contacts", authMiddleware, async (req, res) => {
+    try {
+      const contact = await storage.createClientContact({
+        ...req.body,
+        clientId: Number(req.params.id),
+      });
+      res.json(contact);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/clients/:id/contacts/:contactId", authMiddleware, async (req, res) => {
+    try {
+      await storage.updateClientContact(Number(req.params.contactId), req.body);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/clients/:id/contacts/:contactId", authMiddleware, async (req, res) => {
+    try {
+      await storage.deleteClientContact(Number(req.params.contactId));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/clients/import", authMiddleware, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "Brak pliku" });

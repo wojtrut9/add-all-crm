@@ -15,7 +15,7 @@ function getPool(): mysql.Pool {
   if (!pool) {
     const url = process.env.IBIZNES_DB_URL;
     if (!url) throw new Error("IBIZNES_DB_URL is not set");
-    pool = mysql.createPool(url + "?connectTimeout=10000&waitForConnections=true&connectionLimit=3");
+    pool = mysql.createPool(url + "?connectTimeout=15000&waitForConnections=true&connectionLimit=1&queueLimit=2");
   }
   return pool;
 }
