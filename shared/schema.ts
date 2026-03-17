@@ -70,6 +70,18 @@ export const insertClientContactSchema = createInsertSchema(clientContacts).omit
 export type InsertClientContact = z.infer<typeof insertClientContactSchema>;
 export type ClientContact = typeof clientContacts.$inferSelect;
 
+export const clientProducts = pgTable("client_products", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  nazwa: text("nazwa").notNull(),
+  notatka: text("notatka"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertClientProductSchema = createInsertSchema(clientProducts).omit({ id: true, createdAt: true });
+export type InsertClientProduct = z.infer<typeof insertClientProductSchema>;
+export type ClientProduct = typeof clientProducts.$inferSelect;
+
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").notNull(),

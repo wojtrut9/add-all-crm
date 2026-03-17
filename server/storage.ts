@@ -3,7 +3,7 @@ import { eq, and, gte, lte, sql, like, or, desc, asc, inArray } from "drizzle-or
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
-  fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts,
+  fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts, clientProducts,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -13,6 +13,7 @@ import {
   type InsertSalary, type InsertCost, type InsertFleet,
   type Cost, type DailyAnalysis,
   type ClientContact, type InsertClientContact,
+  type ClientProduct, type InsertClientProduct,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -32,6 +33,12 @@ export interface IStorage {
   createClientContact(contact: InsertClientContact): Promise<ClientContact>;
   updateClientContact(id: number, data: Partial<ClientContact>): Promise<void>;
   deleteClientContact(id: number): Promise<void>;
+
+  getClientProducts(clientId: number): Promise<ClientProduct[]>;
+  createClientProduct(product: InsertClientProduct): Promise<ClientProduct>;
+  upsertClientProducts(clientId: number, names: string[]): Promise<void>;
+  updateClientProduct(id: number, data: Partial<ClientProduct>): Promise<void>;
+  deleteClientProduct(id: number): Promise<void>;
 
   getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]>;
   getContactsForToday(opiekun?: string): Promise<any[]>;
@@ -190,6 +197,41 @@ export class DatabaseStorage implements IStorage {
 
   async deleteClientContact(id: number): Promise<void> {
     await db.delete(clientContacts).where(eq(clientContacts.id, id));
+  }
+
+  async getClientProducts(clientId: number): Promise<ClientProduct[]> {
+    return db
+      .select()
+      .from(clientProducts)
+      .where(eq(clientProducts.clientId, clientId))
+      .orderBy(asc(clientProducts.createdAt));
+  }
+
+  async createClientProduct(product: InsertClientProduct): Promise<ClientProduct> {
+    const [created] = await db.insert(clientProducts).values(product).returning();
+    return created;
+  }
+
+  async upsertClientProducts(clientId: number, names: string[]): Promise<void> {
+    const existing = await db
+      .select({ nazwa: clientProducts.nazwa })
+      .from(clientProducts)
+      .where(eq(clientProducts.clientId, clientId));
+    const existingNames = new Set(existing.map(e => e.nazwa.trim().toLowerCase()));
+    const toInsert = names
+      .map(n => n.trim())
+      .filter(n => n && !existingNames.has(n.toLowerCase()));
+    if (toInsert.length > 0) {
+      await db.insert(clientProducts).values(toInsert.map(nazwa => ({ clientId, nazwa })));
+    }
+  }
+
+  async updateClientProduct(id: number, data: Partial<ClientProduct>): Promise<void> {
+    await db.update(clientProducts).set(data).where(eq(clientProducts.id, id));
+  }
+
+  async deleteClientProduct(id: number): Promise<void> {
+    await db.delete(clientProducts).where(eq(clientProducts.id, id));
   }
 
   async getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]> {

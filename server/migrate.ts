@@ -241,6 +241,14 @@ export async function migrateDatabase() {
       is_primary BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS client_products (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      nazwa TEXT NOT NULL,
+      notatka TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
   `);
 
   console.log("Database schema ensured.");

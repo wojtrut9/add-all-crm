@@ -41,9 +41,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Search, Download, Upload, Plus, AlertTriangle, Phone,
   MapPin, Users, Pencil, Save, X, Trash2, Wrench, StickyNote,
-  Building2, CreditCard, UserPlus, Star, Mail,
+  Building2, CreditCard, UserPlus, Star, Mail, Package, PackagePlus,
 } from "lucide-react";
-import type { Client, ClientContact } from "@shared/schema";
+import type { Client, ClientContact, ClientProduct } from "@shared/schema";
 
 const OPIEKUN_OPTIONS = ["Gosia", "Magda", "Weryfikacja"];
 const SEGMENT_OPTIONS = ["Premium", "Standard", "Weryfikacja"];
@@ -271,6 +271,48 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
       if (!res.ok) return [];
       return res.json();
     },
+  });
+
+  const { data: productList = [], refetch: refetchProducts } = useQuery<ClientProduct[]>({
+    queryKey: ["/api/clients", client.id, "products"],
+    queryFn: async () => {
+      const res = await authFetch(`/api/clients/${client.id}/products`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductNote, setNewProductNote] = useState("");
+  const [addingProduct, setAddingProduct] = useState(false);
+
+  const addProductMutation = useMutation({
+    mutationFn: async (data: { nazwa: string; notatka?: string }) => {
+      const res = await authFetch(`/api/clients/${client.id}/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Błąd");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Dodano produkt" });
+      refetchProducts();
+      setNewProductName("");
+      setNewProductNote("");
+      setAddingProduct(false);
+    },
+    onError: () => toast({ title: "Błąd zapisu", variant: "destructive" }),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await authFetch(`/api/clients/${client.id}/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Błąd");
+    },
+    onSuccess: () => { toast({ title: "Usunięto produkt" }); refetchProducts(); },
+    onError: () => toast({ title: "Błąd usuwania", variant: "destructive" }),
   });
 
   const przekazanyMutation = useMutation({
@@ -503,10 +545,14 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
 
       <Tabs defaultValue="firma">
         <TabsList className="w-full">
-          <TabsTrigger value="firma" className="flex-1"><Building2 className="w-3.5 h-3.5 mr-1" />Dane firmy</TabsTrigger>
+          <TabsTrigger value="firma" className="flex-1"><Building2 className="w-3.5 h-3.5 mr-1" />Firma</TabsTrigger>
           <TabsTrigger value="kontakty" className="flex-1">
             <Users className="w-3.5 h-3.5 mr-1" />Kontakty
             {contactPersons.length > 0 && <Badge variant="secondary" className="ml-1 text-xs px-1.5">{contactPersons.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="produkty" className="flex-1">
+            <Package className="w-3.5 h-3.5 mr-1" />Produkty
+            {productList.length > 0 && <Badge variant="secondary" className="ml-1 text-xs px-1.5">{productList.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="handlowe" className="flex-1"><CreditCard className="w-3.5 h-3.5 mr-1" />Handlowe</TabsTrigger>
           <TabsTrigger value="notatki" className="flex-1"><StickyNote className="w-3.5 h-3.5 mr-1" />Notatki</TabsTrigger>
@@ -559,6 +605,68 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
               </Button>
             )
           }
+        </TabsContent>
+
+        {/* PRODUKTY INDYWIDUALNE */}
+        <TabsContent value="produkty" className="space-y-3 pt-3">
+          {productList.length === 0 && !addingProduct && (
+            <div className="text-center py-6 text-muted-foreground">
+              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Brak produktów indywidualnych</p>
+            </div>
+          )}
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
+            {productList.map(p => (
+              <div key={p.id} className="flex items-center justify-between gap-2 p-2.5 rounded-md border bg-card text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{p.nazwa}</p>
+                  {p.notatka && <p className="text-xs text-muted-foreground mt-0.5">{p.notatka}</p>}
+                </div>
+                <Button
+                  variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0"
+                  onClick={() => deleteProductMutation.mutate(p.id)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          {addingProduct ? (
+            <div className="space-y-2 p-3 rounded-md border bg-muted/30">
+              <div className="space-y-1">
+                <Label className="text-xs">Nazwa produktu *</Label>
+                <Input
+                  value={newProductName}
+                  onChange={e => setNewProductName(e.target.value)}
+                  placeholder="np. Pojemnik prostokątny hot 900ml"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Notatka (opcjonalnie)</Label>
+                <Input
+                  value={newProductNote}
+                  onChange={e => setNewProductNote(e.target.value)}
+                  placeholder="np. zamawia co tydzień"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => { setAddingProduct(false); setNewProductName(""); setNewProductNote(""); }}>
+                  <X className="w-3.5 h-3.5 mr-1" /> Anuluj
+                </Button>
+                <Button size="sm"
+                  disabled={!newProductName.trim() || addProductMutation.isPending}
+                  onClick={() => addProductMutation.mutate({ nazwa: newProductName.trim(), notatka: newProductNote.trim() || undefined })}
+                >
+                  <Save className="w-3.5 h-3.5 mr-1" /> {addProductMutation.isPending ? "Zapisuję..." : "Dodaj"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full" onClick={() => setAddingProduct(true)}>
+              <PackagePlus className="w-4 h-4 mr-1" /> Dodaj produkt
+            </Button>
+          )}
         </TabsContent>
 
         {/* HANDLOWE */}

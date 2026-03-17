@@ -166,6 +166,46 @@ export async function registerRoutes(
     }
   });
 
+  // --- Client Products ---
+  app.get("/api/clients/:id/products", authMiddleware, async (req, res) => {
+    try {
+      const products = await storage.getClientProducts(Number(req.params.id));
+      res.json(products);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/:id/products", authMiddleware, async (req, res) => {
+    try {
+      const product = await storage.createClientProduct({
+        ...req.body,
+        clientId: Number(req.params.id),
+      });
+      res.json(product);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/clients/:id/products/:productId", authMiddleware, async (req, res) => {
+    try {
+      await storage.updateClientProduct(Number(req.params.productId), req.body);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/clients/:id/products/:productId", authMiddleware, async (req, res) => {
+    try {
+      await storage.deleteClientProduct(Number(req.params.productId));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/clients/import", authMiddleware, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "Brak pliku" });
@@ -217,6 +257,13 @@ export async function registerRoutes(
           } else {
             skipped++;
           }
+
+          // Zawsze importuj produkty indywidualne (dodaj brakujące)
+          const produktyRaw = row["Produkty indywidualne"] || row.Produkty_indywidualne || "";
+          if (produktyRaw && produktyRaw.trim() && produktyRaw.trim().toUpperCase() !== "BRAK") {
+            const produkty = produktyRaw.split(";").map((p: string) => p.trim()).filter((p: string) => p);
+            if (produkty.length > 0) await storage.upsertClientProducts(existing.id, produkty);
+          }
           continue;
         }
 
@@ -246,7 +293,7 @@ export async function registerRoutes(
         const rytmKontaktu = rytmRaw ? normalizeRytm(rytmRaw) : null;
 
         try {
-          await storage.createClient({
+          const newClient = await storage.createClient({
             klient: klientName,
             clientId: csvClientId || `C${Date.now()}`,
             opiekun,
@@ -273,6 +320,12 @@ export async function registerRoutes(
             nip: nipRaw,
             brakiZamowien: 0,
           });
+          // Import produktów indywidualnych
+          const produktyRaw = row["Produkty indywidualne"] || row.Produkty_indywidualne || "";
+          if (produktyRaw && produktyRaw.trim() && produktyRaw.trim().toUpperCase() !== "BRAK") {
+            const produkty = produktyRaw.split(";").map((p: string) => p.trim()).filter((p: string) => p);
+            if (produkty.length > 0) await storage.upsertClientProducts(newClient.id, produkty);
+          }
           created++;
         } catch (e: any) {
           skipped++;
