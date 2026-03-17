@@ -264,6 +264,15 @@ export async function registerRoutes(
             const produkty = produktyRaw.split(";").map((p: string) => p.trim()).filter((p: string) => p);
             if (produkty.length > 0) await storage.upsertClientProducts(existing.id, produkty);
           }
+
+          // Importuj osoby kontaktowe z kolumny KONTAKTY
+          const kontaktyRaw = row["KONTAKTY"] || row.Kontakty || "";
+          if (kontaktyRaw && kontaktyRaw.trim()) {
+            const parsed = parseKontakty(kontaktyRaw);
+            for (const c of parsed) {
+              await storage.upsertClientContactByName(existing.id, c);
+            }
+          }
           continue;
         }
 
@@ -325,6 +334,15 @@ export async function registerRoutes(
           if (produktyRaw && produktyRaw.trim() && produktyRaw.trim().toUpperCase() !== "BRAK") {
             const produkty = produktyRaw.split(";").map((p: string) => p.trim()).filter((p: string) => p);
             if (produkty.length > 0) await storage.upsertClientProducts(newClient.id, produkty);
+          }
+
+          // Import osób kontaktowych
+          const kontaktyRaw = row["KONTAKTY"] || row.Kontakty || "";
+          if (kontaktyRaw && kontaktyRaw.trim()) {
+            const parsedContacts = parseKontakty(kontaktyRaw);
+            for (const c of parsedContacts) {
+              await storage.upsertClientContactByName(newClient.id, c);
+            }
           }
           created++;
         } catch (e: any) {
@@ -1538,6 +1556,62 @@ function normalizeRytm(val: string): string {
   if (v.includes("co miesią") || v.includes("co miesiac") || v === "miesięcznie") return "1x/miesiąc";
 
   return val;
+}
+
+interface ParsedContact {
+  imie: string;
+  rola?: string;
+  telefon?: string;
+  email?: string;
+}
+
+function parseKontakty(raw: string): ParsedContact[] {
+  if (!raw || !raw.trim()) return [];
+
+  // Split on ";\n" or just ";" treating each segment as one contact
+  const entries = raw.split(/;\s*\n|;\s*$|;\s*(?=[A-ZŁŚŹŻĆŃÓ])/m)
+    .map(e => e.trim())
+    .filter(e => e.length > 2);
+
+  const results: ParsedContact[] = [];
+
+  for (const entry of entries) {
+    // Extract email
+    const emailMatch = entry.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i);
+    const email = emailMatch ? emailMatch[0] : undefined;
+
+    // Extract phone: sequence of digits and spaces 9+ digits total
+    const phoneMatch = entry.replace(email || "", "").match(/[\d][\d\s\-]{7,}[\d]/);
+    const telefon = phoneMatch
+      ? phoneMatch[0].replace(/\s+/g, " ").trim()
+      : undefined;
+
+    // Remove email and phone from entry to get name/role
+    let remainder = entry
+      .replace(email || "", "")
+      .replace(phoneMatch ? phoneMatch[0] : "", "")
+      .trim();
+
+    // Split on " - " or "- " to separate name from role
+    const dashIdx = remainder.search(/\s*[-–]\s*/);
+    let imie = remainder;
+    let rola: string | undefined;
+
+    if (dashIdx > 0) {
+      imie = remainder.slice(0, dashIdx).trim();
+      rola = remainder.slice(dashIdx).replace(/^[-–\s]+/, "").trim() || undefined;
+    }
+
+    // Clean up trailing punctuation
+    imie = imie.replace(/[,;]+$/, "").trim();
+    rola = rola?.replace(/[,;]+$/, "").trim() || undefined;
+
+    if (imie.length >= 2) {
+      results.push({ imie, rola, telefon, email });
+    }
+  }
+
+  return results;
 }
 
 function parseNotatkiFields(notatki: string): {

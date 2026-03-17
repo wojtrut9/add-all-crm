@@ -31,6 +31,7 @@ export interface IStorage {
 
   getClientContacts(clientId: number): Promise<ClientContact[]>;
   createClientContact(contact: InsertClientContact): Promise<ClientContact>;
+  upsertClientContactByName(clientId: number, contact: { imie: string; rola?: string; telefon?: string; email?: string }): Promise<void>;
   updateClientContact(id: number, data: Partial<ClientContact>): Promise<void>;
   deleteClientContact(id: number): Promise<void>;
 
@@ -189,6 +190,36 @@ export class DatabaseStorage implements IStorage {
   async createClientContact(contact: InsertClientContact): Promise<ClientContact> {
     const [created] = await db.insert(clientContacts).values(contact).returning();
     return created;
+  }
+
+  async upsertClientContactByName(
+    clientId: number,
+    contact: { imie: string; rola?: string; telefon?: string; email?: string }
+  ): Promise<void> {
+    const existing = await db
+      .select({ id: clientContacts.id })
+      .from(clientContacts)
+      .where(and(
+        eq(clientContacts.clientId, clientId),
+        sql`LOWER(${clientContacts.imie}) = LOWER(${contact.imie})`
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update only empty fields
+      const updates: any = {};
+      const cur = await db.select().from(clientContacts).where(eq(clientContacts.id, existing[0].id)).limit(1);
+      if (cur[0]) {
+        if (contact.rola && !cur[0].rola) updates.rola = contact.rola;
+        if (contact.telefon && !cur[0].telefon) updates.telefon = contact.telefon;
+        if (contact.email && !cur[0].email) updates.email = contact.email;
+        if (Object.keys(updates).length > 0) {
+          await db.update(clientContacts).set(updates).where(eq(clientContacts.id, existing[0].id));
+        }
+      }
+    } else {
+      await db.insert(clientContacts).values({ clientId, ...contact, isPrimary: false });
+    }
   }
 
   async updateClientContact(id: number, data: Partial<ClientContact>): Promise<void> {
