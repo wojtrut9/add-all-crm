@@ -1421,6 +1421,18 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/clients/clear-imported-data", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { sql } = await import("drizzle-orm");
+      await db.execute(sql`DELETE FROM client_contacts`);
+      await db.execute(sql`DELETE FROM client_products`);
+      res.json({ ok: true, message: "Wyczyszczono kontakty i produkty" });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
   app.post("/api/clients/clear-nip", authMiddleware, adminOnly, async (_req, res) => {
     try {
       const { db } = await import("./db");
@@ -1449,6 +1461,7 @@ function parseCSV(content: string): Record<string, string>[] {
   // Strip BOM
   if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
 
+  // Split into logical lines (respecting quoted newlines), preserving quotes
   const lines: string[] = [];
   let current = "";
   let inQuotes = false;
@@ -1456,6 +1469,7 @@ function parseCSV(content: string): Record<string, string>[] {
   for (let i = 0; i < content.length; i++) {
     const char = content[i];
     if (char === '"') {
+      current += char;
       if (inQuotes && content[i + 1] === '"') {
         current += '"';
         i++;
