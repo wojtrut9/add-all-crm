@@ -32,6 +32,7 @@ export interface IStorage {
   getClientContacts(clientId: number): Promise<ClientContact[]>;
   createClientContact(contact: InsertClientContact): Promise<ClientContact>;
   upsertClientContactByName(clientId: number, contact: { imie: string; rola?: string; telefon?: string; email?: string }): Promise<void>;
+  upsertClientContactByEmail(clientId: number, email: string, rola?: string): Promise<void>;
   updateClientContact(id: number, data: Partial<ClientContact>): Promise<void>;
   deleteClientContact(id: number): Promise<void>;
 
@@ -219,6 +220,26 @@ export class DatabaseStorage implements IStorage {
       }
     } else {
       await db.insert(clientContacts).values({ clientId, ...contact, isPrimary: false });
+    }
+  }
+
+  async upsertClientContactByEmail(clientId: number, email: string, rola?: string): Promise<void> {
+    const existing = await db
+      .select({ id: clientContacts.id })
+      .from(clientContacts)
+      .where(and(
+        eq(clientContacts.clientId, clientId),
+        sql`LOWER(${clientContacts.email}) = LOWER(${email})`
+      ))
+      .limit(1);
+    if (existing.length === 0) {
+      await db.insert(clientContacts).values({
+        clientId,
+        imie: email,
+        rola: rola || "Email kontaktowy",
+        email,
+        isPrimary: false,
+      });
     }
   }
 

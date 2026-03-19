@@ -273,6 +273,17 @@ export async function registerRoutes(
               await storage.upsertClientContactByName(existing.id, c);
             }
           }
+          // Dodaj emaile z kolumn Email / Email dodatkowe jeśli nie ma ich w kontaktach
+          for (const emailField of ["Email", "email", "Email dodatkowe", "email_dodatkowe"]) {
+            const emailVal = (row[emailField] || "").trim();
+            if (emailVal && emailVal.includes("@")) {
+              for (const singleEmail of emailVal.split(";").map((e: string) => e.trim()).filter(Boolean)) {
+                if (singleEmail.includes("@")) {
+                  await storage.upsertClientContactByEmail(existing.id, singleEmail);
+                }
+              }
+            }
+          }
           continue;
         }
 
@@ -342,6 +353,17 @@ export async function registerRoutes(
             const parsedContacts = parseKontakty(kontaktyRaw);
             for (const c of parsedContacts) {
               await storage.upsertClientContactByName(newClient.id, c);
+            }
+          }
+          // Dodaj emaile z kolumn Email / Email dodatkowe
+          for (const emailField of ["Email", "email", "Email dodatkowe", "email_dodatkowe"]) {
+            const emailVal = (row[emailField] || "").trim();
+            if (emailVal && emailVal.includes("@")) {
+              for (const singleEmail of emailVal.split(";").map((e: string) => e.trim()).filter(Boolean)) {
+                if (singleEmail.includes("@")) {
+                  await storage.upsertClientContactByEmail(newClient.id, singleEmail);
+                }
+              }
             }
           }
           created++;
