@@ -18,6 +18,7 @@ export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
   klient: text("klient").notNull(),
   clientId: text("client_id").notNull().unique(),
+  pelnaFirmaNazwa: text("pelna_firma_nazwa"),
   opiekun: text("opiekun").notNull(),
   segment: text("segment").notNull(),
   grupaMvp: text("grupa_mvp"),
@@ -31,7 +32,9 @@ export const clients = pgTable("clients", {
   zamowieniaGdzie: text("zamowienia_gdzie"),
   dniZamowien: text("dni_zamowien"),
   rytmKontaktu: text("rytm_kontaktu"),
+  adres: text("adres"),
   miasto: text("miasto"),
+  kodPocztowy: text("kod_pocztowy"),
   kraj: text("kraj"),
   notatki: text("notatki"),
   rabatProcent: decimal("rabat_procent"),
@@ -42,12 +45,42 @@ export const clients = pgTable("clients", {
   osobaKontaktowa: text("osoba_kontaktowa"),
   brakiZamowien: integer("braki_zamowien").notNull().default(0),
   przekazany: boolean("przekazany").notNull().default(false),
+  nip: text("nip"),
+  ibiznesAlias: text("ibiznes_alias"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const clientContacts = pgTable("client_contacts", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  imie: text("imie").notNull(),
+  rola: text("rola"),
+  telefon: text("telefon"),
+  email: text("email"),
+  notatka: text("notatka"),
+  isPrimary: boolean("is_primary").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true, createdAt: true });
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
+
+export const insertClientContactSchema = createInsertSchema(clientContacts).omit({ id: true, createdAt: true });
+export type InsertClientContact = z.infer<typeof insertClientContactSchema>;
+export type ClientContact = typeof clientContacts.$inferSelect;
+
+export const clientProducts = pgTable("client_products", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  nazwa: text("nazwa").notNull(),
+  notatka: text("notatka"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertClientProductSchema = createInsertSchema(clientProducts).omit({ id: true, createdAt: true });
+export type InsertClientProduct = z.infer<typeof insertClientProductSchema>;
+export type ClientProduct = typeof clientProducts.$inferSelect;
 
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
@@ -248,3 +281,37 @@ export const salesHistory = pgTable("sales_history", {
 export const insertSalesHistorySchema = createInsertSchema(salesHistory).omit({ id: true });
 export type InsertSalesHistory = z.infer<typeof insertSalesHistorySchema>;
 export type SalesHistory = typeof salesHistory.$inferSelect;
+
+export const ibiznesInvoices = pgTable("ibiznes_invoices", {
+  id: serial("id").primaryKey(),
+  nrR: text("nr_r").notNull(),
+  source: text("source").notNull(), // 'sp_zoo' | 'firma'
+  clientId: integer("client_id"),
+  nip: text("nip").notNull(),
+  alias: text("alias"),
+  dataWyst: text("data_wyst").notNull(), // "yyyy-MM-dd"
+  rok: integer("rok").notNull(),
+  miesiac: integer("miesiac").notNull(),
+  koszt: decimal("koszt"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+});
+
+export const insertIbiznesInvoiceSchema = createInsertSchema(ibiznesInvoices).omit({ id: true, syncedAt: true });
+export type InsertIbiznesInvoice = z.infer<typeof insertIbiznesInvoiceSchema>;
+export type IbiznesInvoice = typeof ibiznesInvoices.$inferSelect;
+
+export const ibizneSyncLog = pgTable("ibiznes_sync_log", {
+  id: serial("id").primaryKey(),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  status: text("status").notNull().default("running"), // 'running' | 'success' | 'error'
+  message: text("message"),
+  invoicesSynced: integer("invoices_synced").default(0),
+  clientsMatched: integer("clients_matched").default(0),
+  clientsUnmatched: integer("clients_unmatched").default(0),
+  trigger: text("trigger").default("cron"), // 'cron' | 'manual'
+});
+
+export const insertIbizneSyncLogSchema = createInsertSchema(ibizneSyncLog).omit({ id: true });
+export type InsertIbizneSyncLog = z.infer<typeof insertIbizneSyncLogSchema>;
+export type IbizneSyncLog = typeof ibizneSyncLog.$inferSelect;

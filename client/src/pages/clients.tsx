@@ -41,8 +41,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Search, Download, Upload, Plus, AlertTriangle, Phone,
   MapPin, Users, Pencil, Save, X, Trash2, Wrench, StickyNote,
+  Building2, CreditCard, UserPlus, Star, Mail, Package, PackagePlus,
 } from "lucide-react";
-import type { Client } from "@shared/schema";
+import type { Client, ClientContact, ClientProduct } from "@shared/schema";
 
 const OPIEKUN_OPTIONS = ["Gosia", "Magda", "Weryfikacja"];
 const SEGMENT_OPTIONS = ["Premium", "Standard", "Weryfikacja"];
@@ -106,8 +107,8 @@ function InfoRow({ label, value, alert }: { label: string; value: string; alert?
   );
 }
 
-function EditField({ label, value, onChange, type = "text" }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string;
+function EditField({ label, value, onChange, type = "text", placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -116,6 +117,7 @@ function EditField({ label, value, onChange, type = "text" }: {
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         data-testid={`input-edit-${label.toLowerCase().replace(/\s/g, '-')}`}
       />
     </div>
@@ -140,10 +142,117 @@ function SelectField({ label, value, onChange, options }: {
   );
 }
 
+function ContactPersonCard({
+  contact,
+  onEdit,
+  onDelete,
+}: {
+  contact: ClientContact;
+  onEdit: (c: ClientContact) => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 p-3 rounded-md border bg-card">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-medium">{contact.imie}</p>
+          {contact.isPrimary && (
+            <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 border-transparent">
+              <Star className="w-2.5 h-2.5 mr-1" /> Główny
+            </Badge>
+          )}
+          {contact.rola && <Badge variant="outline" className="text-xs">{contact.rola}</Badge>}
+        </div>
+        <div className="flex flex-col gap-0.5 mt-1">
+          {contact.telefon && (
+            <a href={`tel:${contact.telefon}`} className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground">
+              <Phone className="w-3 h-3" /> {contact.telefon}
+            </a>
+          )}
+          {contact.email && (
+            <a href={`mailto:${contact.email}`} className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground">
+              <Mail className="w-3 h-3" /> {contact.email}
+            </a>
+          )}
+          {contact.notatka && <p className="text-xs text-muted-foreground mt-1 italic">{contact.notatka}</p>}
+        </div>
+      </div>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(contact)}>
+          <Pencil className="w-3.5 h-3.5" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(contact.id)}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ContactPersonForm({
+  initial,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  initial?: Partial<ClientContact>;
+  onSave: (data: any) => void;
+  onCancel: () => void;
+  saving?: boolean;
+}) {
+  const [form, setForm] = useState({
+    imie: initial?.imie || "",
+    rola: initial?.rola || "",
+    telefon: initial?.telefon || "",
+    email: initial?.email || "",
+    notatka: initial?.notatka || "",
+    isPrimary: initial?.isPrimary || false,
+  });
+  const set = (k: string, v: any) => setForm(p => ({ ...p, [k]: v }));
+  return (
+    <div className="space-y-3 p-3 rounded-md border bg-muted/30">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs">Imię i nazwisko *</Label>
+          <Input value={form.imie} onChange={e => set("imie", e.target.value)} placeholder="Jan Kowalski" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Rola</Label>
+          <Input value={form.rola} onChange={e => set("rola", e.target.value)} placeholder="np. Manager, Księgowość" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Telefon</Label>
+          <Input value={form.telefon} onChange={e => set("telefon", e.target.value)} placeholder="+48 600 000 000" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Email</Label>
+          <Input value={form.email} onChange={e => set("email", e.target.value)} placeholder="jan@firma.pl" />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Notatka</Label>
+        <Input value={form.notatka} onChange={e => set("notatka", e.target.value)} placeholder="Dodatkowe informacje..." />
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch checked={form.isPrimary} onCheckedChange={v => set("isPrimary", v)} id="is-primary" />
+        <Label htmlFor="is-primary" className="text-xs cursor-pointer">Główna osoba kontaktowa</Label>
+      </div>
+      <div className="flex gap-2 justify-end">
+        <Button variant="outline" size="sm" onClick={onCancel}><X className="w-3.5 h-3.5 mr-1" /> Anuluj</Button>
+        <Button size="sm" onClick={() => onSave(form)} disabled={!form.imie.trim() || saving}>
+          <Save className="w-3.5 h-3.5 mr-1" /> {saving ? "Zapisuję..." : "Zapisz"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ClientDetail({ client, onClose }: { client: Client; onClose: () => void }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [addingContact, setAddingContact] = useState(false);
+  const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
 
   const { data: clientNotes = [] } = useQuery({
     queryKey: ["/api/notes", "client", client.id],
@@ -155,6 +264,57 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
     },
   });
 
+  const { data: contactPersons = [], refetch: refetchContacts } = useQuery<ClientContact[]>({
+    queryKey: ["/api/clients", client.id, "contacts"],
+    queryFn: async () => {
+      const res = await authFetch(`/api/clients/${client.id}/contacts`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const { data: productList = [], refetch: refetchProducts } = useQuery<ClientProduct[]>({
+    queryKey: ["/api/clients", client.id, "products"],
+    queryFn: async () => {
+      const res = await authFetch(`/api/clients/${client.id}/products`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductNote, setNewProductNote] = useState("");
+  const [addingProduct, setAddingProduct] = useState(false);
+
+  const addProductMutation = useMutation({
+    mutationFn: async (data: { nazwa: string; notatka?: string }) => {
+      const res = await authFetch(`/api/clients/${client.id}/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Błąd");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Dodano produkt" });
+      refetchProducts();
+      setNewProductName("");
+      setNewProductNote("");
+      setAddingProduct(false);
+    },
+    onError: () => toast({ title: "Błąd zapisu", variant: "destructive" }),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await authFetch(`/api/clients/${client.id}/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Błąd");
+    },
+    onSuccess: () => { toast({ title: "Usunięto produkt" }); refetchProducts(); },
+    onError: () => toast({ title: "Błąd usuwania", variant: "destructive" }),
+  });
+
   const przekazanyMutation = useMutation({
     mutationFn: async (val: boolean) => {
       return apiRequest("PATCH", `/api/clients/${client.id}`, { przekazany: val });
@@ -163,36 +323,40 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
       toast({ title: val ? "Klient oznaczony jako przekazany" : "Oznaczenie przekazany usunięte" });
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
     },
-    onError: () => {
-      toast({ title: "Błąd zapisu", variant: "destructive" });
-    },
+    onError: () => toast({ title: "Błąd zapisu", variant: "destructive" }),
   });
 
   const [form, setForm] = useState({
     klient: client.klient,
+    pelnaFirmaNazwa: (client as any).pelnaFirmaNazwa || "",
     opiekun: client.opiekun,
     segment: client.segment,
     grupaMvp: client.grupaMvp || "",
     status: client.status,
+    nip: (client as any).nip || "",
+    adres: (client as any).adres || "",
+    kodPocztowy: (client as any).kodPocztowy || "",
+    miasto: client.miasto || "",
+    kraj: client.kraj || "",
     telefon: client.telefon || "",
     telefonDodatkowy: client.telefonDodatkowy || "",
     email: client.email || "",
     emailDodatkowe: client.emailDodatkowe || "",
+    preferowanaFormaKontaktu: client.preferowanaFormaKontaktu || "",
+    zamowieniaGdzie: client.zamowieniaGdzie || "",
     dniZamowien: client.dniZamowien || "",
     rytmKontaktu: client.rytmKontaktu || "",
-    miasto: client.miasto || "",
     rabatProcent: client.rabatProcent ? String(client.rabatProcent) : "",
     warunkiPlatnosci: client.warunkiPlatnosci || "",
     terminPlatnosciDni: client.terminPlatnosciDni ? String(client.terminPlatnosciDni) : "",
     limitKredytowy: client.limitKredytowy ? String(client.limitKredytowy) : "",
+    ubezpieczenieStatus: client.ubezpieczenieStatus || "",
     osobaKontaktowa: client.osobaKontaktowa || "",
     notatki: client.notatki || "",
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest("PATCH", `/api/clients/${client.id}`, data);
-    },
+    mutationFn: async (data: any) => apiRequest("PATCH", `/api/clients/${client.id}`, data),
     onSuccess: (_res: any, variables: any) => {
       toast({ title: "Zapisano zmiany" });
       if (variables.dniZamowien !== undefined && variables.dniZamowien !== (client.dniZamowien || null)) {
@@ -200,96 +364,134 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
       }
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setEditing(false);
-      onClose();
     },
-    onError: () => {
-      toast({ title: "Błąd zapisu", variant: "destructive" });
-    },
+    onError: () => toast({ title: "Błąd zapisu", variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest("DELETE", `/api/clients/${client.id}`);
-    },
+    mutationFn: async () => apiRequest("DELETE", `/api/clients/${client.id}`),
     onSuccess: () => {
       toast({ title: `Usunięto klienta ${client.klient}` });
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       onClose();
     },
-    onError: () => {
-      toast({ title: "Błąd usuwania klienta", variant: "destructive" });
+    onError: () => toast({ title: "Błąd usuwania klienta", variant: "destructive" }),
+  });
+
+  const addContactMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await authFetch(`/api/clients/${client.id}/contacts`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      if (!res.ok) throw new Error("Błąd");
+      return res.json();
     },
+    onSuccess: () => { toast({ title: "Dodano osobę kontaktową" }); refetchContacts(); setAddingContact(false); },
+    onError: () => toast({ title: "Błąd zapisu", variant: "destructive" }),
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await authFetch(`/api/clients/${client.id}/contacts/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      if (!res.ok) throw new Error("Błąd");
+    },
+    onSuccess: () => { toast({ title: "Zaktualizowano kontakt" }); refetchContacts(); setEditingContact(null); },
+    onError: () => toast({ title: "Błąd zapisu", variant: "destructive" }),
+  });
+
+  const deleteContactMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await authFetch(`/api/clients/${client.id}/contacts/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Błąd");
+    },
+    onSuccess: () => { toast({ title: "Usunięto kontakt" }); refetchContacts(); },
+    onError: () => toast({ title: "Błąd usuwania", variant: "destructive" }),
   });
 
   const handleSave = () => {
     updateMutation.mutate({
       klient: form.klient,
+      pelnaFirmaNazwa: form.pelnaFirmaNazwa || null,
       opiekun: form.opiekun,
       segment: form.segment,
       grupaMvp: form.grupaMvp || null,
       status: form.status,
+      nip: form.nip || null,
+      adres: form.adres || null,
+      kodPocztowy: form.kodPocztowy || null,
       telefon: form.telefon || null,
       telefonDodatkowy: form.telefonDodatkowy || null,
       email: form.email || null,
       emailDodatkowe: form.emailDodatkowe || null,
+      preferowanaFormaKontaktu: form.preferowanaFormaKontaktu || null,
+      zamowieniaGdzie: form.zamowieniaGdzie || null,
       dniZamowien: form.dniZamowien || null,
       rytmKontaktu: form.rytmKontaktu || null,
       miasto: form.miasto || null,
+      kraj: form.kraj || null,
       rabatProcent: form.rabatProcent ? Number(form.rabatProcent) : null,
       warunkiPlatnosci: form.warunkiPlatnosci || null,
       terminPlatnosciDni: form.terminPlatnosciDni ? Number(form.terminPlatnosciDni) : null,
       limitKredytowy: form.limitKredytowy ? Number(form.limitKredytowy) : null,
+      ubezpieczenieStatus: form.ubezpieczenieStatus || null,
       osobaKontaktowa: form.osobaKontaktowa || null,
       notatki: form.notatki || null,
     });
   };
 
-  const setField = (key: string, value: string) => {
-    setForm(prev => ({ ...prev, [key]: value }));
-  };
+  const setField = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const isAdmin = user?.rola === "admin";
 
   if (editing) {
     return (
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edytuj klienta</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <EditField label="Nazwa" value={form.klient} onChange={(v) => setField("klient", v)} />
-            <SelectField label="Opiekun" value={form.opiekun} onChange={(v) => setField("opiekun", v)} options={OPIEKUN_OPTIONS} />
-            <SelectField label="Segment" value={form.segment} onChange={(v) => setField("segment", v)} options={SEGMENT_OPTIONS} />
-            <SelectField label="Grupa MVP" value={form.grupaMvp} onChange={(v) => setField("grupaMvp", v)} options={GRUPA_OPTIONS} />
-            <SelectField label="Status" value={form.status} onChange={(v) => setField("status", v)} options={STATUS_OPTIONS} />
-            <EditField label="Telefon" value={form.telefon} onChange={(v) => setField("telefon", v)} />
-            <EditField label="Telefon dodatkowy" value={form.telefonDodatkowy} onChange={(v) => setField("telefonDodatkowy", v)} />
-            <EditField label="Email" value={form.email} onChange={(v) => setField("email", v)} />
-            <EditField label="Email dodatkowe" value={form.emailDodatkowe} onChange={(v) => setField("emailDodatkowe", v)} />
-            <EditField label="Dni zamówień" value={form.dniZamowien} onChange={(v) => setField("dniZamowien", v)} />
-            <SelectField label="Rytm kontaktu" value={form.rytmKontaktu} onChange={(v) => setField("rytmKontaktu", v)} options={RYTM_OPTIONS} />
-            <EditField label="Miasto" value={form.miasto} onChange={(v) => setField("miasto", v)} />
-            <EditField label="Rabat %" value={form.rabatProcent} onChange={(v) => setField("rabatProcent", v)} type="number" />
-            <EditField label="Warunki płatności" value={form.warunkiPlatnosci} onChange={(v) => setField("warunkiPlatnosci", v)} />
-            <EditField label="Termin płatności (dni)" value={form.terminPlatnosciDni} onChange={(v) => setField("terminPlatnosciDni", v)} type="number" />
-            <EditField label="Limit kredytowy" value={form.limitKredytowy} onChange={(v) => setField("limitKredytowy", v)} type="number" />
-            <EditField label="Osoba kontaktowa" value={form.osobaKontaktowa} onChange={(v) => setField("osobaKontaktowa", v)} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Notatki</Label>
-            <Textarea
-              value={form.notatki}
-              onChange={(e) => setField("notatki", e.target.value)}
-              className="resize-none"
-              rows={3}
-              data-testid="textarea-edit-notatki"
-            />
-          </div>
-        </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setEditing(false)} data-testid="button-cancel-edit">
-            <X className="w-4 h-4 mr-1" /> Anuluj
-          </Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending} data-testid="button-save-edit">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Edytuj klienta — {client.klient}</DialogTitle></DialogHeader>
+        <Tabs defaultValue="firma">
+          <TabsList className="w-full">
+            <TabsTrigger value="firma" className="flex-1"><Building2 className="w-3.5 h-3.5 mr-1" />Firma</TabsTrigger>
+            <TabsTrigger value="handlowe" className="flex-1"><CreditCard className="w-3.5 h-3.5 mr-1" />Handlowe</TabsTrigger>
+            <TabsTrigger value="notatki" className="flex-1"><StickyNote className="w-3.5 h-3.5 mr-1" />Notatki</TabsTrigger>
+          </TabsList>
+          <TabsContent value="firma" className="space-y-3 pt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <EditField label="Nazwa skrócona *" value={form.klient} onChange={(v) => setField("klient", v)} />
+              <EditField label="Pełna nazwa firmy" value={form.pelnaFirmaNazwa} onChange={(v) => setField("pelnaFirmaNazwa", v)} placeholder="np. FIRMA SP. Z O.O." />
+              <EditField label="NIP" value={form.nip} onChange={(v) => setField("nip", v)} placeholder="np. 1234567890" />
+              <EditField label="Adres (ulica)" value={form.adres} onChange={(v) => setField("adres", v)} placeholder="ul. Przykładowa 1" />
+              <EditField label="Kod pocztowy" value={form.kodPocztowy} onChange={(v) => setField("kodPocztowy", v)} placeholder="00-000" />
+              <EditField label="Miasto" value={form.miasto} onChange={(v) => setField("miasto", v)} />
+              <EditField label="Kraj" value={form.kraj} onChange={(v) => setField("kraj", v)} />
+              <EditField label="Ubezpieczenie" value={form.ubezpieczenieStatus} onChange={(v) => setField("ubezpieczenieStatus", v)} />
+            </div>
+          </TabsContent>
+          <TabsContent value="handlowe" className="space-y-3 pt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <SelectField label="Opiekun" value={form.opiekun} onChange={(v) => setField("opiekun", v)} options={OPIEKUN_OPTIONS} />
+              <SelectField label="Segment" value={form.segment} onChange={(v) => setField("segment", v)} options={SEGMENT_OPTIONS} />
+              <SelectField label="Grupa MVP" value={form.grupaMvp} onChange={(v) => setField("grupaMvp", v)} options={GRUPA_OPTIONS} />
+              <SelectField label="Status" value={form.status} onChange={(v) => setField("status", v)} options={STATUS_OPTIONS} />
+              <EditField label="Dni zamówień" value={form.dniZamowien} onChange={(v) => setField("dniZamowien", v)} />
+              <SelectField label="Rytm kontaktu" value={form.rytmKontaktu} onChange={(v) => setField("rytmKontaktu", v)} options={RYTM_OPTIONS} />
+              <EditField label="Preferowana forma kontaktu" value={form.preferowanaFormaKontaktu} onChange={(v) => setField("preferowanaFormaKontaktu", v)} />
+              <EditField label="Zamówienia gdzie" value={form.zamowieniaGdzie} onChange={(v) => setField("zamowieniaGdzie", v)} />
+              <EditField label="Telefon" value={form.telefon} onChange={(v) => setField("telefon", v)} />
+              <EditField label="Telefon dodatkowy" value={form.telefonDodatkowy} onChange={(v) => setField("telefonDodatkowy", v)} />
+              <EditField label="Email" value={form.email} onChange={(v) => setField("email", v)} />
+              <EditField label="Email dodatkowe" value={form.emailDodatkowe} onChange={(v) => setField("emailDodatkowe", v)} />
+              <EditField label="Rabat %" value={form.rabatProcent} onChange={(v) => setField("rabatProcent", v)} type="number" />
+              <EditField label="Warunki płatności" value={form.warunkiPlatnosci} onChange={(v) => setField("warunkiPlatnosci", v)} />
+              <EditField label="Termin płatności (dni)" value={form.terminPlatnosciDni} onChange={(v) => setField("terminPlatnosciDni", v)} type="number" />
+              <EditField label="Limit kredytowy" value={form.limitKredytowy} onChange={(v) => setField("limitKredytowy", v)} type="number" />
+            </div>
+          </TabsContent>
+          <TabsContent value="notatki" className="pt-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Notatki</Label>
+              <Textarea value={form.notatki} onChange={(e) => setField("notatki", e.target.value)} className="resize-none" rows={8} />
+            </div>
+          </TabsContent>
+        </Tabs>
+        <DialogFooter className="gap-2 pt-2">
+          <Button variant="outline" onClick={() => setEditing(false)}><X className="w-4 h-4 mr-1" /> Anuluj</Button>
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>
             <Save className="w-4 h-4 mr-1" /> {updateMutation.isPending ? "Zapisuję..." : "Zapisz"}
           </Button>
         </DialogFooter>
@@ -298,106 +500,224 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
   }
 
   return (
-    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <DialogTitle className="flex items-center gap-2">
-            {client.klient}
-            <Badge variant={client.segment === "Premium" ? "default" : "secondary"}>{client.segment}</Badge>
-          </DialogTitle>
+          <div>
+            <DialogTitle className="flex items-center gap-2">
+              {client.klient}
+              <Badge variant={client.segment === "Premium" ? "default" : "secondary"}>{client.segment}</Badge>
+            </DialogTitle>
+            {(client as any).pelnaFirmaNazwa && (
+              <p className="text-xs text-muted-foreground mt-0.5">{(client as any).pelnaFirmaNazwa}</p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditing(true)} data-testid="button-edit-client">
-              <Pencil className="w-4 h-4 mr-1" /> Edytuj
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" data-testid="button-delete-client">
-                  <Trash2 className="w-4 h-4 mr-1" /> Usuń
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Czy na pewno chcesz usunąć tego klienta?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Klient <strong>{client.klient}</strong> zostanie trwale usunięty. Tej operacji nie można cofnąć.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deleteMutation.mutate()}
-                    disabled={deleteMutation.isPending}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {deleteMutation.isPending ? "Usuwam..." : "Usuń klienta"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                <Pencil className="w-4 h-4 mr-1" /> Edytuj
+              </Button>
+            )}
+            {isAdmin && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm"><Trash2 className="w-4 h-4 mr-1" /> Usuń</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Usunąć klienta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Klient <strong>{client.klient}</strong> zostanie trwale usunięty.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      {deleteMutation.isPending ? "Usuwam..." : "Usuń klienta"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </DialogHeader>
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoRow label="ID" value={client.clientId} />
-          <InfoRow label="Opiekun" value={client.opiekun} />
-          <InfoRow label="Grupa MVP" value={client.grupaMvp || "-"} />
-          <InfoRow label="Status" value={client.status} />
-          <InfoRow label="Miasto" value={client.miasto || "-"} />
-          <InfoRow label="Kraj" value={client.kraj || "-"} />
-          <InfoRow label="Telefon" value={client.telefon || "-"} />
-          <InfoRow label="Telefon dodatkowy" value={client.telefonDodatkowy || "-"} />
-          <InfoRow label="Email" value={client.email || "-"} />
-          <InfoRow label="Email dodatkowe" value={client.emailDodatkowe || "-"} />
-          <InfoRow label="Forma kontaktu" value={client.preferowanaFormaKontaktu || "-"} />
-          <InfoRow label="Zamówienia gdzie" value={client.zamowieniaGdzie || "-"} />
-          <InfoRow label="Dni zamówień" value={client.dniZamowien || "-"} />
-          <InfoRow label="Rytm kontaktu" value={client.rytmKontaktu || "-"} />
-          <InfoRow label="Rabat %" value={client.rabatProcent ? `${client.rabatProcent}%` : "-"} />
-          <InfoRow label="Warunki płatności" value={client.warunkiPlatnosci || "-"} />
-          <InfoRow label="Termin płatności" value={client.terminPlatnosciDni ? `${client.terminPlatnosciDni} dni` : "-"} />
-          <InfoRow label="Limit kredytowy" value={client.limitKredytowy ? `${Number(client.limitKredytowy).toLocaleString("pl-PL")} PLN` : "-"} />
-          <InfoRow label="Osoba kontaktowa" value={client.osobaKontaktowa || "-"} />
-          <InfoRow label="Braki zamówień" value={String(client.brakiZamowien || 0)} alert={(client.brakiZamowien || 0) >= 2} />
-        </div>
-        <div className="flex items-center justify-between gap-3 p-3 rounded-md border">
-          <div>
-            <p className="text-sm font-medium">Klient przekazany</p>
-            <p className="text-xs text-muted-foreground">Oznacz klienta jako przekazanego</p>
+
+      <Tabs defaultValue="firma">
+        <TabsList className="w-full">
+          <TabsTrigger value="firma" className="flex-1"><Building2 className="w-3.5 h-3.5 mr-1" />Firma</TabsTrigger>
+          <TabsTrigger value="kontakty" className="flex-1">
+            <Users className="w-3.5 h-3.5 mr-1" />Kontakty
+            {contactPersons.length > 0 && <Badge variant="secondary" className="ml-1 text-xs px-1.5">{contactPersons.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="produkty" className="flex-1">
+            <Package className="w-3.5 h-3.5 mr-1" />Produkty
+            {productList.length > 0 && <Badge variant="secondary" className="ml-1 text-xs px-1.5">{productList.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="handlowe" className="flex-1"><CreditCard className="w-3.5 h-3.5 mr-1" />Handlowe</TabsTrigger>
+          <TabsTrigger value="notatki" className="flex-1"><StickyNote className="w-3.5 h-3.5 mr-1" />Notatki</TabsTrigger>
+        </TabsList>
+
+        {/* DANE FIRMY */}
+        <TabsContent value="firma" className="space-y-4 pt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <InfoRow label="ID klienta" value={client.clientId} />
+            <InfoRow label="NIP" value={(client as any).nip || "-"} />
+            {(client as any).adres && <InfoRow label="Adres" value={(client as any).adres} />}
+            {(client as any).kodPocztowy && <InfoRow label="Kod pocztowy" value={(client as any).kodPocztowy} />}
+            {client.miasto && <InfoRow label="Miasto" value={client.miasto} />}
+            {client.kraj && <InfoRow label="Kraj" value={client.kraj} />}
+            {client.ubezpieczenieStatus && <InfoRow label="Ubezpieczenie" value={client.ubezpieczenieStatus} />}
           </div>
-          <Switch
-            checked={(client as any).przekazany || false}
-            onCheckedChange={(val) => przekazanyMutation.mutate(val)}
-            data-testid="switch-przekazany"
-          />
-        </div>
-        {client.notatki && (
-          <div>
-            <p className="text-sm font-medium mb-1">Notatki klienta</p>
-            <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md max-h-40 overflow-y-auto">
+          <div className="flex items-center justify-between gap-3 p-3 rounded-md border">
+            <div>
+              <p className="text-sm font-medium">Klient przekazany</p>
+              <p className="text-xs text-muted-foreground">Oznacz klienta jako przekazanego</p>
+            </div>
+            <Switch checked={(client as any).przekazany || false} onCheckedChange={(val) => przekazanyMutation.mutate(val)} />
+          </div>
+        </TabsContent>
+
+        {/* KONTAKTY */}
+        <TabsContent value="kontakty" className="space-y-3 pt-3">
+          {contactPersons.length === 0 && !addingContact && (
+            <div className="text-center py-6 text-muted-foreground">
+              <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Brak osób kontaktowych</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            {contactPersons.map(cp => (
+              editingContact?.id === cp.id
+                ? <ContactPersonForm key={cp.id} initial={cp} saving={updateContactMutation.isPending}
+                    onSave={(data) => updateContactMutation.mutate({ id: cp.id, data })}
+                    onCancel={() => setEditingContact(null)} />
+                : <ContactPersonCard key={cp.id} contact={cp}
+                    onEdit={(c) => setEditingContact(c)}
+                    onDelete={(id) => deleteContactMutation.mutate(id)} />
+            ))}
+          </div>
+          {addingContact
+            ? <ContactPersonForm saving={addContactMutation.isPending} onSave={(data) => addContactMutation.mutate(data)} onCancel={() => setAddingContact(false)} />
+            : (
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setAddingContact(true)}>
+                <UserPlus className="w-4 h-4 mr-1" /> Dodaj osobę kontaktową
+              </Button>
+            )
+          }
+        </TabsContent>
+
+        {/* PRODUKTY INDYWIDUALNE */}
+        <TabsContent value="produkty" className="space-y-3 pt-3">
+          {productList.length === 0 && !addingProduct && (
+            <div className="text-center py-6 text-muted-foreground">
+              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Brak produktów indywidualnych</p>
+            </div>
+          )}
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
+            {productList.map(p => (
+              <div key={p.id} className="flex items-center justify-between gap-2 p-2.5 rounded-md border bg-card text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{p.nazwa}</p>
+                  {p.notatka && <p className="text-xs text-muted-foreground mt-0.5">{p.notatka}</p>}
+                </div>
+                <Button
+                  variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0"
+                  onClick={() => deleteProductMutation.mutate(p.id)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          {addingProduct ? (
+            <div className="space-y-2 p-3 rounded-md border bg-muted/30">
+              <div className="space-y-1">
+                <Label className="text-xs">Nazwa produktu *</Label>
+                <Input
+                  value={newProductName}
+                  onChange={e => setNewProductName(e.target.value)}
+                  placeholder="np. Pojemnik prostokątny hot 900ml"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Notatka (opcjonalnie)</Label>
+                <Input
+                  value={newProductNote}
+                  onChange={e => setNewProductNote(e.target.value)}
+                  placeholder="np. zamawia co tydzień"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => { setAddingProduct(false); setNewProductName(""); setNewProductNote(""); }}>
+                  <X className="w-3.5 h-3.5 mr-1" /> Anuluj
+                </Button>
+                <Button size="sm"
+                  disabled={!newProductName.trim() || addProductMutation.isPending}
+                  onClick={() => addProductMutation.mutate({ nazwa: newProductName.trim(), notatka: newProductNote.trim() || undefined })}
+                >
+                  <Save className="w-3.5 h-3.5 mr-1" /> {addProductMutation.isPending ? "Zapisuję..." : "Dodaj"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full" onClick={() => setAddingProduct(true)}>
+              <PackagePlus className="w-4 h-4 mr-1" /> Dodaj produkt
+            </Button>
+          )}
+        </TabsContent>
+
+        {/* HANDLOWE */}
+        <TabsContent value="handlowe" className="space-y-3 pt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <InfoRow label="Opiekun" value={client.opiekun} />
+            <InfoRow label="Grupa MVP" value={client.grupaMvp || "-"} />
+            <InfoRow label="Status" value={client.status} />
+            <InfoRow label="Rytm kontaktu" value={client.rytmKontaktu || "-"} />
+            <InfoRow label="Dni zamówień" value={client.dniZamowien || "-"} />
+            <InfoRow label="Zamówienia gdzie" value={client.zamowieniaGdzie || "-"} />
+            <InfoRow label="Forma kontaktu" value={client.preferowanaFormaKontaktu || "-"} />
+            <InfoRow label="Telefon" value={client.telefon || "-"} />
+            <InfoRow label="Email" value={client.email || "-"} />
+            <InfoRow label="Rabat %" value={client.rabatProcent ? `${client.rabatProcent}%` : "-"} />
+            <InfoRow label="Warunki płatności" value={client.warunkiPlatnosci || "-"} />
+            <InfoRow label="Termin płatności" value={client.terminPlatnosciDni ? `${client.terminPlatnosciDni} dni` : "-"} />
+            <InfoRow label="Limit kredytowy" value={client.limitKredytowy ? `${Number(client.limitKredytowy).toLocaleString("pl-PL")} PLN` : "-"} />
+            <InfoRow label="Braki zamówień" value={String(client.brakiZamowien || 0)} alert={(client.brakiZamowien || 0) >= 2} />
+          </div>
+        </TabsContent>
+
+        {/* NOTATKI */}
+        <TabsContent value="notatki" className="space-y-3 pt-3">
+          {client.notatki ? (
+            <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md max-h-48 overflow-y-auto">
               {client.notatki}
             </div>
-          </div>
-        )}
-        {clientNotes.length > 0 && (
-          <div>
-            <p className="text-sm font-medium mb-2 flex items-center gap-1">
-              <StickyNote className="w-4 h-4" /> Notatki powiązane ({clientNotes.length})
-            </p>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {clientNotes.map((note: any) => (
-                <div key={note.id} className="p-2 rounded-md bg-muted/50 border">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{note.tytul}</p>
-                    <Badge variant="outline" className="text-xs">{note.kategoria}</Badge>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">Brak notatek</p>
+          )}
+          {clientNotes.length > 0 && (
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-1">
+                <StickyNote className="w-4 h-4" /> Notatki powiązane ({clientNotes.length})
+              </p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {clientNotes.map((note: any) => (
+                  <div key={note.id} className="p-2 rounded-md bg-muted/50 border">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{note.tytul}</p>
+                      <Badge variant="outline" className="text-xs">{note.kategoria}</Badge>
+                    </div>
+                    {note.tresc && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{note.tresc}</p>}
                   </div>
-                  {note.tresc && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{note.tresc}</p>}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </DialogContent>
   );
 }
@@ -423,6 +743,7 @@ function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
     limitKredytowy: "",
     osobaKontaktowa: "",
     notatki: "",
+    nip: "",
   });
 
   const createMutation = useMutation({
@@ -447,7 +768,7 @@ function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
       status: "Aktywny", telefon: "", telefonDodatkowy: "", email: "", emailDodatkowe: "",
       dniZamowien: "", rytmKontaktu: "", miasto: "", rabatProcent: "",
       warunkiPlatnosci: "", terminPlatnosciDni: "", limitKredytowy: "",
-      osobaKontaktowa: "", notatki: "",
+      osobaKontaktowa: "", notatki: "", nip: "",
     });
   };
 
@@ -508,6 +829,7 @@ function AddClientDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
             <EditField label="Termin płatności (dni)" value={form.terminPlatnosciDni} onChange={(v) => setField("terminPlatnosciDni", v)} type="number" />
             <EditField label="Limit kredytowy" value={form.limitKredytowy} onChange={(v) => setField("limitKredytowy", v)} type="number" />
             <EditField label="Osoba kontaktowa" value={form.osobaKontaktowa} onChange={(v) => setField("osobaKontaktowa", v)} />
+            <EditField label="NIP (iBiznes sync)" value={form.nip} onChange={(v) => setField("nip", v)} placeholder="np. 1234567890" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Notatki</Label>
@@ -623,9 +945,13 @@ export default function ClientsPage() {
         });
         if (!res.ok) throw new Error("Import failed");
         const data = await res.json();
+        const parts = [];
+        if (data.created) parts.push(`Nowi: ${data.created}`);
+        if (data.updated) parts.push(`Zaktualizowano: ${data.updated}`);
+        if (data.skipped) parts.push(`Bez zmian: ${data.skipped}`);
         toast({
           title: "Import zakończony",
-          description: `Zaimportowano ${data.created} nowych klientów. Pominięto ${data.skipped} istniejących.`,
+          description: parts.join(" · "),
         });
         queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       } catch {

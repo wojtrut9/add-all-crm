@@ -3,7 +3,7 @@ import { eq, and, gte, lte, sql, like, or, desc, asc, inArray } from "drizzle-or
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
-  fleet, notes, meetings, salesHistory, dailyAnalysis,
+  fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts, clientProducts,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -12,6 +12,8 @@ import {
   type InsertMeeting, type Meeting,
   type InsertSalary, type InsertCost, type InsertFleet,
   type Cost, type DailyAnalysis,
+  type ClientContact, type InsertClientContact,
+  type ClientProduct, type InsertClientProduct,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -26,6 +28,19 @@ export interface IStorage {
   updateClient(id: number, data: Partial<Client>): Promise<void>;
   deleteClient(id: number): Promise<void>;
   getNextClientId(): Promise<string>;
+
+  getClientContacts(clientId: number): Promise<ClientContact[]>;
+  createClientContact(contact: InsertClientContact): Promise<ClientContact>;
+  upsertClientContactByName(clientId: number, contact: { imie: string; rola?: string; telefon?: string; email?: string }): Promise<void>;
+  upsertClientContactByEmail(clientId: number, email: string, rola?: string): Promise<void>;
+  updateClientContact(id: number, data: Partial<ClientContact>): Promise<void>;
+  deleteClientContact(id: number): Promise<void>;
+
+  getClientProducts(clientId: number): Promise<ClientProduct[]>;
+  createClientProduct(product: InsertClientProduct): Promise<ClientProduct>;
+  upsertClientProducts(clientId: number, names: string[]): Promise<void>;
+  updateClientProduct(id: number, data: Partial<ClientProduct>): Promise<void>;
+  deleteClientProduct(id: number): Promise<void>;
 
   getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]>;
   getContactsForToday(opiekun?: string): Promise<any[]>;
@@ -163,6 +178,112 @@ export class DatabaseStorage implements IStorage {
     }
     const next = maxNum + 1;
     return `C${String(next).padStart(3, "0")}`;
+  }
+
+  async getClientContacts(clientId: number): Promise<ClientContact[]> {
+    return db
+      .select()
+      .from(clientContacts)
+      .where(eq(clientContacts.clientId, clientId))
+      .orderBy(desc(clientContacts.isPrimary), asc(clientContacts.createdAt));
+  }
+
+  async createClientContact(contact: InsertClientContact): Promise<ClientContact> {
+    const [created] = await db.insert(clientContacts).values(contact).returning();
+    return created;
+  }
+
+  async upsertClientContactByName(
+    clientId: number,
+    contact: { imie: string; rola?: string; telefon?: string; email?: string }
+  ): Promise<void> {
+    const existing = await db
+      .select({ id: clientContacts.id })
+      .from(clientContacts)
+      .where(and(
+        eq(clientContacts.clientId, clientId),
+        sql`LOWER(${clientContacts.imie}) = LOWER(${contact.imie})`
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update only empty fields
+      const updates: any = {};
+      const cur = await db.select().from(clientContacts).where(eq(clientContacts.id, existing[0].id)).limit(1);
+      if (cur[0]) {
+        if (contact.rola && !cur[0].rola) updates.rola = contact.rola;
+        if (contact.telefon && !cur[0].telefon) updates.telefon = contact.telefon;
+        if (contact.email && !cur[0].email) updates.email = contact.email;
+        if (Object.keys(updates).length > 0) {
+          await db.update(clientContacts).set(updates).where(eq(clientContacts.id, existing[0].id));
+        }
+      }
+    } else {
+      await db.insert(clientContacts).values({ clientId, ...contact, isPrimary: false });
+    }
+  }
+
+  async upsertClientContactByEmail(clientId: number, email: string, rola?: string): Promise<void> {
+    const existing = await db
+      .select({ id: clientContacts.id })
+      .from(clientContacts)
+      .where(and(
+        eq(clientContacts.clientId, clientId),
+        sql`LOWER(${clientContacts.email}) = LOWER(${email})`
+      ))
+      .limit(1);
+    if (existing.length === 0) {
+      await db.insert(clientContacts).values({
+        clientId,
+        imie: email,
+        rola: rola || "Email kontaktowy",
+        email,
+        isPrimary: false,
+      });
+    }
+  }
+
+  async updateClientContact(id: number, data: Partial<ClientContact>): Promise<void> {
+    await db.update(clientContacts).set(data).where(eq(clientContacts.id, id));
+  }
+
+  async deleteClientContact(id: number): Promise<void> {
+    await db.delete(clientContacts).where(eq(clientContacts.id, id));
+  }
+
+  async getClientProducts(clientId: number): Promise<ClientProduct[]> {
+    return db
+      .select()
+      .from(clientProducts)
+      .where(eq(clientProducts.clientId, clientId))
+      .orderBy(asc(clientProducts.createdAt));
+  }
+
+  async createClientProduct(product: InsertClientProduct): Promise<ClientProduct> {
+    const [created] = await db.insert(clientProducts).values(product).returning();
+    return created;
+  }
+
+  async upsertClientProducts(clientId: number, names: string[]): Promise<void> {
+    const existing = await db
+      .select({ nazwa: clientProducts.nazwa })
+      .from(clientProducts)
+      .where(eq(clientProducts.clientId, clientId));
+    const existingNames = new Set(existing.map(e => e.nazwa.trim().toLowerCase()));
+    const toInsert = names
+      .map(n => n.trim())
+      .filter(n => n && !existingNames.has(n.toLowerCase()));
+    if (toInsert.length > 0) {
+      await db.insert(clientProducts).values(toInsert.map(nazwa => ({ clientId, nazwa })));
+    }
+  }
+
+  async updateClientProduct(id: number, data: Partial<ClientProduct>): Promise<void> {
+    await db.update(clientProducts).set(data).where(eq(clientProducts.id, id));
+  }
+
+  async deleteClientProduct(id: number): Promise<void> {
+    await db.delete(clientProducts).where(eq(clientProducts.id, id));
   }
 
   async getContacts(from?: string, to?: string, opiekun?: string): Promise<any[]> {

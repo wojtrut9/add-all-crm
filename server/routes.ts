@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { authMiddleware, adminOnly, generateToken, comparePassword } from "./auth";
 import { seedDatabase } from "./seed";
 import { migrateDatabase } from "./migrate";
+import { runIbiznesSync, getLastSyncStatus, getSyncLogs, testIbiznesConnection } from "./ibiznesSync";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -125,6 +126,86 @@ export async function registerRoutes(
     }
   });
 
+  // --- Client Contacts (knowledge base) ---
+  app.get("/api/clients/:id/contacts", authMiddleware, async (req, res) => {
+    try {
+      const contacts = await storage.getClientContacts(Number(req.params.id));
+      res.json(contacts);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/:id/contacts", authMiddleware, async (req, res) => {
+    try {
+      const contact = await storage.createClientContact({
+        ...req.body,
+        clientId: Number(req.params.id),
+      });
+      res.json(contact);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/clients/:id/contacts/:contactId", authMiddleware, async (req, res) => {
+    try {
+      await storage.updateClientContact(Number(req.params.contactId), req.body);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/clients/:id/contacts/:contactId", authMiddleware, async (req, res) => {
+    try {
+      await storage.deleteClientContact(Number(req.params.contactId));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // --- Client Products ---
+  app.get("/api/clients/:id/products", authMiddleware, async (req, res) => {
+    try {
+      const products = await storage.getClientProducts(Number(req.params.id));
+      res.json(products);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/:id/products", authMiddleware, async (req, res) => {
+    try {
+      const product = await storage.createClientProduct({
+        ...req.body,
+        clientId: Number(req.params.id),
+      });
+      res.json(product);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/clients/:id/products/:productId", authMiddleware, async (req, res) => {
+    try {
+      await storage.updateClientProduct(Number(req.params.productId), req.body);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/clients/:id/products/:productId", authMiddleware, async (req, res) => {
+    try {
+      await storage.deleteClientProduct(Number(req.params.productId));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/clients/import", authMiddleware, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "Brak pliku" });
@@ -132,6 +213,7 @@ export async function registerRoutes(
       const content = req.file.buffer.toString("utf-8");
       const lines = parseCSV(content);
       let created = 0;
+      let updated = 0;
       let skipped = 0;
 
       for (const row of lines) {
@@ -139,10 +221,69 @@ export async function registerRoutes(
 
         const klientName = row.Klient || row.klient || "";
         const csvClientId = row.Client_ID || row.client_id || "";
+        // NIP tylko z dedykowanej kolumny NIP
+        const nipRaw = (row.NIP || row.nip || row.Nip || "").replace(/[-\s]/g, "") || null;
 
         const existing = await storage.getClientByNameOrClientId(klientName, csvClientId || undefined);
         if (existing) {
-          skipped++;
+          // Klient już istnieje — aktualizuj tylko pola które są puste lub zmieniły się w CSV
+          const updates: Record<string, any> = {};
+
+          // Zawsze aktualizuj NIP jeśli CSV go ma (niezależnie od tego co jest w bazie)
+          if (nipRaw) updates.nip = nipRaw;
+
+          // Aktualizuj grupę/segment jeśli puste
+          const grupaMvpCsv = row.Grupa_MVP || row.grupa_mvp || row.Grupa || null;
+          if (grupaMvpCsv && !existing.grupaMvp) updates.grupaMvp = grupaMvpCsv;
+
+          // Aktualizuj rytm jeśli pusty
+          const rytmRaw = row.Rytm_kontaktu || row.rytm_kontaktu ||
+            row["CZĘSTOTLIW."] || row["CZĘSTOTLIWOŚĆ MIESIĄC"] || "";
+          if (rytmRaw && !existing.rytmKontaktu) updates.rytmKontaktu = normalizeRytm(rytmRaw);
+
+          // Aktualizuj dni zamówień jeśli puste
+          const dniCsv = row.DNI || row["Dni_zamówień"] || row.Dni_zamowien || null;
+          if (dniCsv && !existing.dniZamowien) updates.dniZamowien = dniCsv;
+
+          // Aktualizuj telefon/email jeśli puste
+          if ((row.Telefon || row.telefon) && !existing.telefon)
+            updates.telefon = row.Telefon || row.telefon;
+          if ((row.Email || row.email) && !existing.email)
+            updates.email = row.Email || row.email;
+
+          if (Object.keys(updates).length > 0) {
+            await storage.updateClient(existing.id, updates);
+            updated++;
+          } else {
+            skipped++;
+          }
+
+          // Zawsze importuj produkty indywidualne (dodaj brakujące)
+          const produktyRaw = row["Produkty indywidualne"] || row.Produkty_indywidualne || "";
+          if (produktyRaw && produktyRaw.trim() && produktyRaw.trim().toUpperCase() !== "BRAK") {
+            const produkty = produktyRaw.split(";").map((p: string) => p.trim()).filter((p: string) => p);
+            if (produkty.length > 0) await storage.upsertClientProducts(existing.id, produkty);
+          }
+
+          // Importuj osoby kontaktowe z kolumny KONTAKTY
+          const kontaktyRaw = row["KONTAKTY"] || row.Kontakty || "";
+          if (kontaktyRaw && kontaktyRaw.trim()) {
+            const parsed = parseKontakty(kontaktyRaw);
+            for (const c of parsed) {
+              await storage.upsertClientContactByName(existing.id, c);
+            }
+          }
+          // Dodaj emaile z kolumn Email / Email dodatkowe jeśli nie ma ich w kontaktach
+          for (const emailField of ["Email", "email", "Email dodatkowe", "email_dodatkowe"]) {
+            const emailVal = (row[emailField] || "").trim();
+            if (emailVal && emailVal.includes("@")) {
+              for (const singleEmail of emailVal.split(";").map((e: string) => e.trim()).filter(Boolean)) {
+                if (singleEmail.includes("@")) {
+                  await storage.upsertClientContactByEmail(existing.id, singleEmail);
+                }
+              }
+            }
+          }
           continue;
         }
 
@@ -172,7 +313,7 @@ export async function registerRoutes(
         const rytmKontaktu = rytmRaw ? normalizeRytm(rytmRaw) : null;
 
         try {
-          await storage.createClient({
+          const newClient = await storage.createClient({
             klient: klientName,
             clientId: csvClientId || `C${Date.now()}`,
             opiekun,
@@ -196,15 +337,42 @@ export async function registerRoutes(
             terminPlatnosciDni: parsed.terminPlatnosci ? Number(parsed.terminPlatnosci) : null,
             limitKredytowy: parsed.limitKredytowy || null,
             osobaKontaktowa: parsed.osobaKontaktowa || null,
+            nip: nipRaw,
             brakiZamowien: 0,
           });
+          // Import produktów indywidualnych
+          const produktyRaw = row["Produkty indywidualne"] || row.Produkty_indywidualne || "";
+          if (produktyRaw && produktyRaw.trim() && produktyRaw.trim().toUpperCase() !== "BRAK") {
+            const produkty = produktyRaw.split(";").map((p: string) => p.trim()).filter((p: string) => p);
+            if (produkty.length > 0) await storage.upsertClientProducts(newClient.id, produkty);
+          }
+
+          // Import osób kontaktowych
+          const kontaktyRaw = row["KONTAKTY"] || row.Kontakty || "";
+          if (kontaktyRaw && kontaktyRaw.trim()) {
+            const parsedContacts = parseKontakty(kontaktyRaw);
+            for (const c of parsedContacts) {
+              await storage.upsertClientContactByName(newClient.id, c);
+            }
+          }
+          // Dodaj emaile z kolumn Email / Email dodatkowe
+          for (const emailField of ["Email", "email", "Email dodatkowe", "email_dodatkowe"]) {
+            const emailVal = (row[emailField] || "").trim();
+            if (emailVal && emailVal.includes("@")) {
+              for (const singleEmail of emailVal.split(";").map((e: string) => e.trim()).filter(Boolean)) {
+                if (singleEmail.includes("@")) {
+                  await storage.upsertClientContactByEmail(newClient.id, singleEmail);
+                }
+              }
+            }
+          }
           created++;
         } catch (e: any) {
           skipped++;
         }
       }
 
-      res.json({ created, skipped });
+      res.json({ created, updated, skipped });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -1253,6 +1421,61 @@ export async function registerRoutes(
     }
   });
 
+  // ── iBiznes Sync ────────────────────────────────────────────────────────────
+
+  app.get("/api/ibiznes/status", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const connected = await testIbiznesConnection();
+      const lastSync = await getLastSyncStatus();
+      res.json({ connected, lastSync });
+    } catch (err: any) {
+      res.json({ connected: false, lastSync: null, error: err.message });
+    }
+  });
+
+  app.get("/api/ibiznes/logs", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const limit = Number(req.query.limit) || 20;
+      const logs = await getSyncLogs(limit);
+      res.json(logs);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/clear-imported-data", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { sql } = await import("drizzle-orm");
+      await db.execute(sql`DELETE FROM client_contacts`);
+      await db.execute(sql`DELETE FROM client_products`);
+      res.json({ ok: true, message: "Wyczyszczono kontakty i produkty" });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  app.post("/api/clients/clear-nip", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { clients } = await import("../shared/schema");
+      const { sql } = await import("drizzle-orm");
+      await db.execute(sql`UPDATE clients SET nip = NULL, ibiznes_alias = NULL WHERE nip IS NOT NULL`);
+      res.json({ ok: true, message: "NIPy wyczyszczone" });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  app.post("/api/ibiznes/sync", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const result = await runIbiznesSync("manual");
+      res.json({ ok: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
   return httpServer;
 }
 
@@ -1260,6 +1483,7 @@ function parseCSV(content: string): Record<string, string>[] {
   // Strip BOM
   if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
 
+  // Split into logical lines (respecting quoted newlines), preserving quotes
   const lines: string[] = [];
   let current = "";
   let inQuotes = false;
@@ -1267,6 +1491,7 @@ function parseCSV(content: string): Record<string, string>[] {
   for (let i = 0; i < content.length; i++) {
     const char = content[i];
     if (char === '"') {
+      current += char;
       if (inQuotes && content[i + 1] === '"') {
         current += '"';
         i++;
@@ -1367,6 +1592,62 @@ function normalizeRytm(val: string): string {
   if (v.includes("co miesią") || v.includes("co miesiac") || v === "miesięcznie") return "1x/miesiąc";
 
   return val;
+}
+
+interface ParsedContact {
+  imie: string;
+  rola?: string;
+  telefon?: string;
+  email?: string;
+}
+
+function parseKontakty(raw: string): ParsedContact[] {
+  if (!raw || !raw.trim()) return [];
+
+  // Split on ";\n" or just ";" treating each segment as one contact
+  const entries = raw.split(/;\s*\n|;\s*$|;\s*(?=[A-ZŁŚŹŻĆŃÓ])/m)
+    .map(e => e.trim())
+    .filter(e => e.length > 2);
+
+  const results: ParsedContact[] = [];
+
+  for (const entry of entries) {
+    // Extract email
+    const emailMatch = entry.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i);
+    const email = emailMatch ? emailMatch[0] : undefined;
+
+    // Extract phone: sequence of digits and spaces 9+ digits total
+    const phoneMatch = entry.replace(email || "", "").match(/[\d][\d\s\-]{7,}[\d]/);
+    const telefon = phoneMatch
+      ? phoneMatch[0].replace(/\s+/g, " ").trim()
+      : undefined;
+
+    // Remove email and phone from entry to get name/role
+    let remainder = entry
+      .replace(email || "", "")
+      .replace(phoneMatch ? phoneMatch[0] : "", "")
+      .trim();
+
+    // Split on " - " or "- " to separate name from role
+    const dashIdx = remainder.search(/\s*[-–]\s*/);
+    let imie = remainder;
+    let rola: string | undefined;
+
+    if (dashIdx > 0) {
+      imie = remainder.slice(0, dashIdx).trim();
+      rola = remainder.slice(dashIdx).replace(/^[-–\s]+/, "").trim() || undefined;
+    }
+
+    // Clean up trailing punctuation
+    imie = imie.replace(/[,;]+$/, "").trim();
+    rola = rola?.replace(/[,;]+$/, "").trim() || undefined;
+
+    if (imie.length >= 2) {
+      results.push({ imie, rola, telefon, email });
+    }
+  }
+
+  return results;
 }
 
 function parseNotatkiFields(notatki: string): {

@@ -196,6 +196,59 @@ export async function migrateDatabase() {
     );
 
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS przekazany BOOLEAN NOT NULL DEFAULT false;
+
+    CREATE TABLE IF NOT EXISTS ibiznes_invoices (
+      id SERIAL PRIMARY KEY,
+      nr_r TEXT NOT NULL,
+      source TEXT NOT NULL,
+      client_id INTEGER,
+      nip TEXT NOT NULL,
+      alias TEXT,
+      data_wyst TEXT NOT NULL,
+      rok INTEGER NOT NULL,
+      miesiac INTEGER NOT NULL,
+      koszt DECIMAL(12,2),
+      synced_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(nr_r, source)
+    );
+
+    CREATE TABLE IF NOT EXISTS ibiznes_sync_log (
+      id SERIAL PRIMARY KEY,
+      started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      finished_at TIMESTAMP,
+      status TEXT NOT NULL DEFAULT 'running',
+      message TEXT,
+      invoices_synced INTEGER DEFAULT 0,
+      clients_matched INTEGER DEFAULT 0,
+      clients_unmatched INTEGER DEFAULT 0,
+      trigger TEXT DEFAULT 'cron'
+    );
+
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS nip TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS ibiznes_alias TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS pelna_firma_nazwa TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS adres TEXT;
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS kod_pocztowy TEXT;
+
+    CREATE TABLE IF NOT EXISTS client_contacts (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      imie TEXT NOT NULL,
+      rola TEXT,
+      telefon TEXT,
+      email TEXT,
+      notatka TEXT,
+      is_primary BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS client_products (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      nazwa TEXT NOT NULL,
+      notatka TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
   `);
 
   console.log("Database schema ensured.");
