@@ -513,11 +513,9 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
             )}
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                <Pencil className="w-4 h-4 mr-1" /> Edytuj
-              </Button>
-            )}
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+              <Pencil className="w-4 h-4 mr-1" /> Edytuj
+            </Button>
             {isAdmin && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -1012,11 +1010,11 @@ export default function ClientsPage() {
               <Button variant="outline" size="sm" onClick={handleImportCSV} data-testid="button-import-csv">
                 <Upload className="w-4 h-4 mr-1" /> Importuj CSV
               </Button>
-              <Button size="sm" onClick={() => setAddDialogOpen(true)} data-testid="button-add-client">
-                <Plus className="w-4 h-4 mr-1" /> Dodaj klienta
-              </Button>
             </>
           )}
+          <Button size="sm" onClick={() => setAddDialogOpen(true)} data-testid="button-add-client">
+            <Plus className="w-4 h-4 mr-1" /> Dodaj klienta
+          </Button>
         </div>
       </div>
 
