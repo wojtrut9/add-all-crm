@@ -331,6 +331,8 @@ export default function SalesAnalysisPage() {
       if (!res.ok) return null;
       return res.json();
     },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   const toggleGroup = (grupa: string) => {

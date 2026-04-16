@@ -743,8 +743,9 @@ export async function registerRoutes(
 
   app.get("/api/sales-analysis", authMiddleware, adminOnly, async (req, res) => {
     try {
-      const rok = Number(req.query.rok) || 2026;
-      const miesiac = Number(req.query.miesiac) || 1;
+      const now = new Date();
+      const rok = Number(req.query.rok) || now.getFullYear();
+      const miesiac = Number(req.query.miesiac) || (now.getMonth() + 1);
       const data = await storage.getSalesAnalysis(rok, miesiac);
       res.json(data);
     } catch (err: any) {
@@ -1421,6 +1422,72 @@ export async function registerRoutes(
     }
   });
 
+  // ── Ordering App API ─────────────────────────────────────────────────────────
+  // These endpoints are used by the external ordering application.
+  // Authentication: same JWT token via Authorization: Bearer <token>
+
+  app.get("/api/ordering/clients", authMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const opiekun = user.rola === "handlowiec" ? user.imie : undefined;
+      const allClients = await storage.getClients(opiekun);
+      res.json(
+        allClients.map(c => ({
+          id: c.id,
+          klient: c.klient,
+          clientId: c.clientId,
+          opiekun: c.opiekun,
+          segment: c.segment,
+          rytmKontaktu: c.rytmKontaktu,
+          braki: c.brakiZamowien,
+        }))
+      );
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/ordering/order", authMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { clientId, kwota, notatka, data } = req.body;
+
+      if (!clientId) {
+        return res.status(400).json({ message: "Brak clientId" });
+      }
+
+      const client = await storage.getClient(Number(clientId));
+      if (!client) {
+        return res.status(404).json({ message: "Klient nie znaleziony" });
+      }
+
+      const contact = await storage.createContact({
+        clientId: client.id,
+        opiekun: user.imie,
+        data: data || new Date().toISOString().split("T")[0],
+        status: "Zamowil",
+        typ: "Telefon",
+        priorytet: "Normalny",
+        kwota: kwota ? String(kwota) : null,
+        notatka: notatka || null,
+      });
+
+      res.json({ ok: true, contactId: contact.id });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/ordering/products/:clientId", authMiddleware, async (req, res) => {
+    try {
+      const clientId = Number(req.params.clientId);
+      const products = await storage.getClientProducts(clientId);
+      res.json(products);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // ── iBiznes Sync ────────────────────────────────────────────────────────────
 
   app.get("/api/ibiznes/status", authMiddleware, adminOnly, async (_req, res) => {
@@ -1473,6 +1540,33 @@ export async function registerRoutes(
       res.json({ ok: true, ...result });
     } catch (err: any) {
       res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  app.get("/api/ibiznes/unmatched", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { ibiznesInvoices } = await import("../shared/schema");
+      const { sql, isNull } = await import("drizzle-orm");
+
+      const rows = await db.execute(sql`
+        SELECT
+          nip,
+          alias,
+          source,
+          COUNT(*)::int AS invoice_count,
+          SUM(CAST(koszt AS NUMERIC))::float AS total,
+          MAX(data_wyst) AS last_date
+        FROM ibiznes_invoices
+        WHERE client_id IS NULL
+        GROUP BY nip, alias, source
+        ORDER BY total DESC
+        LIMIT 100
+      `);
+
+      res.json(rows.rows);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   });
 

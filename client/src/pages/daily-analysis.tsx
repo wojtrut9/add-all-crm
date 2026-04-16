@@ -80,6 +80,8 @@ export default function DailyAnalysisPage() {
       if (!res.ok) throw new Error("Blad pobierania danych");
       return res.json();
     },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   const prevMonth = miesiac === 1 ? 12 : miesiac - 1;

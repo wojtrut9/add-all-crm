@@ -313,6 +313,8 @@ export default function Dashboard() {
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 
   const { data: todayContacts } = useQuery({
@@ -322,6 +324,8 @@ export default function Dashboard() {
       if (!res.ok) return [];
       return res.json();
     },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 
   const now = new Date();
@@ -332,6 +336,8 @@ export default function Dashboard() {
       if (!res.ok) return null;
       return res.json();
     },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   if (isLoading) {

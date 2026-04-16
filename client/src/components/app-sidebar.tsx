@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Target,
   Calculator,
+  Database,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -65,6 +66,7 @@ export function AppSidebar() {
     { title: "Panel sprzeda\u017cowy", url: "/sprzedaz", icon: TrendingUp },
     { title: "Analiza dzienna", url: "/analiza-dzienna", icon: Calculator },
     { title: "Panel finansowy", url: "/finanse", icon: DollarSign },
+    { title: "Sync iBiznes", url: "/ibiznes", icon: Database },
     { title: "Notatki", url: "/notatki", icon: StickyNote },
   ];
 
