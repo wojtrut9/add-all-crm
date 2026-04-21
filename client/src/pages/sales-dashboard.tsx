@@ -54,6 +54,8 @@ export default function SalesDashboard() {
       if (!res.ok) return null;
       return res.json();
     },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   const updateTargetsMutation = useMutation({

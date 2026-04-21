@@ -202,7 +202,7 @@ export async function migrateDatabase() {
       nr_r TEXT NOT NULL,
       source TEXT NOT NULL,
       client_id INTEGER,
-      nip TEXT NOT NULL,
+      nip TEXT NOT NULL DEFAULT '',
       alias TEXT,
       data_wyst TEXT NOT NULL,
       rok INTEGER NOT NULL,
@@ -211,6 +211,7 @@ export async function migrateDatabase() {
       synced_at TIMESTAMP DEFAULT NOW(),
       UNIQUE(nr_r, source)
     );
+    ALTER TABLE ibiznes_invoices ALTER COLUMN nip SET DEFAULT '';
 
     CREATE TABLE IF NOT EXISTS ibiznes_sync_log (
       id SERIAL PRIMARY KEY,
@@ -249,6 +250,18 @@ export async function migrateDatabase() {
       notatka TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    CREATE INDEX IF NOT EXISTS idx_contacts_data ON contacts(data);
+    CREATE INDEX IF NOT EXISTS idx_contacts_opiekun_data ON contacts(opiekun, data);
+    CREATE INDEX IF NOT EXISTS idx_contacts_client_id ON contacts(client_id);
+    CREATE INDEX IF NOT EXISTS idx_client_sales_client_rok_mies ON client_sales(client_id, rok, miesiac);
+    CREATE INDEX IF NOT EXISTS idx_client_sales_rok_mies ON client_sales(rok, miesiac);
+    CREATE INDEX IF NOT EXISTS idx_client_sales_weekly_client ON client_sales_weekly(client_id, rok, miesiac, tydzien);
+    CREATE INDEX IF NOT EXISTS idx_ibiznes_invoices_client ON ibiznes_invoices(client_id);
+    CREATE INDEX IF NOT EXISTS idx_ibiznes_invoices_rok_mies ON ibiznes_invoices(rok, miesiac);
+    CREATE INDEX IF NOT EXISTS idx_deliveries_data ON deliveries(data_dostawy);
+    CREATE INDEX IF NOT EXISTS idx_daily_analysis_rok_mies ON daily_analysis(rok, miesiac);
+    CREATE INDEX IF NOT EXISTS idx_sales_targets_rok_mies ON sales_targets(rok, miesiac);
   `);
 
   console.log("Database schema ensured.");

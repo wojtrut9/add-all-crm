@@ -15,7 +15,8 @@ function getPool(): mysql.Pool {
   if (!pool) {
     const url = process.env.IBIZNES_DB_URL;
     if (!url) throw new Error("IBIZNES_DB_URL is not set");
-    pool = mysql.createPool(url + "?connectTimeout=15000&waitForConnections=true&connectionLimit=1&queueLimit=2");
+    const separator = url.includes("?") ? "&" : "?";
+    pool = mysql.createPool(url + separator + "connectTimeout=15000&waitForConnections=true&connectionLimit=1&queueLimit=2");
   }
   return pool;
 }
@@ -80,8 +81,8 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   for (const row of spZooRows as any[]) {
     const date = parseIbiznesDate(row.Data);
     if (!date) continue;
-    const nip = normalizeNip(row.NIP);
-    if (!nip) continue;
+    const nip = normalizeNip(row.NIP); // may be empty — alias matching still possible
+    if (!nip && !row.Alias) continue;  // skip only if both NIP and Alias are missing
     result.push({
       nrR: String(row.NrR),
       alias: row.Alias || null,
@@ -95,8 +96,8 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   for (const row of firmaRows as any[]) {
     const date = parseIbiznesDate(row.Data);
     if (!date) continue;
-    const nip = normalizeNip(row.NIP);
-    if (!nip) continue;
+    const nip = normalizeNip(row.NIP); // may be empty — alias matching still possible
+    if (!nip && !row.Alias) continue;  // skip only if both NIP and Alias are missing
     result.push({
       nrR: String(row.NrR),
       alias: row.Alias || null,

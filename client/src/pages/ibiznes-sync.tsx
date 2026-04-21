@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2, AlertTriangle } from "lucide-react";
 import { useLocation } from "wouter";
 
 function formatDate(val: string | null | undefined) {
@@ -80,6 +81,15 @@ export default function IbizneSyncPage() {
     onError: (err: any) => {
       toast({ title: "Błąd", description: err.message, variant: "destructive" });
     },
+  });
+
+  const { data: unmatched = [], isLoading: unmatchedLoading } = useQuery({
+    queryKey: ["/api/ibiznes/unmatched"],
+    queryFn: async () => {
+      const res = await authFetch("/api/ibiznes/unmatched");
+      return res.json();
+    },
+    refetchInterval: 60000,
   });
 
   const lastSync = status?.lastSync;
@@ -193,6 +203,62 @@ export default function IbizneSyncPage() {
         </CardContent>
       </Card>
 
+      {/* Unmatched iBiznes clients */}
+      <Card className={unmatched.length > 0 ? "border-amber-300 dark:border-amber-700" : ""}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            {unmatched.length > 0 && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+            Niedopasowane faktury z iBiznes
+            {unmatched.length > 0 && (
+              <Badge variant="outline" className="ml-auto text-amber-600 border-amber-400">{unmatched.length} firm</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {unmatchedLoading ? (
+            <p className="text-sm text-muted-foreground">Ładowanie...</p>
+          ) : unmatched.length === 0 ? (
+            <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" /> Wszystkie faktury są dopasowane do klientów CRM.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Poniższe firmy z iBiznes nie mają dopasowania w CRM. Wejdź w kartę klienta → Edytuj → uzupełnij pole <strong>NIP</strong>, a następnie uruchom sync ponownie.
+              </p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Alias / Nazwa</TableHead>
+                    <TableHead>NIP</TableHead>
+                    <TableHead>Źródło</TableHead>
+                    <TableHead className="text-right">Faktur</TableHead>
+                    <TableHead className="text-right">Wartość (PLN)</TableHead>
+                    <TableHead className="text-right">Ostatnia</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {unmatched.map((row: any, i: number) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium text-sm">{row.alias || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{row.nip}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">{row.source === "sp_zoo" ? "Sp. z o.o." : "JDG"}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">{row.invoice_count}</TableCell>
+                      <TableCell className="text-right text-sm font-medium">
+                        {Math.round(row.total).toLocaleString("pl-PL")}
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">{row.last_date}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* How to match clients */}
       <Card>
         <CardHeader className="pb-2">
@@ -201,7 +267,7 @@ export default function IbizneSyncPage() {
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>Sync dopasowuje faktury z iBiznes do klientów w CRM na podstawie <strong>numeru NIP</strong>.</p>
           <p>Żeby klient był dopasowany, wejdź w jego kartę → Edytuj → wpisz pole <strong>NIP (iBiznes sync)</strong> z tym samym NIP-em co w systemie iBiznes (bez kresek, np. <code className="bg-muted px-1 rounded">1234567890</code>).</p>
-          <p>Po uzupełnieniu NIP-ów uruchom sync ponownie — faktury zostaną przypisane, a <strong>clientSales</strong> (realizacja) zaktualizuje się automatycznie.</p>
+          <p>Po uzupełnieniu NIP-ów uruchom sync ponownie — faktury zostaną przypisane, a <strong>realizacja sprzedaży</strong> zaktualizuje się automatycznie.</p>
         </CardContent>
       </Card>
 

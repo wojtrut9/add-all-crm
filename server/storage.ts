@@ -549,7 +549,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSalesDashboard(): Promise<any> {
-    const targets = await db.select().from(salesTargets).where(eq(salesTargets.rok, 2026)).orderBy(asc(salesTargets.miesiac));
+    const currentYear = new Date().getFullYear();
+    const targets = await db.select().from(salesTargets).where(eq(salesTargets.rok, currentYear)).orderBy(asc(salesTargets.miesiac));
     const historyData = await db.select().from(salesHistory).orderBy(asc(salesHistory.rok), asc(salesHistory.miesiac));
 
     const historyByYear: Record<number, any[]> = {};
@@ -1263,7 +1264,6 @@ export class DatabaseStorage implements IStorage {
     const prognozaOnTrack = prognoza >= monthPlan;
 
     const uniqueOrderedClients = new Set(allMonthContacts.filter(c => c.status === "Zamowil").map(c => c.clientId)).size;
-    const spadkiSprzedazy = allClients.filter(c => c.aktywny && (c as any).spadekSprzedazy).length;
 
     const mondayOfWeek = new Date(now);
     const dayOfWeek = mondayOfWeek.getDay();

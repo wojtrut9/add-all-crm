@@ -48,7 +48,7 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
     // Build NIP → clientId AND alias → clientId maps from CRM
     const allClients = await db
-      .select({ id: clients.id, nip: clients.nip, klient: clients.klient })
+      .select({ id: clients.id, nip: clients.nip, klient: clients.klient, ibiznesAlias: clients.ibiznesAlias })
       .from(clients);
 
     const nipToClientId = new Map<string, number>();
@@ -56,17 +56,21 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
     for (const c of allClients) {
       if (c.nip) nipToClientId.set(normalizeNip(c.nip), c.id);
+      // ibiznesAlias takes priority over klient for alias matching (exact override)
+      if (c.ibiznesAlias) aliasToClientId.set(normalizeAlias(c.ibiznesAlias), c.id);
       if (c.klient) aliasToClientId.set(normalizeAlias(c.klient), c.id);
     }
 
+    const matchedClientIds = new Set<number>();
+
     // Upsert each invoice — match by NIP first, then by alias name
     for (const inv of invoices) {
-      let clientId = nipToClientId.get(inv.nip) ?? null;
+      let clientId = (inv.nip ? nipToClientId.get(inv.nip) : undefined) ?? null;
       if (!clientId && inv.alias) {
         clientId = aliasToClientId.get(normalizeAlias(inv.alias)) ?? null;
       }
-      if (clientId) clientsMatched++;
-      else unmatchedNips.add(inv.nip);
+      if (clientId) matchedClientIds.add(clientId);
+      else unmatchedNips.add(inv.nip || inv.alias || "unknown");
 
       const [rok, miesiacStr] = inv.dataWyst.split("-");
 
@@ -95,6 +99,8 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
       invoicesSynced++;
     }
+
+    clientsMatched = matchedClientIds.size;
 
     // Rebuild clientSales aggregates for each (clientId, rok, miesiac) touched
     await aggregateClientSales();
