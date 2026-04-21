@@ -246,7 +246,7 @@ async function aggregateDailyAnalysis() {
       SUM(CAST(koszt AS NUMERIC)) AS total
     FROM ibiznes_invoices
     WHERE data_wyst IS NOT NULL AND data_wyst <> ''
-    GROUP BY rok, miesiac, dzien
+    GROUP BY SPLIT_PART(data_wyst, '-', 1), SPLIT_PART(data_wyst, '-', 2), SPLIT_PART(data_wyst, '-', 3)
   `);
 
   for (const row of rows.rows as any[]) {
