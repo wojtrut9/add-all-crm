@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly } from "../shared/schema";
+import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly, dailyAnalysis, salesHistory, salesTargets } from "../shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { fetchIbiznesInvoices, testIbiznesConnection } from "./ibiznes";
 
@@ -102,9 +102,12 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
     clientsMatched = matchedClientIds.size;
 
-    // Rebuild clientSales aggregates for each (clientId, rok, miesiac) touched
+    // Rebuild all analytics aggregates from iBiznes data
     await aggregateClientSales();
     await aggregateClientSalesWeekly();
+    await aggregateDailyAnalysis();
+    await aggregateSalesHistory();
+    await aggregateSalesTargetsExecution();
 
     await db
       .update(ibizneSyncLog)
@@ -225,6 +228,123 @@ async function aggregateClientSalesWeekly() {
         miesiac: row.miesiac,
         tydzien,
         realizacja,
+      });
+    }
+  }
+}
+
+/**
+ * Aggregate ibiznes_invoices → daily_analysis.sprzedaz (daily totals across all clients).
+ * Keeps the (rok, miesiac, dzien=0) settings row untouched (that holds dniRobocze).
+ */
+async function aggregateDailyAnalysis() {
+  const rows = await db.execute(sql`
+    SELECT
+      CAST(SPLIT_PART(data_wyst, '-', 1) AS INT) AS rok,
+      CAST(SPLIT_PART(data_wyst, '-', 2) AS INT) AS miesiac,
+      CAST(SPLIT_PART(data_wyst, '-', 3) AS INT) AS dzien,
+      SUM(CAST(koszt AS NUMERIC)) AS total
+    FROM ibiznes_invoices
+    WHERE data_wyst IS NOT NULL AND data_wyst <> ''
+    GROUP BY rok, miesiac, dzien
+  `);
+
+  for (const row of rows.rows as any[]) {
+    const rok = Number(row.rok);
+    const miesiac = Number(row.miesiac);
+    const dzien = Number(row.dzien);
+    if (!rok || !miesiac || dzien < 1 || dzien > 31) continue;
+
+    const sprzedaz = String(Math.round(Number(row.total) * 100) / 100);
+
+    const existing = await db
+      .select()
+      .from(dailyAnalysis)
+      .where(
+        and(
+          eq(dailyAnalysis.rok, rok),
+          eq(dailyAnalysis.miesiac, miesiac),
+          eq(dailyAnalysis.dzien, dzien)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(dailyAnalysis)
+        .set({ sprzedaz })
+        .where(eq(dailyAnalysis.id, existing[0].id));
+    } else {
+      await db.insert(dailyAnalysis).values({ rok, miesiac, dzien, sprzedaz });
+    }
+  }
+}
+
+/**
+ * Aggregate ibiznes_invoices → sales_history.wartosc (monthly totals, all clients).
+ */
+async function aggregateSalesHistory() {
+  const rows = await db.execute(sql`
+    SELECT rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
+    FROM ibiznes_invoices
+    GROUP BY rok, miesiac
+  `);
+
+  for (const row of rows.rows as any[]) {
+    const rok = Number(row.rok);
+    const miesiac = Number(row.miesiac);
+    const wartosc = String(Math.round(Number(row.total) * 100) / 100);
+
+    const existing = await db
+      .select()
+      .from(salesHistory)
+      .where(and(eq(salesHistory.rok, rok), eq(salesHistory.miesiac, miesiac)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(salesHistory)
+        .set({ wartosc })
+        .where(eq(salesHistory.id, existing[0].id));
+    } else {
+      await db.insert(salesHistory).values({ rok, miesiac, wartosc });
+    }
+  }
+}
+
+/**
+ * Aggregate ibiznes_invoices → sales_targets.wykonanie_obrotu (monthly realized revenue).
+ * Doesn't touch plan_obrotu — only updates execution column.
+ */
+async function aggregateSalesTargetsExecution() {
+  const rows = await db.execute(sql`
+    SELECT rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
+    FROM ibiznes_invoices
+    GROUP BY rok, miesiac
+  `);
+
+  for (const row of rows.rows as any[]) {
+    const rok = Number(row.rok);
+    const miesiac = Number(row.miesiac);
+    const wykonanie = String(Math.round(Number(row.total) * 100) / 100);
+
+    const existing = await db
+      .select()
+      .from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(salesTargets)
+        .set({ wykonanieObrotu: wykonanie })
+        .where(eq(salesTargets.id, existing[0].id));
+    } else {
+      await db.insert(salesTargets).values({
+        rok,
+        miesiac,
+        planObrotu: "0",
+        wykonanieObrotu: wykonanie,
       });
     }
   }

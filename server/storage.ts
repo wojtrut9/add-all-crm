@@ -1242,9 +1242,21 @@ export class DatabaseStorage implements IStorage {
     const allMonthContacts = await db.select().from(contacts)
       .where(and(gte(contacts.data, monthStart), lte(contacts.data, monthEnd)));
 
-    const monthSales = allMonthContacts
-      .filter(c => c.status === "Zamowil")
-      .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+    // monthSales: prefer iBiznes-aggregated client_sales; fall back to contacts.kwota when no data
+    const monthSalesRows = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, year), eq(clientSales.miesiac, month + 1)));
+    const filteredSalesRows = opiekun && rola === "handlowiec"
+      ? monthSalesRows.filter(r => {
+          const client = allClients.find(c => c.id === r.clientId);
+          return client?.opiekun === opiekun;
+        })
+      : monthSalesRows;
+    const ibiznesMonthSales = filteredSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+    const monthSales = ibiznesMonthSales > 0
+      ? ibiznesMonthSales
+      : allMonthContacts
+          .filter(c => c.status === "Zamowil")
+          .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
     const countWorkdays = (y: number, m: number, upToDay: number) => {
       let count = 0;
