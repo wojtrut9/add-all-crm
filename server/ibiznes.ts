@@ -52,26 +52,31 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   const db = getPool();
   const sinceDwy = sinceDate.replace(/-/g, "");
 
-  // Sp. z o.o.: WZ from spec joined with klienci for NIP
+  // Sp. z o.o.: WZ from spec. NIP is fetched via scalar subquery (deterministic,
+  // no JOIN multiplication when klienci has multiple rows per Alias).
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt, k.NIP
+    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt,
+            (SELECT k.NIP FROM addallspkazogrklienci k
+             WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
+             ORDER BY k.NIP LIMIT 1) AS NIP
      FROM addallspkazogrspec s
-     LEFT JOIN addallspkazogrklienci k ON k.Alias = s.Alias
      WHERE s.Typ = 'WZ'
        AND s.Data >= ?
-     GROUP BY s.NrR, s.Alias, s.Data, k.NIP
+     GROUP BY s.NrR, s.Alias, s.Data
      ORDER BY s.Data DESC`,
     [sinceDwy]
   );
 
-  // JDG: WZ from firmaspec joined with firmaklienci for NIP
+  // JDG: same approach for firmaspec
   const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt, k.NIP
+    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt,
+            (SELECT k.NIP FROM firmaklienci k
+             WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
+             ORDER BY k.NIP LIMIT 1) AS NIP
      FROM firmaspec s
-     LEFT JOIN firmaklienci k ON k.Alias = s.Alias
      WHERE s.Typ = 'WZ'
        AND s.Data >= ?
-     GROUP BY s.NrR, s.Alias, s.Data, k.NIP
+     GROUP BY s.NrR, s.Alias, s.Data
      ORDER BY s.Data DESC`,
     [sinceDwy]
   );
@@ -109,6 +114,145 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   }
 
   return result;
+}
+
+export interface IbiznesDiagnosticsRow {
+  source: "sp_zoo" | "firma";
+  typ: string;
+  documentsCount: number;
+  totalPln: number;
+  minDate: string | null;
+  maxDate: string | null;
+}
+
+/**
+ * Returns a breakdown of all `Typ` values in the spec tables for a date range.
+ * Helps identify whether `Typ='WZ'` alone is the right filter, or whether
+ * the table mixes sales / cost invoices / returns / internal transfers.
+ */
+export async function fetchIbiznesTypeStats(sinceDate: string): Promise<IbiznesDiagnosticsRow[]> {
+  const db = getPool();
+  const sinceDwy = sinceDate.replace(/-/g, "");
+
+  const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT Typ,
+            COUNT(DISTINCT NrR) AS cnt,
+            ROUND(SUM(Il * Cb), 2) AS total,
+            MIN(Data) AS minDate,
+            MAX(Data) AS maxDate
+     FROM addallspkazogrspec
+     WHERE Data >= ?
+     GROUP BY Typ
+     ORDER BY total DESC`,
+    [sinceDwy]
+  );
+
+  const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT Typ,
+            COUNT(DISTINCT NrR) AS cnt,
+            ROUND(SUM(Il * Cb), 2) AS total,
+            MIN(Data) AS minDate,
+            MAX(Data) AS maxDate
+     FROM firmaspec
+     WHERE Data >= ?
+     GROUP BY Typ
+     ORDER BY total DESC`,
+    [sinceDwy]
+  );
+
+  const out: IbiznesDiagnosticsRow[] = [];
+
+  for (const row of spZooRows as any[]) {
+    out.push({
+      source: "sp_zoo",
+      typ: String(row.Typ || ""),
+      documentsCount: Number(row.cnt) || 0,
+      totalPln: Number(row.total) || 0,
+      minDate: parseIbiznesDate(row.minDate),
+      maxDate: parseIbiznesDate(row.maxDate),
+    });
+  }
+  for (const row of firmaRows as any[]) {
+    out.push({
+      source: "firma",
+      typ: String(row.Typ || ""),
+      documentsCount: Number(row.cnt) || 0,
+      totalPln: Number(row.total) || 0,
+      minDate: parseIbiznesDate(row.minDate),
+      maxDate: parseIbiznesDate(row.maxDate),
+    });
+  }
+
+  return out;
+}
+
+export interface IbiznesUnmatchedRow {
+  source: "sp_zoo" | "firma";
+  alias: string;
+  nip: string;
+  documentsCount: number;
+  totalPln: number;
+}
+
+/**
+ * Returns aliases that appear in WZ documents but have NO NIP in klienci.
+ * These are the candidates that land in "unmatched" in CRM — user can decide
+ * whether they are real customers (missing in CRM) or non-sales docs (to filter).
+ */
+export async function fetchIbiznesUnmatchedAliases(sinceDate: string): Promise<IbiznesUnmatchedRow[]> {
+  const db = getPool();
+  const sinceDwy = sinceDate.replace(/-/g, "");
+
+  const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT s.Alias,
+            (SELECT k.NIP FROM addallspkazogrklienci k
+             WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
+             ORDER BY k.NIP LIMIT 1) AS NIP,
+            COUNT(DISTINCT s.NrR) AS cnt,
+            ROUND(SUM(s.Il * s.Cb), 2) AS total
+     FROM addallspkazogrspec s
+     WHERE s.Typ = 'WZ' AND s.Data >= ?
+     GROUP BY s.Alias
+     ORDER BY total DESC
+     LIMIT 100`,
+    [sinceDwy]
+  );
+
+  const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT s.Alias,
+            (SELECT k.NIP FROM firmaklienci k
+             WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
+             ORDER BY k.NIP LIMIT 1) AS NIP,
+            COUNT(DISTINCT s.NrR) AS cnt,
+            ROUND(SUM(s.Il * s.Cb), 2) AS total
+     FROM firmaspec s
+     WHERE s.Typ = 'WZ' AND s.Data >= ?
+     GROUP BY s.Alias
+     ORDER BY total DESC
+     LIMIT 100`,
+    [sinceDwy]
+  );
+
+  const out: IbiznesUnmatchedRow[] = [];
+  for (const row of spZooRows as any[]) {
+    out.push({
+      source: "sp_zoo",
+      alias: String(row.Alias || ""),
+      nip: normalizeNip(row.NIP),
+      documentsCount: Number(row.cnt) || 0,
+      totalPln: Number(row.total) || 0,
+    });
+  }
+  for (const row of firmaRows as any[]) {
+    out.push({
+      source: "firma",
+      alias: String(row.Alias || ""),
+      nip: normalizeNip(row.NIP),
+      documentsCount: Number(row.cnt) || 0,
+      totalPln: Number(row.total) || 0,
+    });
+  }
+  return out;
 }
 
 /** Fetch distinct clients (NIP + Alias) known to iBiznes */

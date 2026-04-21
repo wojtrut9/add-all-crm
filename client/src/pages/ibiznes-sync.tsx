@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useAuth, authFetch } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2, AlertTriangle } from "lucide-react";
+import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2, AlertTriangle, BarChart3 } from "lucide-react";
 import { useLocation } from "wouter";
 
 function formatDate(val: string | null | undefined) {
@@ -90,6 +91,17 @@ export default function IbizneSyncPage() {
       return res.json();
     },
     refetchInterval: 60000,
+  });
+
+  const [diagDays, setDiagDays] = useState(90);
+  const [diagEnabled, setDiagEnabled] = useState(false);
+  const { data: diag, isLoading: diagLoading, refetch: refetchDiag } = useQuery({
+    queryKey: ["/api/ibiznes/diagnostics", diagDays],
+    queryFn: async () => {
+      const res = await authFetch(`/api/ibiznes/diagnostics?days=${diagDays}`);
+      return res.json();
+    },
+    enabled: diagEnabled,
   });
 
   const lastSync = status?.lastSync;
@@ -176,6 +188,127 @@ export default function IbizneSyncPage() {
             <p className="text-sm text-red-600 bg-red-50 dark:bg-red-950/20 p-2 rounded-md">
               {lastSync.message}
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Diagnostyka */}
+      <Card className="border-blue-200 dark:border-blue-900">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-600" /> Diagnostyka danych iBiznes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Sprawdza jakie <strong>typy dokumentów</strong> istnieją w iBiznes (WZ, FZ, korekty, PZ itp.) oraz jakie aliasy generują WZ bez przypisanego NIP-u.
+            Pomaga wykryć, czy <code className="bg-muted px-1 rounded text-xs">Typ='WZ'</code> łapie dokumenty kosztowe zamiast sprzedażowych.
+          </p>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm">Ostatnie</label>
+            <select
+              className="border rounded px-2 py-1 text-sm bg-background"
+              value={diagDays}
+              onChange={(e) => setDiagDays(Number(e.target.value))}
+            >
+              <option value={30}>30 dni</option>
+              <option value={60}>60 dni</option>
+              <option value={90}>90 dni</option>
+              <option value={180}>180 dni</option>
+              <option value={365}>1 rok</option>
+            </select>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setDiagEnabled(true);
+                refetchDiag();
+              }}
+              disabled={diagLoading || !status?.connected}
+              className="gap-2"
+            >
+              <RefreshCw className={`w-3 h-3 ${diagLoading ? "animate-spin" : ""}`} />
+              {diagLoading ? "Analizuję..." : "Uruchom diagnostykę"}
+            </Button>
+          </div>
+
+          {diag?.typeStats && diag.typeStats.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Od: {diag.since}</p>
+              <p className="text-sm font-medium mt-2">Typy dokumentów w spec-tables</p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Źródło</TableHead>
+                    <TableHead>Typ</TableHead>
+                    <TableHead className="text-right">Dokumentów</TableHead>
+                    <TableHead className="text-right">Suma PLN</TableHead>
+                    <TableHead>Zakres dat</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {diag.typeStats.map((row: any, i: number) => (
+                    <TableRow key={i} className={row.typ === "WZ" ? "bg-green-50 dark:bg-green-950/20" : ""}>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {row.source === "sp_zoo" ? "Sp. z o.o." : "JDG"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm font-medium">{row.typ || "(puste)"}</TableCell>
+                      <TableCell className="text-right text-sm">{row.documentsCount}</TableCell>
+                      <TableCell className="text-right text-sm font-medium">
+                        {Math.round(row.totalPln).toLocaleString("pl-PL")}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {row.minDate} → {row.maxDate}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <p className="text-xs text-muted-foreground pt-2">
+                Obecnie synchronizujemy <strong>tylko Typ = 'WZ'</strong> (zielone wiersze). Jeśli widzisz inne typy z podobnymi wartościami, daj znać — mogą wymagać filtracji (np. korekty albo WZ wewnętrzne).
+              </p>
+            </div>
+          )}
+
+          {diag?.unmatchedFromIbiznes && diag.unmatchedFromIbiznes.length > 0 && (
+            <div className="space-y-2 pt-3 border-t">
+              <p className="text-sm font-medium">Top aliasy w WZ (żeby zobaczyć co tam jest)</p>
+              <p className="text-xs text-muted-foreground">
+                Tych aliasów możesz użyć do weryfikacji czy to klienci sprzedażowi. Jeśli są to dostawcy/kosztowe — sygnał że <code className="bg-muted px-1 rounded">Typ='WZ'</code> jest za szeroki.
+              </p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Źródło</TableHead>
+                    <TableHead>Alias</TableHead>
+                    <TableHead>NIP</TableHead>
+                    <TableHead className="text-right">Dok.</TableHead>
+                    <TableHead className="text-right">Suma PLN</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {diag.unmatchedFromIbiznes.slice(0, 30).map((row: any, i: number) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {row.source === "sp_zoo" ? "Sp. z o.o." : "JDG"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{row.alias || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{row.nip || "—"}</TableCell>
+                      <TableCell className="text-right text-sm">{row.documentsCount}</TableCell>
+                      <TableCell className="text-right text-sm font-medium">
+                        {Math.round(row.totalPln).toLocaleString("pl-PL")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

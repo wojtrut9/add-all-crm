@@ -138,10 +138,31 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 }
 
 /**
+ * Returns the list of (rok, miesiac) pairs currently in ibiznes_invoices.
+ * Used to zero out analytics rows before rebuilding — prevents stale data
+ * (e.g. WZ re-assigned to a different client or removed in iBiznes).
+ */
+async function getMonthsFromIbiznes(): Promise<{ rok: number; miesiac: number }[]> {
+  const res = await db.execute(sql`
+    SELECT DISTINCT rok, miesiac FROM ibiznes_invoices ORDER BY rok, miesiac
+  `);
+  return (res.rows as any[]).map((r) => ({ rok: Number(r.rok), miesiac: Number(r.miesiac) }));
+}
+
+/**
  * Aggregate ibiznes_invoices → client_sales (monthly totals per client).
- * Only updates rows that have a clientId.
+ * Zeros out sprzedaz for every (rok, miesiac) present in iBiznes before rebuild,
+ * so that WZ re-assigned between clients don't leave ghost totals.
  */
 async function aggregateClientSales() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(clientSales)
+      .set({ sprzedaz: "0" })
+      .where(and(eq(clientSales.rok, m.rok), eq(clientSales.miesiac, m.miesiac)));
+  }
+
   const rows = await db.execute(sql`
     SELECT client_id, rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
     FROM ibiznes_invoices
@@ -185,7 +206,16 @@ async function aggregateClientSales() {
  * Groups by ISO week within each month.
  */
 async function aggregateClientSalesWeekly() {
-  // Get weekly invoice totals using PostgreSQL date functions
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(clientSalesWeekly)
+      .set({ realizacja: "0" })
+      .where(
+        and(eq(clientSalesWeekly.rok, m.rok), eq(clientSalesWeekly.miesiac, m.miesiac))
+      );
+  }
+
   const rows = await db.execute(sql`
     SELECT
       client_id,
@@ -238,6 +268,14 @@ async function aggregateClientSalesWeekly() {
  * Keeps the (rok, miesiac, dzien=0) settings row untouched (that holds dniRobocze).
  */
 async function aggregateDailyAnalysis() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db.execute(sql`
+      UPDATE daily_analysis SET sprzedaz = '0'
+      WHERE rok = ${m.rok} AND miesiac = ${m.miesiac} AND dzien >= 1
+    `);
+  }
+
   const rows = await db.execute(sql`
     SELECT
       CAST(SPLIT_PART(data_wyst, '-', 1) AS INT) AS rok,
@@ -284,6 +322,14 @@ async function aggregateDailyAnalysis() {
  * Aggregate ibiznes_invoices → sales_history.wartosc (monthly totals, all clients).
  */
 async function aggregateSalesHistory() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(salesHistory)
+      .set({ wartosc: "0" })
+      .where(and(eq(salesHistory.rok, m.rok), eq(salesHistory.miesiac, m.miesiac)));
+  }
+
   const rows = await db.execute(sql`
     SELECT rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
     FROM ibiznes_invoices
@@ -317,6 +363,14 @@ async function aggregateSalesHistory() {
  * Doesn't touch plan_obrotu — only updates execution column.
  */
 async function aggregateSalesTargetsExecution() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(salesTargets)
+      .set({ wykonanieObrotu: "0" })
+      .where(and(eq(salesTargets.rok, m.rok), eq(salesTargets.miesiac, m.miesiac)));
+  }
+
   const rows = await db.execute(sql`
     SELECT rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
     FROM ibiznes_invoices

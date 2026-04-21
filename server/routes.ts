@@ -1543,6 +1543,27 @@ export async function registerRoutes(
     }
   });
 
+  // Diagnostyka: breakdown wszystkich `Typ` dokumentów w spec tables.
+  // Pozwala zobaczyć, czy `Typ='WZ'` jest wystarczającym filtrem,
+  // albo czy iBiznes przechowuje inne typy (FZ=faktury zakupowe, korekty itp.)
+  app.get("/api/ibiznes/diagnostics", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const days = Number(req.query.days) || 90;
+      const sinceDate = new Date();
+      sinceDate.setDate(sinceDate.getDate() - days);
+      const sinceIso = sinceDate.toISOString().slice(0, 10);
+
+      const { fetchIbiznesTypeStats, fetchIbiznesUnmatchedAliases } = await import("./ibiznes");
+      const [typeStats, unmatchedFromIbiznes] = await Promise.all([
+        fetchIbiznesTypeStats(sinceIso),
+        fetchIbiznesUnmatchedAliases(sinceIso),
+      ]);
+      res.json({ since: sinceIso, typeStats, unmatchedFromIbiznes });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/ibiznes/unmatched", authMiddleware, adminOnly, async (_req, res) => {
     try {
       const { db } = await import("./db");
