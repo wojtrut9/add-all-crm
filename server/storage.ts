@@ -1697,7 +1697,18 @@ export class DatabaseStorage implements IStorage {
 
     const sumaCel = rows.reduce((s, r) => s + r.cel, 0);
     const sumaCelNaDzis = rows.reduce((s, r) => s + r.celNaDzis, 0);
-    const sumaRealizacja = rows.reduce((s, r) => s + r.realizacja, 0);
+    // sumaRealizacja: total company sales for the month, including clients marked as inactive
+    // (iBiznes WZ counts regardless of CRM "aktywny" flag)
+    let opiekunClientIds: Set<number> | null = null;
+    if (opiekun) {
+      const opiekunAll = await db.select({ id: clients.id }).from(clients).where(eq(clients.opiekun, opiekun));
+      opiekunClientIds = new Set(opiekunAll.map(c => c.id));
+    }
+    const allMonthSalesRows = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const sumaRealizacja = allMonthSalesRows
+      .filter(r => !opiekunClientIds || opiekunClientIds.has(r.clientId))
+      .reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
     const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
     const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
 
