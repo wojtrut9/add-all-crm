@@ -1553,12 +1553,13 @@ export async function registerRoutes(
       sinceDate.setDate(sinceDate.getDate() - days);
       const sinceIso = sinceDate.toISOString().slice(0, 10);
 
-      const { fetchIbiznesTypeStats, fetchIbiznesUnmatchedAliases } = await import("./ibiznes");
-      const [typeStats, unmatchedFromIbiznes] = await Promise.all([
+      const { fetchIbiznesTypeStats, fetchIbiznesUnmatchedAliases, fetchIbiznesDeepDiagnostics } = await import("./ibiznes");
+      const [typeStats, unmatchedFromIbiznes, deepDiagnostics] = await Promise.all([
         fetchIbiznesTypeStats(sinceIso),
         fetchIbiznesUnmatchedAliases(sinceIso),
+        fetchIbiznesDeepDiagnostics(sinceIso),
       ]);
-      res.json({ since: sinceIso, typeStats, unmatchedFromIbiznes });
+      res.json({ since: sinceIso, typeStats, unmatchedFromIbiznes, deepDiagnostics });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

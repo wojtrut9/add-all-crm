@@ -255,6 +255,113 @@ export async function fetchIbiznesUnmatchedAliases(sinceDate: string): Promise<I
   return out;
 }
 
+export interface IbiznesSchemaInfo {
+  source: "sp_zoo" | "firma";
+  table: string;
+  columns: Array<{ name: string; type: string; nullable: string }>;
+  sampleWZ: Array<Record<string, any>>;
+  monthlyWZ: Array<{
+    rok: number;
+    miesiac: number;
+    documentsCount: number;
+    totalCb: number;
+    totalCn: number | null;
+    totalWn: number | null;
+    totalWb: number | null;
+  }>;
+}
+
+/**
+ * Deep diagnostics — returns column definitions of spec tables + 3 sample WZ rows
+ * + per-month WZ sums using every plausible price column that exists.
+ * Lets us see which column is netto vs brutto without guessing.
+ */
+export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<IbiznesSchemaInfo[]> {
+  const db = getPool();
+  const sinceDwy = sinceDate.replace(/-/g, "");
+  const tables: Array<{ source: "sp_zoo" | "firma"; table: string }> = [
+    { source: "sp_zoo", table: "addallspkazogrspec" },
+    { source: "firma", table: "firmaspec" },
+  ];
+
+  const out: IbiznesSchemaInfo[] = [];
+
+  for (const { source, table } of tables) {
+    // 1) Column list
+    const [colRows] = await db.query<mysql.RowDataPacket[]>(
+      `SELECT COLUMN_NAME AS name, DATA_TYPE AS type, IS_NULLABLE AS nullable
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_NAME = ?
+       ORDER BY ORDINAL_POSITION`,
+      [table]
+    );
+
+    const columns = (colRows as any[]).map((r) => ({
+      name: String(r.name),
+      type: String(r.type),
+      nullable: String(r.nullable),
+    }));
+    const colNames = new Set(columns.map((c) => c.name));
+
+    // 2) Sample WZ rows (3 most recent)
+    const [sampleRows] = await db.query<mysql.RowDataPacket[]>(
+      `SELECT * FROM ${table} WHERE Typ = 'WZ' AND Data >= ? ORDER BY Data DESC LIMIT 3`,
+      [sinceDwy]
+    );
+
+    // 3) Monthly breakdown using Il*Cb, and Cn/Wn/Wb if present
+    const hasCn = colNames.has("Cn");
+    const hasWn = colNames.has("Wn");
+    const hasWb = colNames.has("Wb");
+
+    const extras: string[] = [];
+    if (hasCn) extras.push(`ROUND(SUM(Il * Cn), 2) AS totalCn`);
+    else extras.push(`NULL AS totalCn`);
+    if (hasWn) extras.push(`ROUND(SUM(Wn), 2) AS totalWn`);
+    else extras.push(`NULL AS totalWn`);
+    if (hasWb) extras.push(`ROUND(SUM(Wb), 2) AS totalWb`);
+    else extras.push(`NULL AS totalWb`);
+
+    const [monthlyRows] = await db.query<mysql.RowDataPacket[]>(
+      `SELECT LEFT(Data, 4) AS rok,
+              SUBSTRING(Data, 5, 2) AS miesiac,
+              COUNT(DISTINCT NrR) AS cnt,
+              ROUND(SUM(Il * Cb), 2) AS totalCb,
+              ${extras.join(", ")}
+       FROM ${table}
+       WHERE Typ = 'WZ' AND Data >= ?
+       GROUP BY rok, miesiac
+       ORDER BY rok, miesiac`,
+      [sinceDwy]
+    );
+
+    out.push({
+      source,
+      table,
+      columns,
+      sampleWZ: (sampleRows as any[]).map((r) => {
+        const obj: Record<string, any> = {};
+        for (const k of Object.keys(r)) {
+          const v = r[k];
+          obj[k] = v instanceof Date ? v.toISOString() : v == null ? null : String(v);
+        }
+        return obj;
+      }),
+      monthlyWZ: (monthlyRows as any[]).map((r) => ({
+        rok: Number(r.rok),
+        miesiac: Number(r.miesiac),
+        documentsCount: Number(r.cnt) || 0,
+        totalCb: Number(r.totalCb) || 0,
+        totalCn: r.totalCn == null ? null : Number(r.totalCn),
+        totalWn: r.totalWn == null ? null : Number(r.totalWn),
+        totalWb: r.totalWb == null ? null : Number(r.totalWb),
+      })),
+    });
+  }
+
+  return out;
+}
+
 /** Fetch distinct clients (NIP + Alias) known to iBiznes */
 export async function fetchIbiznesClients(): Promise<{ nip: string; alias: string }[]> {
   const db = getPool();

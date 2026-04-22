@@ -274,6 +274,92 @@ export default function IbizneSyncPage() {
             </div>
           )}
 
+          {diag?.deepDiagnostics && diag.deepDiagnostics.length > 0 && (
+            <div className="space-y-3 pt-3 border-t">
+              <p className="text-sm font-medium">WZ miesięcznie — z różnymi kolumnami cen</p>
+              <p className="text-xs text-muted-foreground">
+                Pokazuje ile WZ jest w każdym miesiącu i jakie sumy wychodzą z różnych kolumn cenowych.
+                Jeśli np. <code className="bg-muted px-1 rounded">Cb</code> ≈ <code className="bg-muted px-1 rounded">Cn</code> × 1.23, to <code className="bg-muted px-1 rounded">Cb</code> jest brutto.
+                Szukamy kolumny netto.
+              </p>
+
+              {diag.deepDiagnostics.map((s: any) => (
+                <div key={s.source} className="space-y-2">
+                  <p className="text-sm font-semibold">
+                    {s.source === "sp_zoo" ? "Sp. z o.o." : "JDG"} ({s.table})
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Miesiąc</TableHead>
+                        <TableHead className="text-right">Dok.</TableHead>
+                        <TableHead className="text-right" title="Il × Cb (obecne)">SUM(Il×Cb)</TableHead>
+                        <TableHead className="text-right" title="Il × Cn, jeśli kolumna istnieje">SUM(Il×Cn)</TableHead>
+                        <TableHead className="text-right" title="SUM(Wn) — wartość netto, jeśli istnieje">SUM(Wn)</TableHead>
+                        <TableHead className="text-right" title="SUM(Wb) — wartość brutto, jeśli istnieje">SUM(Wb)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {s.monthlyWZ.map((m: any, i: number) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-mono text-sm">
+                            {m.rok}-{String(m.miesiac).padStart(2, "0")}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">{m.documentsCount}</TableCell>
+                          <TableCell className="text-right text-sm font-medium bg-red-50 dark:bg-red-950/20">
+                            {Math.round(m.totalCb).toLocaleString("pl-PL")}
+                          </TableCell>
+                          <TableCell className="text-right text-sm bg-green-50 dark:bg-green-950/20">
+                            {m.totalCn != null ? Math.round(m.totalCn).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm bg-green-50 dark:bg-green-950/20">
+                            {m.totalWn != null ? Math.round(m.totalWn).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {m.totalWb != null ? Math.round(m.totalWb).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                      Kolumny tabeli {s.table} ({s.columns.length})
+                    </summary>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {s.columns.map((c: any) => (
+                        <Badge
+                          key={c.name}
+                          variant="outline"
+                          className={`text-xs font-mono ${
+                            ["Cn", "Cb", "Wn", "Wb", "Il", "Vat", "VatPr", "Rabat"].includes(c.name)
+                              ? "border-blue-400 text-blue-700 dark:text-blue-300"
+                              : ""
+                          }`}
+                          title={`${c.type}${c.nullable === "YES" ? " (nullable)" : ""}`}
+                        >
+                          {c.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </details>
+
+                  {s.sampleWZ.length > 0 && (
+                    <details className="text-xs">
+                      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                        Przykładowe {s.sampleWZ.length} wiersze WZ
+                      </summary>
+                      <pre className="mt-2 p-2 bg-muted rounded-md overflow-x-auto text-[10px] leading-tight">
+                        {JSON.stringify(s.sampleWZ, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {diag?.unmatchedFromIbiznes && diag.unmatchedFromIbiznes.length > 0 && (
             <div className="space-y-2 pt-3 border-t">
               <p className="text-sm font-medium">Top aliasy w WZ (żeby zobaczyć co tam jest)</p>
