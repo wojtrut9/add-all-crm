@@ -52,48 +52,63 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   const db = getPool();
   const sinceDwy = sinceDate.replace(/-/g, "");
 
-  // Sp. z o.o.: WZ from spec. NIP is fetched via scalar subquery (deterministic,
-  // no JOIN multiplication when klienci has multiple rows per Alias).
+  // Sp. z o.o.: WZ from spec. Group by NrR ONLY (one WZ = one document = one row).
+  // Alias/Data are picked with MAX in case positions have slight variations.
+  // NIP is fetched via correlated scalar subquery (deterministic, no JOIN multiplication).
   // CN = Cena Netto (confirmed by diagnostics: CB = CN * (1 + VAT%)).
   // Filter: Anul != 'T' (nie-anulowane), Akt = 'T' (aktywne/niezarchiwizowane).
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.il * s.CN), 2) AS Koszt,
+    `SELECT x.NrR, x.Alias, x.Data, x.Koszt,
             (SELECT k.NIP FROM addallspkazogrklienci k
-             WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
+             WHERE k.Alias = x.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
              ORDER BY k.NIP LIMIT 1) AS NIP
-     FROM addallspkazogrspec s
-     WHERE s.Typ = 'WZ'
-       AND (s.Anul IS NULL OR s.Anul <> 'T')
-       AND (s.Akt IS NULL OR s.Akt = 'T')
-       AND s.Data >= ?
-     GROUP BY s.NrR, s.Alias, s.Data
-     ORDER BY s.Data DESC`,
+     FROM (
+       SELECT NrR,
+              MAX(Alias) AS Alias,
+              MAX(Data) AS Data,
+              ROUND(SUM(il * CN), 2) AS Koszt
+       FROM addallspkazogrspec
+       WHERE Typ = 'WZ'
+         AND (Anul IS NULL OR Anul <> 'T')
+         AND (Akt IS NULL OR Akt = 'T')
+         AND Data >= ?
+       GROUP BY NrR
+     ) x
+     ORDER BY x.Data DESC`,
     [sinceDwy]
   );
 
   // JDG: same approach for firmaspec
   const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.il * s.CN), 2) AS Koszt,
+    `SELECT x.NrR, x.Alias, x.Data, x.Koszt,
             (SELECT k.NIP FROM firmaklienci k
-             WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
+             WHERE k.Alias = x.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
              ORDER BY k.NIP LIMIT 1) AS NIP
-     FROM firmaspec s
-     WHERE s.Typ = 'WZ'
-       AND (s.Anul IS NULL OR s.Anul <> 'T')
-       AND (s.Akt IS NULL OR s.Akt = 'T')
-       AND s.Data >= ?
-     GROUP BY s.NrR, s.Alias, s.Data
-     ORDER BY s.Data DESC`,
+     FROM (
+       SELECT NrR,
+              MAX(Alias) AS Alias,
+              MAX(Data) AS Data,
+              ROUND(SUM(il * CN), 2) AS Koszt
+       FROM firmaspec
+       WHERE Typ = 'WZ'
+         AND (Anul IS NULL OR Anul <> 'T')
+         AND (Akt IS NULL OR Akt = 'T')
+         AND Data >= ?
+       GROUP BY NrR
+     ) x
+     ORDER BY x.Data DESC`,
     [sinceDwy]
   );
 
   const result: IbiznesInvoiceRow[] = [];
 
+  // Zapisujemy KAŻDE aktywne WZ, nawet bez aliasu/NIP (sprzedaż anonimowa,
+  // paragony). Bez tego nasza tabela była niższa niż iBiznes LIVE o te wpisy.
+  // Pomijamy tylko WZ z niepoprawną/pustą datą.
   for (const row of spZooRows as any[]) {
     const date = parseIbiznesDate(row.Data);
     if (!date) continue;
-    const nip = normalizeNip(row.NIP); // may be empty — alias matching still possible
-    if (!nip && !row.Alias) continue;  // skip only if both NIP and Alias are missing
+    const nip = normalizeNip(row.NIP);
     result.push({
       nrR: String(row.NrR),
       alias: row.Alias || null,
@@ -107,8 +122,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   for (const row of firmaRows as any[]) {
     const date = parseIbiznesDate(row.Data);
     if (!date) continue;
-    const nip = normalizeNip(row.NIP); // may be empty — alias matching still possible
-    if (!nip && !row.Alias) continue;  // skip only if both NIP and Alias are missing
+    const nip = normalizeNip(row.NIP);
     result.push({
       nrR: String(row.NrR),
       alias: row.Alias || null,
