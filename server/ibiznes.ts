@@ -54,8 +54,9 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
 
   // Sp. z o.o.: WZ from spec. NIP is fetched via scalar subquery (deterministic,
   // no JOIN multiplication when klienci has multiple rows per Alias).
+  // CN = Cena Netto (confirmed by diagnostics: CB = CN * (1 + VAT%)).
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt,
+    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.il * s.CN), 2) AS Koszt,
             (SELECT k.NIP FROM addallspkazogrklienci k
              WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
              ORDER BY k.NIP LIMIT 1) AS NIP
@@ -69,7 +70,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
 
   // JDG: same approach for firmaspec
   const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.Il * s.Cb), 2) AS Koszt,
+    `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.il * s.CN), 2) AS Koszt,
             (SELECT k.NIP FROM firmaklienci k
              WHERE k.Alias = s.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
              ORDER BY k.NIP LIMIT 1) AS NIP
@@ -309,24 +310,24 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
       [sinceDwy]
     );
 
-    // 3) Monthly breakdown using Il*Cb, and Cn/Wn/Wb if present
-    const hasCn = colNames.has("Cn");
-    const hasWn = colNames.has("Wn");
-    const hasWb = colNames.has("Wb");
+    // 3) Monthly breakdown using il*CN (netto) and il*CB (brutto).
+    // Also search case-insensitively for alternative netto columns (Wn, Wartość, etc.)
+    const colNamesLower = new Set(columns.map((c) => c.name.toLowerCase()));
+    const hasCN = colNamesLower.has("cn");
+    const hasCB = colNamesLower.has("cb");
+    const hasWn = colNamesLower.has("wn");
+    const hasWb = colNamesLower.has("wb");
 
     const extras: string[] = [];
-    if (hasCn) extras.push(`ROUND(SUM(Il * Cn), 2) AS totalCn`);
-    else extras.push(`NULL AS totalCn`);
-    if (hasWn) extras.push(`ROUND(SUM(Wn), 2) AS totalWn`);
-    else extras.push(`NULL AS totalWn`);
-    if (hasWb) extras.push(`ROUND(SUM(Wb), 2) AS totalWb`);
-    else extras.push(`NULL AS totalWb`);
+    extras.push(hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
+    extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
+    extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
 
     const [monthlyRows] = await db.query<mysql.RowDataPacket[]>(
       `SELECT LEFT(Data, 4) AS rok,
               SUBSTRING(Data, 5, 2) AS miesiac,
               COUNT(DISTINCT NrR) AS cnt,
-              ROUND(SUM(Il * Cb), 2) AS totalCb,
+              ${hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
               ${extras.join(", ")}
        FROM ${table}
        WHERE Typ = 'WZ' AND Data >= ?
