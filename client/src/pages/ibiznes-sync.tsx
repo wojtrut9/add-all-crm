@@ -104,6 +104,61 @@ export default function IbizneSyncPage() {
     enabled: diagEnabled,
   });
 
+  const [auditEnabled, setAuditEnabled] = useState(false);
+  const { data: audit, isLoading: auditLoading, refetch: refetchAudit } = useQuery({
+    queryKey: ["/api/ibiznes/audit"],
+    queryFn: async () => {
+      const res = await authFetch("/api/ibiznes/audit?days=120");
+      return res.json();
+    },
+    enabled: auditEnabled,
+  });
+
+  function monthKey(rok: number, miesiac: number) {
+    return `${rok}-${String(miesiac).padStart(2, "0")}`;
+  }
+
+  const auditMerged = (() => {
+    if (!audit) return null;
+    const map = new Map<string, any>();
+    const put = (key: string, field: string, value: any) => {
+      if (!map.has(key)) map.set(key, { key });
+      map.get(key)[field] = value;
+    };
+    for (const r of audit.iBiznesLive.spZoo || []) {
+      const k = monthKey(r.rok, r.miesiac);
+      put(k, "spZooAll", r.allWz_netto);
+      put(k, "spZooActive", r.activeWz_netto);
+      put(k, "spZooAnul", r.anulowane_netto);
+      put(k, "spZooByRejKo", r.byRejKo);
+      put(k, "spZooByMag", r.byMag);
+    }
+    for (const r of audit.iBiznesLive.firma || []) {
+      const k = monthKey(r.rok, r.miesiac);
+      put(k, "firmaAll", r.allWz_netto);
+      put(k, "firmaActive", r.activeWz_netto);
+      put(k, "firmaAnul", r.anulowane_netto);
+      put(k, "firmaByRejKo", r.byRejKo);
+      put(k, "firmaByMag", r.byMag);
+    }
+    for (const r of audit.ourInvoices || []) {
+      const k = monthKey(Number(r.rok), Number(r.miesiac));
+      put(k, "invTotal", Number(r.total));
+      put(k, "invMatched", Number(r.matched));
+      put(k, "invUnmatched", Number(r.unmatched));
+      put(k, "invCount", Number(r.cnt));
+    }
+    for (const r of audit.ourClientSales || []) {
+      const k = monthKey(Number(r.rok), Number(r.miesiac));
+      put(k, "csTotal", Number(r.total));
+    }
+    for (const r of audit.ourDaily || []) {
+      const k = monthKey(Number(r.rok), Number(r.miesiac));
+      put(k, "dailyTotal", Number(r.total));
+    }
+    return Array.from(map.values()).sort((a, b) => b.key.localeCompare(a.key));
+  })();
+
   const lastSync = status?.lastSync;
 
   return (
@@ -188,6 +243,179 @@ export default function IbizneSyncPage() {
             <p className="text-sm text-red-600 bg-red-50 dark:bg-red-950/20 p-2 rounded-md">
               {lastSync.message}
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* AUDYT WARSTW — najważniejsze narzędzie do znalezienia rozbieżności */}
+      <Card className="border-purple-300 dark:border-purple-800">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-purple-600" /> AUDYT — porównanie 3 warstw danych per miesiąc
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Pokazuje ile per miesiąc pokazuje <strong>iBiznes (live)</strong>, ile mamy w <strong>ibiznes_invoices</strong> (nasza tabela po sync) i ile liczy <strong>client_sales</strong> (to co czyta Dashboard). Jeśli warstwy się rozjeżdżają — widać dokładnie która.
+          </p>
+
+          <Button
+            size="sm"
+            onClick={() => {
+              setAuditEnabled(true);
+              refetchAudit();
+            }}
+            disabled={auditLoading || !status?.connected}
+            className="gap-2 bg-purple-600 hover:bg-purple-700"
+          >
+            <RefreshCw className={`w-3 h-3 ${auditLoading ? "animate-spin" : ""}`} />
+            {auditLoading ? "Analizuję..." : "Uruchom pełny audyt (120 dni)"}
+          </Button>
+
+          {auditMerged && auditMerged.length > 0 && (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead rowSpan={2} className="align-bottom">Miesiąc</TableHead>
+                      <TableHead colSpan={3} className="text-center bg-blue-50 dark:bg-blue-950/30">iBiznes LIVE (spec-tables)</TableHead>
+                      <TableHead colSpan={3} className="text-center bg-amber-50 dark:bg-amber-950/30">ibiznes_invoices (nasza tabela)</TableHead>
+                      <TableHead colSpan={2} className="text-center bg-green-50 dark:bg-green-950/30">Dashboard (client_sales)</TableHead>
+                    </TableRow>
+                    <TableRow>
+                      <TableHead className="text-right bg-blue-50 dark:bg-blue-950/30 text-xs">Wszystkie WZ netto</TableHead>
+                      <TableHead className="text-right bg-blue-50 dark:bg-blue-950/30 text-xs">Aktywne (niezanulowane)</TableHead>
+                      <TableHead className="text-right bg-blue-50 dark:bg-blue-950/30 text-xs">Anulowane</TableHead>
+                      <TableHead className="text-right bg-amber-50 dark:bg-amber-950/30 text-xs">Razem (#)</TableHead>
+                      <TableHead className="text-right bg-amber-50 dark:bg-amber-950/30 text-xs">Dopasowane</TableHead>
+                      <TableHead className="text-right bg-amber-50 dark:bg-amber-950/30 text-xs">Niedop.</TableHead>
+                      <TableHead className="text-right bg-green-50 dark:bg-green-950/30 text-xs">client_sales</TableHead>
+                      <TableHead className="text-right bg-green-50 dark:bg-green-950/30 text-xs">daily_analysis</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditMerged.map((r: any) => {
+                      const liveAll = (r.spZooAll || 0) + (r.firmaAll || 0);
+                      const liveActive = (r.spZooActive || 0) + (r.firmaActive || 0);
+                      const liveAnul = (r.spZooAnul || 0) + (r.firmaAnul || 0);
+                      return (
+                        <TableRow key={r.key}>
+                          <TableCell className="font-mono text-sm font-medium">{r.key}</TableCell>
+                          <TableCell className="text-right text-xs bg-blue-50/50 dark:bg-blue-950/20">
+                            {Math.round(liveAll).toLocaleString("pl-PL")}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-semibold bg-blue-50/50 dark:bg-blue-950/20">
+                            {Math.round(liveActive).toLocaleString("pl-PL")}
+                          </TableCell>
+                          <TableCell className="text-right text-xs bg-blue-50/50 dark:bg-blue-950/20 text-amber-700">
+                            {liveAnul > 0 ? Math.round(liveAnul).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs bg-amber-50/50 dark:bg-amber-950/20">
+                            {r.invTotal != null ? `${Math.round(r.invTotal).toLocaleString("pl-PL")} (${r.invCount})` : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs bg-amber-50/50 dark:bg-amber-950/20">
+                            {r.invMatched != null ? Math.round(r.invMatched).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs bg-amber-50/50 dark:bg-amber-950/20 text-amber-700">
+                            {r.invUnmatched != null ? Math.round(r.invUnmatched).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-semibold bg-green-50/50 dark:bg-green-950/20">
+                            {r.csTotal != null ? Math.round(r.csTotal).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs bg-green-50/50 dark:bg-green-950/20">
+                            {r.dailyTotal != null ? Math.round(r.dailyTotal).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-1 pt-2">
+                <p><strong>Jak czytać:</strong></p>
+                <p>• <span className="text-blue-700 dark:text-blue-400">Niebieski</span> = co pokazuje iBiznes teraz (live query)</p>
+                <p>• <span className="text-amber-700 dark:text-amber-400">Pomarańczowy</span> = co mamy w naszej tabeli po ostatnim sync</p>
+                <p>• <span className="text-green-700 dark:text-green-400">Zielony</span> = co faktycznie czyta Dashboard</p>
+                <p>• Jeśli <strong>niebieski ≠ pomarańczowy</strong> → sync nie przeliczył z nowym kodem (zrób Uruchom sync)</p>
+                <p>• Jeśli <strong>pomarańczowy ≠ zielony</strong> → agregacja ma błąd</p>
+                <p>• Jeśli <strong>niebieski ≈ pomarańczowy ≈ zielony</strong> a zespół mówi inaczej → iBiznes ma więcej WZ niż powinno trafiać do analityki</p>
+              </div>
+
+              {/* Breakdown per RejKo/Mag for April to identify cost-WZ */}
+              {(() => {
+                const apr = auditMerged.find((r: any) => r.key === "2026-04");
+                if (!apr) return null;
+                return (
+                  <div className="space-y-2 pt-3 border-t">
+                    <p className="text-sm font-semibold">Kwiecień 2026 — rozkład aktywnych WZ per RejKo i Mag</p>
+                    <p className="text-xs text-muted-foreground">
+                      Jeśli widzisz tu różne wartości RejKo (rejestr księgowy) lub Mag (magazyn), to sygnał że iBiznes grupuje różne typy WZ (sprzedażowe vs kosztowe vs wewnętrzne) po innym polu niż Typ.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs font-medium mb-1">Sp. z o.o. — per RejKo</p>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs">RejKo</TableHead>
+                              <TableHead className="text-right text-xs">Dok.</TableHead>
+                              <TableHead className="text-right text-xs">Netto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(apr.spZooByRejKo || []).map((r: any, i: number) => (
+                              <TableRow key={i}>
+                                <TableCell className="text-xs font-mono">{r.rejKo}</TableCell>
+                                <TableCell className="text-right text-xs">{r.count}</TableCell>
+                                <TableCell className="text-right text-xs">{Math.round(r.totalNetto).toLocaleString("pl-PL")}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium mb-1">Sp. z o.o. — per Mag</p>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs">Magazyn</TableHead>
+                              <TableHead className="text-right text-xs">Dok.</TableHead>
+                              <TableHead className="text-right text-xs">Netto</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(apr.spZooByMag || []).map((r: any, i: number) => (
+                              <TableRow key={i}>
+                                <TableCell className="text-xs font-mono">{r.mag}</TableCell>
+                                <TableCell className="text-right text-xs">{r.count}</TableCell>
+                                <TableCell className="text-right text-xs">{Math.round(r.totalNetto).toLocaleString("pl-PL")}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {audit?.syncLogs && audit.syncLogs.length > 0 && (
+                <details className="text-xs pt-2">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    Ostatnie {audit.syncLogs.length} sync (czy faktycznie trafił nowy kod?)
+                  </summary>
+                  <div className="mt-2 space-y-1">
+                    {audit.syncLogs.map((log: any) => (
+                      <div key={log.id} className="p-2 rounded bg-muted/50 text-xs font-mono">
+                        #{log.id} [{log.status}] {formatDate(log.startedAt)} → {log.invoicesSynced ?? 0} WZ, {log.clientsMatched ?? 0} dopasowanych, {log.clientsUnmatched ?? 0} nie ({log.trigger})
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

@@ -55,6 +55,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   // Sp. z o.o.: WZ from spec. NIP is fetched via scalar subquery (deterministic,
   // no JOIN multiplication when klienci has multiple rows per Alias).
   // CN = Cena Netto (confirmed by diagnostics: CB = CN * (1 + VAT%)).
+  // Filter: Anul != 'T' (nie-anulowane), Akt = 'T' (aktywne/niezarchiwizowane).
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
     `SELECT s.NrR, s.Alias, s.Data, ROUND(SUM(s.il * s.CN), 2) AS Koszt,
             (SELECT k.NIP FROM addallspkazogrklienci k
@@ -62,6 +63,8 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
              ORDER BY k.NIP LIMIT 1) AS NIP
      FROM addallspkazogrspec s
      WHERE s.Typ = 'WZ'
+       AND (s.Anul IS NULL OR s.Anul <> 'T')
+       AND (s.Akt IS NULL OR s.Akt = 'T')
        AND s.Data >= ?
      GROUP BY s.NrR, s.Alias, s.Data
      ORDER BY s.Data DESC`,
@@ -76,6 +79,8 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
              ORDER BY k.NIP LIMIT 1) AS NIP
      FROM firmaspec s
      WHERE s.Typ = 'WZ'
+       AND (s.Anul IS NULL OR s.Anul <> 'T')
+       AND (s.Akt IS NULL OR s.Akt = 'T')
        AND s.Data >= ?
      GROUP BY s.NrR, s.Alias, s.Data
      ORDER BY s.Data DESC`,
@@ -361,6 +366,115 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
   }
 
   return out;
+}
+
+export interface IbiznesAuditRow {
+  rok: number;
+  miesiac: number;
+  // Raw iBiznes with different filter combinations
+  allWz_netto: number;          // Typ='WZ' (no Anul/Akt filter)
+  activeWz_netto: number;        // + Anul!='T' + Akt='T' (what we sync now)
+  anulowane_netto: number;       // only Anul='T'
+  // Breakdown by RejKo (cost register) for active WZ
+  byRejKo: Array<{ rejKo: string; count: number; totalNetto: number }>;
+  byMag: Array<{ mag: string; count: number; totalNetto: number }>;
+}
+
+/**
+ * Per-month audit showing sums across many filter combinations.
+ * Lets us see whether Anul/Akt/RejKo filters would move our total closer
+ * to the value the team reports.
+ */
+export async function fetchIbiznesMonthlyAudit(sinceDate: string): Promise<{
+  spZoo: IbiznesAuditRow[];
+  firma: IbiznesAuditRow[];
+}> {
+  const db = getPool();
+  const sinceDwy = sinceDate.replace(/-/g, "");
+
+  async function runAuditForTable(table: string): Promise<IbiznesAuditRow[]> {
+    // 1) Per-month sums with different filter sets
+    const [monthlyRows] = await db.query<mysql.RowDataPacket[]>(
+      `SELECT
+         LEFT(Data, 4) AS rok,
+         SUBSTRING(Data, 5, 2) AS miesiac,
+         ROUND(SUM(il * CN), 2) AS allWz_netto,
+         ROUND(SUM(CASE WHEN (Anul IS NULL OR Anul <> 'T')
+                          AND (Akt  IS NULL OR Akt  = 'T')
+                        THEN il * CN ELSE 0 END), 2) AS activeWz_netto,
+         ROUND(SUM(CASE WHEN Anul = 'T' THEN il * CN ELSE 0 END), 2) AS anulowane_netto
+       FROM ${table}
+       WHERE Typ = 'WZ' AND Data >= ?
+       GROUP BY rok, miesiac
+       ORDER BY rok DESC, miesiac DESC`,
+      [sinceDwy]
+    );
+
+    const result: IbiznesAuditRow[] = [];
+
+    for (const m of monthlyRows as any[]) {
+      const rok = Number(m.rok);
+      const miesiac = Number(m.miesiac);
+      const monthDwyStart = `${rok}${String(miesiac).padStart(2, "0")}01`;
+      const monthDwyEnd = `${rok}${String(miesiac).padStart(2, "0")}31`;
+
+      // 2) Breakdown by RejKo for this month (only active WZ)
+      const [rejKoRows] = await db.query<mysql.RowDataPacket[]>(
+        `SELECT COALESCE(RejKo, '(null)') AS rejKo,
+                COUNT(DISTINCT NrR) AS cnt,
+                ROUND(SUM(il * CN), 2) AS totalNetto
+         FROM ${table}
+         WHERE Typ = 'WZ'
+           AND (Anul IS NULL OR Anul <> 'T')
+           AND (Akt  IS NULL OR Akt  = 'T')
+           AND Data BETWEEN ? AND ?
+         GROUP BY rejKo
+         ORDER BY totalNetto DESC`,
+        [monthDwyStart, monthDwyEnd]
+      );
+
+      const [magRows] = await db.query<mysql.RowDataPacket[]>(
+        `SELECT COALESCE(Mag, '(null)') AS mag,
+                COUNT(DISTINCT NrR) AS cnt,
+                ROUND(SUM(il * CN), 2) AS totalNetto
+         FROM ${table}
+         WHERE Typ = 'WZ'
+           AND (Anul IS NULL OR Anul <> 'T')
+           AND (Akt  IS NULL OR Akt  = 'T')
+           AND Data BETWEEN ? AND ?
+         GROUP BY mag
+         ORDER BY totalNetto DESC`,
+        [monthDwyStart, monthDwyEnd]
+      );
+
+      result.push({
+        rok,
+        miesiac,
+        allWz_netto: Number(m.allWz_netto) || 0,
+        activeWz_netto: Number(m.activeWz_netto) || 0,
+        anulowane_netto: Number(m.anulowane_netto) || 0,
+        byRejKo: (rejKoRows as any[]).map((r) => ({
+          rejKo: String(r.rejKo || "(null)"),
+          count: Number(r.cnt) || 0,
+          totalNetto: Number(r.totalNetto) || 0,
+        })),
+        byMag: (magRows as any[]).map((r) => ({
+          mag: String(r.mag || "(null)"),
+          count: Number(r.cnt) || 0,
+          totalNetto: Number(r.totalNetto) || 0,
+        })),
+      });
+    }
+
+    return result;
+  }
+
+  const [spZoo, firma] = await Promise.all([
+    runAuditForTable("addallspkazogrspec"),
+    runAuditForTable("firmaspec"),
+  ]);
+
+  return { spZoo, firma };
 }
 
 /** Fetch distinct clients (NIP + Alias) known to iBiznes */
