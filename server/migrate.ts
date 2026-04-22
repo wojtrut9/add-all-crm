@@ -259,6 +259,13 @@ export async function migrateDatabase() {
     CREATE INDEX IF NOT EXISTS idx_client_sales_weekly_client ON client_sales_weekly(client_id, rok, miesiac, tydzien);
     CREATE INDEX IF NOT EXISTS idx_ibiznes_invoices_client ON ibiznes_invoices(client_id);
     CREATE INDEX IF NOT EXISTS idx_ibiznes_invoices_rok_mies ON ibiznes_invoices(rok, miesiac);
+    -- Deduplicate existing rows (keep highest id per nr_r+source) before creating unique index.
+    -- Required because onConflictDoUpdate in sync relies on this unique constraint;
+    -- without it, every sync inserted new rows instead of updating existing ones.
+    DELETE FROM ibiznes_invoices a
+    USING ibiznes_invoices b
+    WHERE a.nr_r = b.nr_r AND a.source = b.source AND a.id < b.id;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_ibiznes_invoices_unique_key ON ibiznes_invoices(nr_r, source);
     CREATE INDEX IF NOT EXISTS idx_deliveries_data ON deliveries(data_dostawy);
     CREATE INDEX IF NOT EXISTS idx_daily_analysis_rok_mies ON daily_analysis(rok, miesiac);
     CREATE INDEX IF NOT EXISTS idx_sales_targets_rok_mies ON sales_targets(rok, miesiac);

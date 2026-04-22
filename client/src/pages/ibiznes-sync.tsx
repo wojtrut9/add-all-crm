@@ -68,6 +68,28 @@ export default function IbizneSyncPage() {
     },
   });
 
+  const purgeResyncMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch("/api/ibiznes/purge-and-resync", { method: "POST" });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || "Błąd");
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Odbudowa zakończona",
+        description: `Tabela wyczyszczona i przeładowana z iBiznes: ${data.invoicesSynced} WZ, ${data.clientsMatched} dopasowanych.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/audit"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/unmatched"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Błąd odbudowy", description: err.message, variant: "destructive" });
+    },
+  });
+
   const clearNipMutation = useMutation({
     mutationFn: async () => {
       const res = await authFetch("/api/clients/clear-nip", { method: "POST" });
@@ -632,21 +654,42 @@ export default function IbizneSyncPage() {
         <CardHeader className="pb-2">
           <CardTitle className="text-base text-red-600 dark:text-red-400">Narzędzia naprawcze</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">Wyczyść wszystkie NIPy</p>
-            <p className="text-xs text-muted-foreground">Usuwa pole NIP u wszystkich klientów — użyj gdy NIPy zostały błędnie wgrane.</p>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Odbuduj tabelę ibiznes_invoices</p>
+              <p className="text-xs text-muted-foreground">Usuwa wszystkie wpisy w tabeli <code className="bg-muted px-1 rounded">ibiznes_invoices</code> i ciągnie świeże z iBiznes. Używaj gdy sync zadublował rekordy.</p>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => { if (confirm("Na pewno wyczyścić ibiznes_invoices i odpalić świeży sync? Dane zostaną pobrane ponownie z iBiznes.")) purgeResyncMutation.mutate(); }}
+              disabled={purgeResyncMutation.isPending}
+              className="gap-2 shrink-0"
+            >
+              <RefreshCw className={`w-4 h-4 ${purgeResyncMutation.isPending ? "animate-spin" : ""}`} />
+              {purgeResyncMutation.isPending ? "Odbudowuję..." : "Odbuduj od zera"}
+            </Button>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => { if (confirm("Na pewno wyczyścić wszystkie NIPy?")) clearNipMutation.mutate(); }}
-            disabled={clearNipMutation.isPending}
-            className="gap-2 shrink-0"
-          >
-            <Trash2 className="w-4 h-4" />
-            {clearNipMutation.isPending ? "Czyszczę..." : "Wyczyść NIPy"}
-          </Button>
+
+          <Separator />
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Wyczyść wszystkie NIPy</p>
+              <p className="text-xs text-muted-foreground">Usuwa pole NIP u wszystkich klientów — użyj gdy NIPy zostały błędnie wgrane.</p>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => { if (confirm("Na pewno wyczyścić wszystkie NIPy?")) clearNipMutation.mutate(); }}
+              disabled={clearNipMutation.isPending}
+              className="gap-2 shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+              {clearNipMutation.isPending ? "Czyszczę..." : "Wyczyść NIPy"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

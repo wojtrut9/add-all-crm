@@ -1534,6 +1534,21 @@ export async function registerRoutes(
     }
   });
 
+  // Pełny reset: usuwa WSZYSTKIE rekordy z ibiznes_invoices i odpala świeży sync.
+  // Używać gdy tabela uległa zaśmieceniu duplikatami (np. przed naprawą UNIQUE INDEX).
+  // Dane są odświeżane z iBiznes, więc nic nie tracimy.
+  app.post("/api/ibiznes/purge-and-resync", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db: pg } = await import("./db");
+      const { sql: pgsql } = await import("drizzle-orm");
+      await pg.execute(pgsql`TRUNCATE TABLE ibiznes_invoices`);
+      const result = await runIbiznesSync("manual");
+      res.json({ ok: true, purged: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
   app.post("/api/ibiznes/sync", authMiddleware, adminOnly, async (_req, res) => {
     try {
       const result = await runIbiznesSync("manual");
