@@ -1534,12 +1534,119 @@ export async function registerRoutes(
     }
   });
 
+  // Pełny reset: usuwa WSZYSTKIE rekordy z ibiznes_invoices i odpala świeży sync.
+  // Używać gdy tabela uległa zaśmieceniu duplikatami (np. przed naprawą UNIQUE INDEX).
+  // Dane są odświeżane z iBiznes, więc nic nie tracimy.
+  app.post("/api/ibiznes/purge-and-resync", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db: pg } = await import("./db");
+      const { sql: pgsql } = await import("drizzle-orm");
+      await pg.execute(pgsql`TRUNCATE TABLE ibiznes_invoices`);
+      const result = await runIbiznesSync("manual");
+      res.json({ ok: true, purged: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
   app.post("/api/ibiznes/sync", authMiddleware, adminOnly, async (_req, res) => {
     try {
       const result = await runIbiznesSync("manual");
       res.json({ ok: true, ...result });
     } catch (err: any) {
       res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  // Diagnostyka: breakdown wszystkich `Typ` dokumentów w spec tables.
+  // Pozwala zobaczyć, czy `Typ='WZ'` jest wystarczającym filtrem,
+  // albo czy iBiznes przechowuje inne typy (FZ=faktury zakupowe, korekty itp.)
+  app.get("/api/ibiznes/diagnostics", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const days = Number(req.query.days) || 90;
+      const sinceDate = new Date();
+      sinceDate.setDate(sinceDate.getDate() - days);
+      const sinceIso = sinceDate.toISOString().slice(0, 10);
+
+      const { fetchIbiznesTypeStats, fetchIbiznesUnmatchedAliases, fetchIbiznesDeepDiagnostics } = await import("./ibiznes");
+      const [typeStats, unmatchedFromIbiznes, deepDiagnostics] = await Promise.all([
+        fetchIbiznesTypeStats(sinceIso),
+        fetchIbiznesUnmatchedAliases(sinceIso),
+        fetchIbiznesDeepDiagnostics(sinceIso),
+      ]);
+      res.json({ since: sinceIso, typeStats, unmatchedFromIbiznes, deepDiagnostics });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Deep audit: compares 3 layers per month
+  //   1. iBiznes live (what MySQL returns right now, multiple filter variants)
+  //   2. our ibiznes_invoices (what sync wrote to our DB)
+  //   3. our client_sales (what Dashboard/Analytics read)
+  // Lets us spot where numbers diverge.
+  app.get("/api/ibiznes/audit", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const days = Number(req.query.days) || 120;
+      const sinceDate = new Date();
+      sinceDate.setDate(sinceDate.getDate() - days);
+      const sinceIso = sinceDate.toISOString().slice(0, 10);
+
+      const { fetchIbiznesMonthlyAudit } = await import("./ibiznes");
+      const iBiznesLive = await fetchIbiznesMonthlyAudit(sinceIso);
+
+      const { db: pg } = await import("./db");
+      const { sql: pgsql } = await import("drizzle-orm");
+
+      // Our ibiznes_invoices — what sync wrote
+      const ourInvoices = await pg.execute(pgsql`
+        SELECT rok, miesiac,
+               COUNT(*)::int AS cnt,
+               ROUND(SUM(CAST(koszt AS NUMERIC)), 2)::float AS total,
+               ROUND(SUM(CASE WHEN client_id IS NOT NULL
+                              THEN CAST(koszt AS NUMERIC) ELSE 0 END), 2)::float AS matched,
+               ROUND(SUM(CASE WHEN client_id IS NULL
+                              THEN CAST(koszt AS NUMERIC) ELSE 0 END), 2)::float AS unmatched
+        FROM ibiznes_invoices
+        GROUP BY rok, miesiac
+        ORDER BY rok DESC, miesiac DESC
+      `);
+
+      // Our client_sales — what dashboard reads
+      const ourClientSales = await pg.execute(pgsql`
+        SELECT rok, miesiac,
+               COUNT(*)::int AS cnt,
+               ROUND(SUM(CAST(sprzedaz AS NUMERIC)), 2)::float AS total
+        FROM client_sales
+        GROUP BY rok, miesiac
+        ORDER BY rok DESC, miesiac DESC
+      `);
+
+      // Our daily_analysis — to verify daily sum
+      const ourDaily = await pg.execute(pgsql`
+        SELECT rok, miesiac,
+               ROUND(SUM(CAST(sprzedaz AS NUMERIC)), 2)::float AS total,
+               COUNT(*) FILTER (WHERE CAST(sprzedaz AS NUMERIC) > 0)::int AS days_with_sales
+        FROM daily_analysis
+        WHERE dzien >= 1
+        GROUP BY rok, miesiac
+        ORDER BY rok DESC, miesiac DESC
+      `);
+
+      // Last 5 sync logs
+      const { ibizneSyncLog } = await import("../shared/schema");
+      const syncLogs = await pg.select().from(ibizneSyncLog).orderBy(pgsql`${ibizneSyncLog.id} DESC`).limit(5);
+
+      res.json({
+        since: sinceIso,
+        iBiznesLive,
+        ourInvoices: ourInvoices.rows,
+        ourClientSales: ourClientSales.rows,
+        ourDaily: ourDaily.rows,
+        syncLogs,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   });
 

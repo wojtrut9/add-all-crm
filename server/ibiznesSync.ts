@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly } from "../shared/schema";
+import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly, dailyAnalysis, salesHistory, salesTargets } from "../shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { fetchIbiznesInvoices, testIbiznesConnection } from "./ibiznes";
 
@@ -102,9 +102,12 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
     clientsMatched = matchedClientIds.size;
 
-    // Rebuild clientSales aggregates for each (clientId, rok, miesiac) touched
+    // Rebuild all analytics aggregates from iBiznes data
     await aggregateClientSales();
     await aggregateClientSalesWeekly();
+    await aggregateDailyAnalysis();
+    await aggregateSalesHistory();
+    await aggregateSalesTargetsExecution();
 
     await db
       .update(ibizneSyncLog)
@@ -135,10 +138,31 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 }
 
 /**
+ * Returns the list of (rok, miesiac) pairs currently in ibiznes_invoices.
+ * Used to zero out analytics rows before rebuilding — prevents stale data
+ * (e.g. WZ re-assigned to a different client or removed in iBiznes).
+ */
+async function getMonthsFromIbiznes(): Promise<{ rok: number; miesiac: number }[]> {
+  const res = await db.execute(sql`
+    SELECT DISTINCT rok, miesiac FROM ibiznes_invoices ORDER BY rok, miesiac
+  `);
+  return (res.rows as any[]).map((r) => ({ rok: Number(r.rok), miesiac: Number(r.miesiac) }));
+}
+
+/**
  * Aggregate ibiznes_invoices → client_sales (monthly totals per client).
- * Only updates rows that have a clientId.
+ * Zeros out sprzedaz for every (rok, miesiac) present in iBiznes before rebuild,
+ * so that WZ re-assigned between clients don't leave ghost totals.
  */
 async function aggregateClientSales() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(clientSales)
+      .set({ sprzedaz: "0" })
+      .where(and(eq(clientSales.rok, m.rok), eq(clientSales.miesiac, m.miesiac)));
+  }
+
   const rows = await db.execute(sql`
     SELECT client_id, rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
     FROM ibiznes_invoices
@@ -182,7 +206,16 @@ async function aggregateClientSales() {
  * Groups by ISO week within each month.
  */
 async function aggregateClientSalesWeekly() {
-  // Get weekly invoice totals using PostgreSQL date functions
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(clientSalesWeekly)
+      .set({ realizacja: "0" })
+      .where(
+        and(eq(clientSalesWeekly.rok, m.rok), eq(clientSalesWeekly.miesiac, m.miesiac))
+      );
+  }
+
   const rows = await db.execute(sql`
     SELECT
       client_id,
@@ -225,6 +258,147 @@ async function aggregateClientSalesWeekly() {
         miesiac: row.miesiac,
         tydzien,
         realizacja,
+      });
+    }
+  }
+}
+
+/**
+ * Aggregate ibiznes_invoices → daily_analysis.sprzedaz (daily totals across all clients).
+ * Keeps the (rok, miesiac, dzien=0) settings row untouched (that holds dniRobocze).
+ */
+async function aggregateDailyAnalysis() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db.execute(sql`
+      UPDATE daily_analysis SET sprzedaz = '0'
+      WHERE rok = ${m.rok} AND miesiac = ${m.miesiac} AND dzien >= 1
+    `);
+  }
+
+  const rows = await db.execute(sql`
+    SELECT
+      CAST(SPLIT_PART(data_wyst, '-', 1) AS INT) AS rok,
+      CAST(SPLIT_PART(data_wyst, '-', 2) AS INT) AS miesiac,
+      CAST(SPLIT_PART(data_wyst, '-', 3) AS INT) AS dzien,
+      SUM(CAST(koszt AS NUMERIC)) AS total
+    FROM ibiznes_invoices
+    WHERE data_wyst IS NOT NULL AND data_wyst <> ''
+    GROUP BY SPLIT_PART(data_wyst, '-', 1), SPLIT_PART(data_wyst, '-', 2), SPLIT_PART(data_wyst, '-', 3)
+  `);
+
+  for (const row of rows.rows as any[]) {
+    const rok = Number(row.rok);
+    const miesiac = Number(row.miesiac);
+    const dzien = Number(row.dzien);
+    if (!rok || !miesiac || dzien < 1 || dzien > 31) continue;
+
+    const sprzedaz = String(Math.round(Number(row.total) * 100) / 100);
+
+    const existing = await db
+      .select()
+      .from(dailyAnalysis)
+      .where(
+        and(
+          eq(dailyAnalysis.rok, rok),
+          eq(dailyAnalysis.miesiac, miesiac),
+          eq(dailyAnalysis.dzien, dzien)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(dailyAnalysis)
+        .set({ sprzedaz })
+        .where(eq(dailyAnalysis.id, existing[0].id));
+    } else {
+      await db.insert(dailyAnalysis).values({ rok, miesiac, dzien, sprzedaz });
+    }
+  }
+}
+
+/**
+ * Aggregate ibiznes_invoices → sales_history.wartosc (monthly totals, all clients).
+ */
+async function aggregateSalesHistory() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(salesHistory)
+      .set({ wartosc: "0" })
+      .where(and(eq(salesHistory.rok, m.rok), eq(salesHistory.miesiac, m.miesiac)));
+  }
+
+  const rows = await db.execute(sql`
+    SELECT rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
+    FROM ibiznes_invoices
+    GROUP BY rok, miesiac
+  `);
+
+  for (const row of rows.rows as any[]) {
+    const rok = Number(row.rok);
+    const miesiac = Number(row.miesiac);
+    const wartosc = String(Math.round(Number(row.total) * 100) / 100);
+
+    const existing = await db
+      .select()
+      .from(salesHistory)
+      .where(and(eq(salesHistory.rok, rok), eq(salesHistory.miesiac, miesiac)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(salesHistory)
+        .set({ wartosc })
+        .where(eq(salesHistory.id, existing[0].id));
+    } else {
+      await db.insert(salesHistory).values({ rok, miesiac, wartosc });
+    }
+  }
+}
+
+/**
+ * Aggregate ibiznes_invoices → sales_targets.wykonanie_obrotu (monthly realized revenue).
+ * Doesn't touch plan_obrotu — only updates execution column.
+ */
+async function aggregateSalesTargetsExecution() {
+  const months = await getMonthsFromIbiznes();
+  for (const m of months) {
+    await db
+      .update(salesTargets)
+      .set({ wykonanieObrotu: "0" })
+      .where(and(eq(salesTargets.rok, m.rok), eq(salesTargets.miesiac, m.miesiac)));
+  }
+
+  const rows = await db.execute(sql`
+    SELECT rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
+    FROM ibiznes_invoices
+    GROUP BY rok, miesiac
+  `);
+
+  for (const row of rows.rows as any[]) {
+    const rok = Number(row.rok);
+    const miesiac = Number(row.miesiac);
+    const wykonanie = String(Math.round(Number(row.total) * 100) / 100);
+
+    const existing = await db
+      .select()
+      .from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(salesTargets)
+        .set({ wykonanieObrotu: wykonanie })
+        .where(eq(salesTargets.id, existing[0].id));
+    } else {
+      await db.insert(salesTargets).values({
+        rok,
+        miesiac,
+        planObrotu: "0",
+        wykonanieObrotu: wykonanie,
       });
     }
   }

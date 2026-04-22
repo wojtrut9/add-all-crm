@@ -1242,9 +1242,21 @@ export class DatabaseStorage implements IStorage {
     const allMonthContacts = await db.select().from(contacts)
       .where(and(gte(contacts.data, monthStart), lte(contacts.data, monthEnd)));
 
-    const monthSales = allMonthContacts
-      .filter(c => c.status === "Zamowil")
-      .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+    // monthSales: prefer iBiznes-aggregated client_sales; fall back to contacts.kwota when no data
+    const monthSalesRows = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, year), eq(clientSales.miesiac, month + 1)));
+    const filteredSalesRows = opiekun && rola === "handlowiec"
+      ? monthSalesRows.filter(r => {
+          const client = allClients.find(c => c.id === r.clientId);
+          return client?.opiekun === opiekun;
+        })
+      : monthSalesRows;
+    const ibiznesMonthSales = filteredSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+    const monthSales = ibiznesMonthSales > 0
+      ? ibiznesMonthSales
+      : allMonthContacts
+          .filter(c => c.status === "Zamowil")
+          .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
     const countWorkdays = (y: number, m: number, upToDay: number) => {
       let count = 0;
@@ -1685,7 +1697,18 @@ export class DatabaseStorage implements IStorage {
 
     const sumaCel = rows.reduce((s, r) => s + r.cel, 0);
     const sumaCelNaDzis = rows.reduce((s, r) => s + r.celNaDzis, 0);
-    const sumaRealizacja = rows.reduce((s, r) => s + r.realizacja, 0);
+    // sumaRealizacja: total company sales for the month, including clients marked as inactive
+    // (iBiznes WZ counts regardless of CRM "aktywny" flag)
+    let opiekunClientIds: Set<number> | null = null;
+    if (opiekun) {
+      const opiekunAll = await db.select({ id: clients.id }).from(clients).where(eq(clients.opiekun, opiekun));
+      opiekunClientIds = new Set(opiekunAll.map(c => c.id));
+    }
+    const allMonthSalesRows = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const sumaRealizacja = allMonthSalesRows
+      .filter(r => !opiekunClientIds || opiekunClientIds.has(r.clientId))
+      .reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
     const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
     const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
 
