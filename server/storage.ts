@@ -1107,7 +1107,10 @@ export class DatabaseStorage implements IStorage {
     const prev3Month = prev2Month === 1 ? 12 : prev2Month - 1;
     const prev3Year = prev2Month === 1 ? prev2Year - 1 : prev2Year;
 
-    const allClients = await db.select().from(clients).where(eq(clients.aktywny, true));
+    // Take ALL clients that had sales (ignore aktywny flag).
+    // Sales can come from iBiznes WZ for clients not yet flagged aktywny in CRM.
+    const allClients = await db.select().from(clients);
+    const clientIdSet = new Set(allClients.map(c => c.id));
 
     const prevSales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, prevYear), eq(clientSales.miesiac, prevMonth)));
@@ -1121,17 +1124,23 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(clientSales.rok, prev3Year), eq(clientSales.miesiac, prev3Month)));
     const prev3Map = new Map(prev3Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
+    // Build the set of candidate clientIds: anyone with sales in prev, prev2 or prev3 months.
+    const candidateClientIds = new Set<number>();
+    for (const s of prevSales) if (clientIdSet.has(s.clientId)) candidateClientIds.add(s.clientId);
+    for (const s of prev2Sales) if (clientIdSet.has(s.clientId)) candidateClientIds.add(s.clientId);
+    for (const s of prev3Sales) if (clientIdSet.has(s.clientId)) candidateClientIds.add(s.clientId);
+
     await db.delete(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
 
     let generated = 0;
     let skipped = 0;
 
-    for (const client of allClients) {
-      let baseSales = prevMap.get(client.id) || 0;
+    for (const clientId of candidateClientIds) {
+      let baseSales = prevMap.get(clientId) || 0;
 
       if (baseSales === 0) {
-        const vals = [prev2Map.get(client.id) || 0, prev3Map.get(client.id) || 0].filter(v => v > 0);
+        const vals = [prev2Map.get(clientId) || 0, prev3Map.get(clientId) || 0].filter(v => v > 0);
         if (vals.length > 0) {
           baseSales = vals.reduce((a, b) => a + b, 0) / vals.length;
         }
@@ -1147,7 +1156,7 @@ export class DatabaseStorage implements IStorage {
 
       for (let tydzien = 1; tydzien <= 4; tydzien++) {
         await db.insert(clientSalesWeekly).values({
-          clientId: client.id,
+          clientId,
           rok,
           miesiac,
           tydzien,
