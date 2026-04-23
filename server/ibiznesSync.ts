@@ -149,17 +149,19 @@ async function getMonthsFromIbiznes(): Promise<{ rok: number; miesiac: number }[
   return (res.rows as any[]).map((r) => ({ rok: Number(r.rok), miesiac: Number(r.miesiac) }));
 }
 
+const MARZA_PROCENT = 35.3;
+
 /**
  * Aggregate ibiznes_invoices → client_sales (monthly totals per client).
- * Zeros out sprzedaz for every (rok, miesiac) present in iBiznes before rebuild,
- * so that WZ re-assigned between clients don't leave ghost totals.
+ * Zeros out all financial columns before rebuild to prevent stale data.
+ * Calculates koszt/zysk/marza using a flat 35.3% margin.
  */
 async function aggregateClientSales() {
   const months = await getMonthsFromIbiznes();
   for (const m of months) {
     await db
       .update(clientSales)
-      .set({ sprzedaz: "0" })
+      .set({ sprzedaz: "0", koszt: "0", zysk: "0", marza: "0" })
       .where(and(eq(clientSales.rok, m.rok), eq(clientSales.miesiac, m.miesiac)));
   }
 
@@ -183,12 +185,19 @@ async function aggregateClientSales() {
       )
       .limit(1);
 
-    const sprzedaz = String(Math.round(Number(row.total) * 100) / 100);
+    const sprzedazNum = Math.round(Number(row.total) * 100) / 100;
+    const zyskNum = Math.round(sprzedazNum * MARZA_PROCENT) / 100;
+    const kosztNum = Math.round((sprzedazNum - zyskNum) * 100) / 100;
+
+    const sprzedaz = String(sprzedazNum);
+    const zysk = String(zyskNum);
+    const koszt = String(kosztNum);
+    const marza = String(MARZA_PROCENT);
 
     if (existing.length > 0) {
       await db
         .update(clientSales)
-        .set({ sprzedaz })
+        .set({ sprzedaz, koszt, zysk, marza })
         .where(eq(clientSales.id, existing[0].id));
     } else {
       await db.insert(clientSales).values({
@@ -196,6 +205,9 @@ async function aggregateClientSales() {
         rok: row.rok,
         miesiac: row.miesiac,
         sprzedaz,
+        koszt,
+        zysk,
+        marza,
       });
     }
   }
