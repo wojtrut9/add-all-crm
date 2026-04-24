@@ -312,6 +312,7 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
   const out: IbiznesSchemaInfo[] = [];
 
   for (const { source, table } of tables) {
+    try {
     // 1) Column list
     const [colRows] = await db.query<mysql.RowDataPacket[]>(
       `SELECT COLUMN_NAME AS name, DATA_TYPE AS type, IS_NULLABLE AS nullable
@@ -321,21 +322,18 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
       [table]
     );
 
+    // If table doesn't exist in DB, skip silently.
+    if ((colRows as any[]).length === 0) {
+      console.warn(`[diag] table ${table} not found, skipping`);
+      continue;
+    }
+
     const columns = (colRows as any[]).map((r) => ({
       name: String(r.name),
       type: String(r.type),
       nullable: String(r.nullable),
     }));
     const colNames = new Set(columns.map((c) => c.name));
-
-    // 2) Sample WZ rows (3 most recent)
-    const [sampleRows] = await db.query<mysql.RowDataPacket[]>(
-      `SELECT * FROM ${table} WHERE Typ = 'WZ' AND Data >= ? ORDER BY Data DESC LIMIT 3`,
-      [sinceDwy]
-    );
-
-    // 3) Monthly breakdown using il*CN (netto) and il*CB (brutto).
-    // Also search case-insensitively for alternative netto columns (Wn, Wartość, etc.)
     const colNamesLower = new Set(columns.map((c) => c.name.toLowerCase()));
     const hasIl = colNamesLower.has("il");
     const hasCN = colNamesLower.has("cn");
@@ -347,27 +345,60 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
     const hasData = colNamesLower.has("data");
     const hasTyp = colNamesLower.has("typ");
 
-    let monthlyRows: mysql.RowDataPacket[] = [];
-    if (hasData && hasTyp && hasNrR) {
-      const extras: string[] = [];
-      extras.push(hasIl && hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
-      extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
-      extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
-      extras.push(hasKoszt ? `ROUND(SUM(Koszt), 2) AS totalKoszt` : `NULL AS totalKoszt`);
+    // 2) Sample WZ rows (3 most recent). Guard against tables that lack Typ/Data.
+    let sampleRows: mysql.RowDataPacket[] = [];
+    try {
+      if (hasTyp && hasData) {
+        const [rows] = await db.query<mysql.RowDataPacket[]>(
+          `SELECT * FROM ${table} WHERE Typ = 'WZ' AND Data >= ? ORDER BY Data DESC LIMIT 3`,
+          [sinceDwy]
+        );
+        sampleRows = rows;
+      } else if (hasData) {
+        const [rows] = await db.query<mysql.RowDataPacket[]>(
+          `SELECT * FROM ${table} WHERE Data >= ? ORDER BY Data DESC LIMIT 3`,
+          [sinceDwy]
+        );
+        sampleRows = rows;
+      } else {
+        const [rows] = await db.query<mysql.RowDataPacket[]>(
+          `SELECT * FROM ${table} LIMIT 3`
+        );
+        sampleRows = rows;
+      }
+    } catch (err: any) {
+      console.warn(`[diag] sample query failed for ${table}:`, err.message);
+      sampleRows = [];
+    }
 
-      const [rows] = await db.query<mysql.RowDataPacket[]>(
-        `SELECT LEFT(Data, 4) AS rok,
-                SUBSTRING(Data, 5, 2) AS miesiac,
-                COUNT(DISTINCT NrR) AS cnt,
-                ${hasIl && hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
-                ${extras.join(", ")}
-         FROM ${table}
-         WHERE Typ = 'WZ' AND Data >= ?
-         GROUP BY rok, miesiac
-         ORDER BY rok, miesiac`,
-        [sinceDwy]
-      );
-      monthlyRows = rows;
+    // 3) Monthly breakdown using il*CN (netto) and il*CB (brutto).
+
+    let monthlyRows: mysql.RowDataPacket[] = [];
+    try {
+      if (hasData && hasTyp && hasNrR) {
+        const extras: string[] = [];
+        extras.push(hasIl && hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
+        extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
+        extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
+        extras.push(hasKoszt ? `ROUND(SUM(Koszt), 2) AS totalKoszt` : `NULL AS totalKoszt`);
+
+        const [rows] = await db.query<mysql.RowDataPacket[]>(
+          `SELECT LEFT(Data, 4) AS rok,
+                  SUBSTRING(Data, 5, 2) AS miesiac,
+                  COUNT(DISTINCT NrR) AS cnt,
+                  ${hasIl && hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
+                  ${extras.join(", ")}
+           FROM ${table}
+           WHERE Typ = 'WZ' AND Data >= ?
+           GROUP BY rok, miesiac
+           ORDER BY rok, miesiac`,
+          [sinceDwy]
+        );
+        monthlyRows = rows;
+      }
+    } catch (err: any) {
+      console.warn(`[diag] monthly query failed for ${table}:`, err.message);
+      monthlyRows = [];
     }
 
     out.push({
@@ -393,6 +424,10 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
         totalKoszt: r.totalKoszt == null ? null : Number(r.totalKoszt),
       })),
     });
+    } catch (err: any) {
+      console.error(`[diag] failed for table ${table}:`, err.message);
+      // Keep going with the remaining tables.
+    }
   }
 
   return out;
