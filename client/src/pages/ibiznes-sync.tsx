@@ -115,16 +115,6 @@ export default function IbizneSyncPage() {
     refetchInterval: 60000,
   });
 
-  const [tablesEnabled, setTablesEnabled] = useState(false);
-  const { data: tablesData, isLoading: tablesLoading, refetch: refetchTables } = useQuery({
-    queryKey: ["/api/ibiznes/tables"],
-    queryFn: async () => {
-      const res = await authFetch("/api/ibiznes/tables");
-      return res.json();
-    },
-    enabled: tablesEnabled,
-  });
-
   const [diagDays, setDiagDays] = useState(90);
   const [diagEnabled, setDiagEnabled] = useState(false);
   const { data: diag, isLoading: diagLoading, refetch: refetchDiag } = useQuery({
@@ -452,85 +442,6 @@ export default function IbizneSyncPage() {
         </CardContent>
       </Card>
 
-      {/* Lista tabel iBiznes */}
-      <Card className="border-purple-200 dark:border-purple-900">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Database className="w-4 h-4 text-purple-600" /> Tabele w iBiznes (szukamy kolumny "Koszt")
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Listuje wszystkie tabele w iBiznes zawierające słowa <code className="bg-muted px-1 rounded">spka</code>, <code className="bg-muted px-1 rounded">firma</code>, <code className="bg-muted px-1 rounded">kazog</code>, <code className="bg-muted px-1 rounded">dok</code>, <code className="bg-muted px-1 rounded">wz</code>.
-            Pozwala znaleźć <strong>tabelę nagłówków WZ</strong> gdzie jest pole <code className="bg-muted px-1 rounded">Koszt</code> (na szczegółowym widoku WZ).
-          </p>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setTablesEnabled(true);
-              refetchTables();
-            }}
-            disabled={tablesLoading || !status?.connected}
-            className="gap-2"
-          >
-            <RefreshCw className={`w-3 h-3 ${tablesLoading ? "animate-spin" : ""}`} />
-            {tablesLoading ? "Wczytuje..." : "Pobierz liste tabel"}
-          </Button>
-
-          {tablesData?.tables && tablesData.tables.length > 0 && (
-            <div className="space-y-3 pt-2">
-              <p className="text-sm text-muted-foreground">
-                Znaleziono {tablesData.tables.length} tabel. Szukaj tabeli zawierajacej kolumny typu:
-                {" "}<code className="bg-muted px-1 rounded">Koszt</code>, <code className="bg-muted px-1 rounded">KosztCalk</code>, <code className="bg-muted px-1 rounded">WartKoszt</code>, <code className="bg-muted px-1 rounded">Kw</code>.
-              </p>
-              {tablesData.tables.map((t: any) => {
-                const costCols = (t.columns || []).filter((c: any) =>
-                  /koszt|^kw|^cz|zakup/i.test(c.name)
-                );
-                const isHeaderTable = !t.name.toLowerCase().includes("spec") && !t.name.toLowerCase().includes("klienci");
-                return (
-                  <div
-                    key={t.name}
-                    className={`border rounded p-3 text-xs ${costCols.length > 0 ? "border-amber-400 bg-amber-50/40" : ""}`}
-                  >
-                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                      <span className="font-mono font-semibold text-sm">
-                        {t.name}
-                        {isHeaderTable && <Badge variant="secondary" className="ml-2 text-xs">kandydat na naglowki</Badge>}
-                      </span>
-                      <span className="text-muted-foreground">{t.rowCount?.toLocaleString("pl-PL")} rekordow</span>
-                    </div>
-                    {costCols.length > 0 && (
-                      <div className="mb-2 text-amber-800">
-                        <strong>Potencjalne kolumny kosztu:</strong> {costCols.map((c: any) => `${c.name} (${c.type})`).join(", ")}
-                      </div>
-                    )}
-                    <details className="mt-1">
-                      <summary className="cursor-pointer text-muted-foreground">Wszystkie kolumny ({t.columns?.length || 0})</summary>
-                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 text-[10px] font-mono">
-                        {t.columns?.map((c: any) => (
-                          <span key={c.name} className="truncate" title={`${c.name}: ${c.type}`}>
-                            {c.name} <span className="text-muted-foreground">({c.type})</span>
-                          </span>
-                        ))}
-                      </div>
-                    </details>
-                    {t.sampleRow && (
-                      <details className="mt-2">
-                        <summary className="cursor-pointer text-muted-foreground">Przyklad wiersza</summary>
-                        <pre className="mt-1 text-[10px] bg-muted p-2 rounded overflow-x-auto">{JSON.stringify(t.sampleRow, null, 2)}</pre>
-                      </details>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Diagnostyka */}
       <Card className="border-blue-200 dark:border-blue-900">
         <CardHeader className="pb-2">
@@ -636,6 +547,7 @@ export default function IbizneSyncPage() {
                         <TableHead className="text-right" title="Il × Cn, jeśli kolumna istnieje">SUM(Il×Cn)</TableHead>
                         <TableHead className="text-right" title="SUM(Wn) — wartość netto, jeśli istnieje">SUM(Wn)</TableHead>
                         <TableHead className="text-right" title="SUM(Wb) — wartość brutto, jeśli istnieje">SUM(Wb)</TableHead>
+                        <TableHead className="text-right bg-blue-50 dark:bg-blue-950/20" title="SUM(Koszt) — koszt z nagłówka WZ">SUM(Koszt)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -656,6 +568,9 @@ export default function IbizneSyncPage() {
                           </TableCell>
                           <TableCell className="text-right text-sm">
                             {m.totalWb != null ? Math.round(m.totalWb).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-medium bg-blue-50 dark:bg-blue-950/20">
+                            {m.totalKoszt != null ? Math.round(m.totalKoszt).toLocaleString("pl-PL") : "—"}
                           </TableCell>
                         </TableRow>
                       ))}

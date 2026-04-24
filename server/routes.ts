@@ -1580,18 +1580,6 @@ export async function registerRoutes(
     }
   });
 
-  // Lists all iBiznes tables potentially containing document headers (WZ).
-  // Used to locate the "Koszt" column that sits on the header, not in spec table.
-  app.get("/api/ibiznes/tables", authMiddleware, adminOnly, async (_req, res) => {
-    try {
-      const { fetchIbiznesTableList } = await import("./ibiznes");
-      const tables = await fetchIbiznesTableList();
-      res.json({ tables });
-    } catch (err: any) {
-      res.status(500).json({ message: err.message });
-    }
-  });
-
   // Deep audit: compares 3 layers per month
   //   1. iBiznes live (what MySQL returns right now, multiple filter variants)
   //   2. our ibiznes_invoices (what sync wrote to our DB)

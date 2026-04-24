@@ -288,6 +288,7 @@ export interface IbiznesSchemaInfo {
     totalCn: number | null;
     totalWn: number | null;
     totalWb: number | null;
+    totalKoszt: number | null;
   }>;
 }
 
@@ -299,9 +300,13 @@ export interface IbiznesSchemaInfo {
 export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<IbiznesSchemaInfo[]> {
   const db = getPool();
   const sinceDwy = sinceDate.replace(/-/g, "");
+  // Inspect BOTH line tables (spec) and header tables — the "Koszt" shown in iBiznes UI
+  // likely lives on the WZ header (addallspkazogr / firma), not on the line items.
   const tables: Array<{ source: "sp_zoo" | "firma"; table: string }> = [
-    { source: "sp_zoo", table: "addallspkazogrspec" },
-    { source: "firma", table: "firmaspec" },
+    { source: "sp_zoo", table: "addallspkazogr" },      // WZ header
+    { source: "sp_zoo", table: "addallspkazogrspec" },  // WZ lines
+    { source: "firma", table: "firma" },                 // WZ header (JDG)
+    { source: "firma", table: "firmaspec" },             // WZ lines (JDG)
   ];
 
   const out: IbiznesSchemaInfo[] = [];
@@ -332,28 +337,38 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
     // 3) Monthly breakdown using il*CN (netto) and il*CB (brutto).
     // Also search case-insensitively for alternative netto columns (Wn, Wartość, etc.)
     const colNamesLower = new Set(columns.map((c) => c.name.toLowerCase()));
+    const hasIl = colNamesLower.has("il");
     const hasCN = colNamesLower.has("cn");
     const hasCB = colNamesLower.has("cb");
     const hasWn = colNamesLower.has("wn");
     const hasWb = colNamesLower.has("wb");
+    const hasKoszt = colNamesLower.has("koszt");
+    const hasNrR = colNamesLower.has("nrr");
+    const hasData = colNamesLower.has("data");
+    const hasTyp = colNamesLower.has("typ");
 
-    const extras: string[] = [];
-    extras.push(hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
-    extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
-    extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
+    let monthlyRows: mysql.RowDataPacket[] = [];
+    if (hasData && hasTyp && hasNrR) {
+      const extras: string[] = [];
+      extras.push(hasIl && hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
+      extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
+      extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
+      extras.push(hasKoszt ? `ROUND(SUM(Koszt), 2) AS totalKoszt` : `NULL AS totalKoszt`);
 
-    const [monthlyRows] = await db.query<mysql.RowDataPacket[]>(
-      `SELECT LEFT(Data, 4) AS rok,
-              SUBSTRING(Data, 5, 2) AS miesiac,
-              COUNT(DISTINCT NrR) AS cnt,
-              ${hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
-              ${extras.join(", ")}
-       FROM ${table}
-       WHERE Typ = 'WZ' AND Data >= ?
-       GROUP BY rok, miesiac
-       ORDER BY rok, miesiac`,
-      [sinceDwy]
-    );
+      const [rows] = await db.query<mysql.RowDataPacket[]>(
+        `SELECT LEFT(Data, 4) AS rok,
+                SUBSTRING(Data, 5, 2) AS miesiac,
+                COUNT(DISTINCT NrR) AS cnt,
+                ${hasIl && hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
+                ${extras.join(", ")}
+         FROM ${table}
+         WHERE Typ = 'WZ' AND Data >= ?
+         GROUP BY rok, miesiac
+         ORDER BY rok, miesiac`,
+        [sinceDwy]
+      );
+      monthlyRows = rows;
+    }
 
     out.push({
       source,
@@ -375,81 +390,11 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
         totalCn: r.totalCn == null ? null : Number(r.totalCn),
         totalWn: r.totalWn == null ? null : Number(r.totalWn),
         totalWb: r.totalWb == null ? null : Number(r.totalWb),
+        totalKoszt: r.totalKoszt == null ? null : Number(r.totalKoszt),
       })),
     });
   }
 
-  return out;
-}
-
-export interface IbiznesTableInfo {
-  name: string;
-  columns: Array<{ name: string; type: string }>;
-  rowCount: number;
-  sampleRow: Record<string, any> | null;
-}
-
-/**
- * Lists iBiznes tables related to documents and their columns. Used to find
- * the cost column (which lives on the WZ header, not in spec/lines table).
- * Matches tables with names containing 'spka', 'firma', 'kazog', 'dok', 'wz'.
- */
-export async function fetchIbiznesTableList(): Promise<IbiznesTableInfo[]> {
-  const db = getPool();
-  const [tableRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT TABLE_NAME AS name
-     FROM INFORMATION_SCHEMA.TABLES
-     WHERE TABLE_SCHEMA = DATABASE()
-       AND (
-         TABLE_NAME LIKE '%spka%'
-         OR TABLE_NAME LIKE '%firma%'
-         OR TABLE_NAME LIKE '%kazog%'
-         OR TABLE_NAME LIKE '%dok%'
-         OR TABLE_NAME LIKE '%wz%'
-       )
-     ORDER BY TABLE_NAME`
-  );
-
-  const out: IbiznesTableInfo[] = [];
-  for (const row of tableRows as any[]) {
-    const tableName = String(row.name);
-    const [colRows] = await db.query<mysql.RowDataPacket[]>(
-      `SELECT COLUMN_NAME AS name, DATA_TYPE AS type
-       FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_NAME = ?
-       ORDER BY ORDINAL_POSITION`,
-      [tableName]
-    );
-    const columns = (colRows as any[]).map((r) => ({
-      name: String(r.name),
-      type: String(r.type),
-    }));
-
-    let rowCount = 0;
-    let sampleRow: Record<string, any> | null = null;
-    try {
-      const [cntRows] = await db.query<mysql.RowDataPacket[]>(
-        `SELECT COUNT(*) AS cnt FROM \`${tableName}\``
-      );
-      rowCount = Number((cntRows as any[])[0]?.cnt || 0);
-      if (rowCount > 0) {
-        const [sampleRows] = await db.query<mysql.RowDataPacket[]>(
-          `SELECT * FROM \`${tableName}\` LIMIT 1`
-        );
-        const raw = (sampleRows as any[])[0];
-        if (raw) {
-          sampleRow = {};
-          for (const k of Object.keys(raw)) {
-            const v = raw[k];
-            sampleRow[k] = v instanceof Date ? v.toISOString() : v == null ? null : String(v).slice(0, 100);
-          }
-        }
-      }
-    } catch {
-      // skip tables we can't count (permissions, etc.)
-    }
-    out.push({ name: tableName, columns, rowCount, sampleRow });
-  }
   return out;
 }
 
