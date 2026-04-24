@@ -212,6 +212,7 @@ export async function migrateDatabase() {
       UNIQUE(nr_r, source)
     );
     ALTER TABLE ibiznes_invoices ALTER COLUMN nip SET DEFAULT '';
+    ALTER TABLE ibiznes_invoices ADD COLUMN IF NOT EXISTS koszt_zakupu DECIMAL;
 
     CREATE TABLE IF NOT EXISTS ibiznes_sync_log (
       id SERIAL PRIMARY KEY,

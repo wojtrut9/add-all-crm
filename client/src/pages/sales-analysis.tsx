@@ -362,30 +362,72 @@ export default function SalesAnalysisPage() {
   const groups: any[] = data?.groups || [];
   const prevMiesiac = data?.prevMiesiac;
   const prevRok = data?.prevRok;
-  const totalSales = groups.reduce((s: number, g: any) => s + Number(g.sprzedaz || 0), 0);
-  const totalCost = groups.reduce((s: number, g: any) => s + Number(g.koszt || 0), 0);
-  const totalProfit = groups.reduce((s: number, g: any) => s + Number(g.zysk || 0), 0);
+
+  const unmatchedSales = Number(data?.unmatchedSales || 0);
+  const unmatchedCostRaw = Number(data?.unmatchedCost || 0);
+  const unmatchedCount = Number(data?.unmatchedCount || 0);
+  const unmatchedPrevSales = Number(data?.unmatchedPrevSales || 0);
+  const unmatchedPrevCost = Number(data?.unmatchedPrevCost || 0);
+
+  // Per-client totals from groups (do NOT include unmatched — unknown client).
+  const matchedSales = groups.reduce((s: number, g: any) => s + Number(g.sprzedaz || 0), 0);
+  const matchedCost = groups.reduce((s: number, g: any) => s + Number(g.koszt || 0), 0);
+  const matchedProfit = groups.reduce((s: number, g: any) => s + Number(g.zysk || 0), 0);
+
+  // Unmatched koszt/zysk comes from actual iBiznes cost (SUM(il*Cz)).
+  // Fallback to flat 35.3% if iBiznes didn't report a cost for these rows.
+  const FALLBACK_MARGIN = 0.353;
+  const unmatchedCost = unmatchedCostRaw > 0 ? unmatchedCostRaw : unmatchedSales * (1 - FALLBACK_MARGIN);
+  const unmatchedProfit = unmatchedSales - unmatchedCost;
+  const unmatchedMarginPct = unmatchedSales > 0 ? (unmatchedProfit / unmatchedSales * 100) : 0;
+
+  const totalSales = matchedSales + unmatchedSales;
+  const totalCost = matchedCost + unmatchedCost;
+  const totalProfit = matchedProfit + unmatchedProfit;
   const totalMargin = totalSales > 0 ? (totalProfit / totalSales * 100) : 0;
+
   const totalKlientow = groups.reduce((s: number, g: any) => s + (g.klientow || 0), 0);
   const totalAktywnych = groups.reduce((s: number, g: any) => s + (g.aktywnych || 0), 0);
   const totalPrev = groups.reduce((s: number, g: any) => s + Number(g.prevSprzedaz || 0), 0);
   const totalZmiana = totalPrev > 0 ? ((totalSales - totalPrev) / totalPrev * 100) : 0;
 
-  const prevTotalSales = Number(data?.prevTotalSales || 0);
-  const prevTotalCost = Number(data?.prevTotalCost || 0);
-  const prevTotalProfit = Number(data?.prevTotalProfit || 0);
-  const prevTotalMarza = Number(data?.prevTotalMarza || 0);
+  const unmatchedPrevCostFinal = unmatchedPrevCost > 0
+    ? unmatchedPrevCost
+    : unmatchedPrevSales * (1 - FALLBACK_MARGIN);
+  const unmatchedPrevProfit = unmatchedPrevSales - unmatchedPrevCostFinal;
 
-  const prevMonthLabel = prevMiesiac ? `${MONTHS_SHORT[prevMiesiac - 1]} ${String(prevRok).slice(2)}` : "";
+  // Prev month totals (already scaled on backend) with unmatched included.
+  const prevTotalSales = Number(data?.prevTotalSales || 0) + unmatchedPrevSales;
+  const prevTotalCost = Number(data?.prevTotalCost || 0) + unmatchedPrevCostFinal;
+  const prevTotalProfit = Number(data?.prevTotalProfit || 0) + unmatchedPrevProfit;
+  const prevTotalMarza = Number(data?.prevTotalMarza || 0);
+  const dniRoboczeMiesiac = Number(data?.dniRoboczeMiesiac || 0);
+  const dniRoboczeMiniete = Number(data?.dniRoboczeMiniete || 0);
+  const prevCompareDays = Number(data?.prevCompareDays || 0);
+  const prevTotalWorkdays = Number(data?.prevTotalWorkdays || 0);
+  const isCurrentMonth = Boolean(data?.isCurrentMonth);
+
+  const prevMonthLabel = prevMiesiac
+    ? (isCurrentMonth
+        ? `${MONTHS_SHORT[prevMiesiac - 1]} ${String(prevRok).slice(2)} (${prevCompareDays}/${prevTotalWorkdays} dni)`
+        : `${MONTHS_SHORT[prevMiesiac - 1]} ${String(prevRok).slice(2)}`)
+    : "";
 
   const pieThreshold = 3;
-  const pieRaw = groups
-    .filter((g: any) => Number(g.sprzedaz || 0) > 0)
-    .map((g: any) => ({
-      name: g.grupa,
-      value: Number(g.sprzedaz || 0),
-      pct: totalSales > 0 ? (Number(g.sprzedaz || 0) / totalSales * 100) : 0,
-    }));
+  const pieRaw = [
+    ...groups
+      .filter((g: any) => Number(g.sprzedaz || 0) > 0)
+      .map((g: any) => ({
+        name: g.grupa,
+        value: Number(g.sprzedaz || 0),
+        pct: totalSales > 0 ? (Number(g.sprzedaz || 0) / totalSales * 100) : 0,
+      })),
+    ...(unmatchedSales > 0 ? [{
+      name: "Spoza bazy",
+      value: unmatchedSales,
+      pct: totalSales > 0 ? (unmatchedSales / totalSales * 100) : 0,
+    }] : []),
+  ];
 
   const pieMain = pieRaw.filter(p => p.pct >= pieThreshold);
   const pieInne = pieRaw.filter(p => p.pct < pieThreshold);
@@ -394,11 +436,18 @@ export default function SalesAnalysisPage() {
     ? [...pieMain, { name: "Inne", value: pieInneTotal, pct: totalSales > 0 ? (pieInneTotal / totalSales * 100) : 0 }]
     : pieMain;
 
-  const barData = groups.map((g: any) => ({
-    grupa: g.grupa.length > 15 ? g.grupa.replace("Weryfikacja ", "Wer. ") : g.grupa,
-    sprzedaz: Number(g.sprzedaz || 0),
-    prevSprzedaz: Number(g.prevSprzedaz || 0),
-  }));
+  const barData = [
+    ...groups.map((g: any) => ({
+      grupa: g.grupa.length > 15 ? g.grupa.replace("Weryfikacja ", "Wer. ") : g.grupa,
+      sprzedaz: Number(g.sprzedaz || 0),
+      prevSprzedaz: Number(g.prevSprzedaz || 0),
+    })),
+    ...(unmatchedSales > 0 || unmatchedPrevSales > 0 ? [{
+      grupa: "Spoza bazy",
+      sprzedaz: unmatchedSales,
+      prevSprzedaz: unmatchedPrevSales,
+    }] : []),
+  ];
 
   const renderPieLabel = ({ name, pct }: any) => {
     const shortName = name.length > 12 ? name.replace("Weryfikacja ", "W.").replace("Premium", "P.").replace("Standard", "St.") : name;
@@ -412,6 +461,9 @@ export default function SalesAnalysisPage() {
           <h1 className="text-2xl font-bold" data-testid="text-page-title">Analiza sprzedazy</h1>
           <p className="text-sm text-muted-foreground">
             {MONTHS[miesiac - 1]} {rok} | Klientow aktywnych: {totalAktywnych}
+            {isCurrentMonth && dniRoboczeMiesiac > 0 && (
+              <> | Dni robocze: {dniRoboczeMiniete}/{dniRoboczeMiesiac}</>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -450,6 +502,22 @@ export default function SalesAnalysisPage() {
         <KpiCard label="Zysk" value={totalProfit} prevValue={prevTotalProfit} prevLabel={prevMonthLabel} />
         <KpiCard label="Marza" value={totalMargin} prevValue={prevTotalMarza} prevLabel={prevMonthLabel} isMarza />
       </div>
+
+      {unmatchedSales > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="py-4 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="text-sm font-medium">Sprzedaz do klientow spoza bazy CRM</div>
+              <div className="text-xs text-muted-foreground">
+                WZ z iBiznes z nieznanymi NIP-ami ({unmatchedCount} dokumentow). Nie wchodzi w analize per klient.
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-amber-600">
+              {fmtPLN(unmatchedSales)}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
@@ -546,6 +614,22 @@ export default function SalesAnalysisPage() {
                     </TableRow>
                   );
                 })}
+                {unmatchedSales > 0 && (
+                  <TableRow className="bg-amber-500/5">
+                    <TableCell className="font-medium italic text-amber-700">
+                      <div className="flex items-center gap-1 pl-5">
+                        Spoza bazy (nieznane NIP)
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground italic">— / {unmatchedCount}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtPLN(unmatchedSales)}</TableCell>
+                    <TableCell className="text-right">{totalSales > 0 ? ((unmatchedSales / totalSales) * 100).toFixed(1) : "0"}%</TableCell>
+                    <TableCell className="text-right">{fmtPLN(unmatchedCost)}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtPLN(unmatchedProfit)}</TableCell>
+                    <TableCell className="text-right">{fmtMarza(unmatchedMarginPct)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground italic">—</TableCell>
+                  </TableRow>
+                )}
                 <TableRow className="bg-muted/50">
                   <TableCell className="font-bold text-base">RAZEM</TableCell>
                   <TableCell className="text-right font-bold text-base">{totalAktywnych} / {totalKlientow}</TableCell>

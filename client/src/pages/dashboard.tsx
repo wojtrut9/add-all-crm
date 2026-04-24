@@ -83,6 +83,15 @@ function MonthlySalesWidget({ stats, isHandlowiec, userName, planData }: { stats
   const brakuje = Math.max(0, monthPlan - monthSales);
   const nadwyzka = Math.max(0, monthSales - monthPlan);
 
+  // Proportional comparison with previous month
+  const prevMonthSalesScaled = Number(stats?.prevMonthSalesScaled || 0);
+  const prevCompareDays = Number(stats?.prevCompareDays || 0);
+  const prevTotalWorkdays = Number(stats?.prevTotalWorkdays || 0);
+  const prevMonthNum = Number(stats?.prevMonthNum || 0);
+  const prevMonthChange = stats?.prevMonthChange;
+  const prevMonthName = prevMonthNum > 0 ? POLISH_MONTHS[prevMonthNum - 1] : "";
+  const prevChangePositive = prevMonthChange !== null && prevMonthChange !== undefined && prevMonthChange >= 0;
+
   return (
     <Card
       className="border-2"
@@ -148,6 +157,29 @@ function MonthlySalesWidget({ stats, isHandlowiec, userName, planData }: { stats
           <p>Dzien {workingDaysPassed}/{totalWorkdays} — powinno byc: {formatPLN(dailyTarget * workingDaysPassed)}</p>
           <p className="mt-1">Tempo: {formatPLN(effectiveTempo)}/dzien | Prognoza: {formatPLN(effectivePrognoza)}</p>
         </div>
+
+        {prevMonthSalesScaled > 0 && !isHandlowiec && (
+          <div
+            className="text-xs text-center p-2 rounded-md"
+            style={{
+              backgroundColor: "hsl(210 40% 94%)",
+              color: "hsl(210 30% 25%)",
+            }}
+            data-testid="text-prev-month-compare"
+          >
+            <p>
+              vs {prevMonthName} ({prevCompareDays}/{prevTotalWorkdays} dni): {formatPLN(prevMonthSalesScaled)}
+              {prevMonthChange !== null && prevMonthChange !== undefined && (
+                <span
+                  className="ml-2 font-semibold"
+                  style={{ color: prevChangePositive ? "hsl(142 76% 30%)" : "hsl(0 84% 40%)" }}
+                >
+                  {prevChangePositive ? "↑" : "↓"} {Math.abs(prevMonthChange).toFixed(1)}%
+                </span>
+              )}
+            </p>
+          </div>
+        )}
 
         {isHandlowiec && monthPlan > 0 && (
           <div
@@ -449,6 +481,22 @@ export default function Dashboard() {
           color={stats?.alertClients > 0 ? "bg-destructive" : "bg-muted"}
         />
       </div>
+
+      {isAdmin && Number(stats?.unmatchedSales || 0) > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="py-4 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="text-sm font-medium">Sprzedaz do klientow spoza bazy CRM</div>
+              <div className="text-xs text-muted-foreground">
+                WZ z iBiznes z nieznanymi NIP-ami ({stats.unmatchedCount} dokumentow w tym miesiacu)
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-amber-600">
+              {formatPLN(Number(stats.unmatchedSales))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {(isHandlowiec || isAdmin) && todayContacts && todayContacts.length > 0 && (
         <Card>

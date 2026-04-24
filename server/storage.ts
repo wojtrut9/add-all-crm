@@ -404,6 +404,38 @@ export class DatabaseStorage implements IStorage {
     const prevMiesiac = miesiac === 1 ? 12 : miesiac - 1;
     const prevRok = miesiac === 1 ? rok - 1 : rok;
 
+    // Compute scaling factor for prev-month comparison:
+    // If current month is still in progress, prev-month values are scaled down
+    // to match the same number of business days that have elapsed so far.
+    const now = new Date();
+    const nowYear = now.getFullYear();
+    const nowMonth = now.getMonth() + 1;
+    const isCurrentMonth = rok === nowYear && miesiac === nowMonth;
+
+    const countWorkdays = (y: number, m: number, upToDay: number) => {
+      let count = 0;
+      for (let d = 1; d <= upToDay; d++) {
+        const dow = new Date(y, m - 1, d).getDay();
+        if (dow >= 1 && dow <= 5) count++;
+      }
+      return count;
+    };
+
+    const daysInMonth = new Date(rok, miesiac, 0).getDate();
+    const dniRoboczeMiesiac = countWorkdays(rok, miesiac, daysInMonth);
+    const dniRoboczeMiniete = isCurrentMonth
+      ? countWorkdays(rok, miesiac, now.getDate())
+      : dniRoboczeMiesiac;
+
+    const daysInPrevMonth = new Date(prevRok, prevMiesiac, 0).getDate();
+    const prevTotalWorkdays = countWorkdays(prevRok, prevMiesiac, daysInPrevMonth);
+    // For current month: scale prev so we compare the same number of business days.
+    // Cap at prev month's total workdays (e.g. if Feb only has 20 wd and April already passed 20).
+    const prevCompareDays = isCurrentMonth
+      ? Math.min(dniRoboczeMiniete, prevTotalWorkdays)
+      : prevTotalWorkdays;
+    const prevScale = prevTotalWorkdays > 0 ? prevCompareDays / prevTotalWorkdays : 1;
+
     const salesData = await db
       .select({
         clientId: clientSales.clientId,
@@ -429,9 +461,9 @@ export class DatabaseStorage implements IStorage {
     const prevSalesMap = new Map<number, { sprzedaz: number; koszt: number; zysk: number; marza: number }>();
     for (const ps of prevSalesData) {
       prevSalesMap.set(ps.clientId, {
-        sprzedaz: Number(ps.sprzedaz || 0),
-        koszt: Number(ps.koszt || 0),
-        zysk: Number(ps.zysk || 0),
+        sprzedaz: Number(ps.sprzedaz || 0) * prevScale,
+        koszt: Number(ps.koszt || 0) * prevScale,
+        zysk: Number(ps.zysk || 0) * prevScale,
         marza: Number(ps.marza || 0),
       });
     }
@@ -545,7 +577,51 @@ export class DatabaseStorage implements IStorage {
     const prevTotalProfit = groups.reduce((s, g) => s + g.prevZysk, 0);
     const prevTotalMarza = prevTotalSales > 0 ? (prevTotalProfit / prevTotalSales * 100) : 0;
 
-    return { groups, prevMiesiac, prevRok, prevTotalSales, prevTotalCost, prevTotalProfit, prevTotalMarza };
+    // Unmatched sales: WZ from iBiznes without a matching client in CRM
+    // (unknown NIP or missing Alias mapping). Shown as a separate metric so user can
+    // quickly see how much revenue is "orphaned" from client-level analysis.
+    const unmatchedRows = await db.execute(sql`
+      SELECT
+        COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+        COALESCE(SUM(CAST(COALESCE(koszt_zakupu, 0) AS NUMERIC)), 0) AS total_cost,
+        COUNT(*) AS count
+      FROM ibiznes_invoices
+      WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NULL
+    `);
+    const unmatchedSales = Number((unmatchedRows.rows[0] as any)?.total || 0);
+    const unmatchedCost = Number((unmatchedRows.rows[0] as any)?.total_cost || 0);
+    const unmatchedCount = Number((unmatchedRows.rows[0] as any)?.count || 0);
+
+    // Previous month unmatched (for scaled comparison)
+    const unmatchedPrevRows = await db.execute(sql`
+      SELECT
+        COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+        COALESCE(SUM(CAST(COALESCE(koszt_zakupu, 0) AS NUMERIC)), 0) AS total_cost
+      FROM ibiznes_invoices
+      WHERE rok = ${prevRok} AND miesiac = ${prevMiesiac} AND client_id IS NULL
+    `);
+    const unmatchedPrevSales = Number((unmatchedPrevRows.rows[0] as any)?.total || 0) * prevScale;
+    const unmatchedPrevCost = Number((unmatchedPrevRows.rows[0] as any)?.total_cost || 0) * prevScale;
+
+    return {
+      groups,
+      prevMiesiac,
+      prevRok,
+      prevTotalSales,
+      prevTotalCost,
+      prevTotalProfit,
+      prevTotalMarza,
+      unmatchedSales,
+      unmatchedCost,
+      unmatchedCount,
+      unmatchedPrevSales,
+      unmatchedPrevCost,
+      dniRoboczeMiesiac,
+      dniRoboczeMiniete,
+      prevCompareDays,
+      prevTotalWorkdays,
+      isCurrentMonth,
+    };
   }
 
   async getSalesDashboard(): Promise<any> {
@@ -1107,7 +1183,10 @@ export class DatabaseStorage implements IStorage {
     const prev3Month = prev2Month === 1 ? 12 : prev2Month - 1;
     const prev3Year = prev2Month === 1 ? prev2Year - 1 : prev2Year;
 
-    const allClients = await db.select().from(clients).where(eq(clients.aktywny, true));
+    // Take ALL clients that had sales (ignore aktywny flag).
+    // Sales can come from iBiznes WZ for clients not yet flagged aktywny in CRM.
+    const allClients = await db.select().from(clients);
+    const clientIdSet = new Set(allClients.map(c => c.id));
 
     const prevSales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, prevYear), eq(clientSales.miesiac, prevMonth)));
@@ -1121,17 +1200,23 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(clientSales.rok, prev3Year), eq(clientSales.miesiac, prev3Month)));
     const prev3Map = new Map(prev3Sales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
 
+    // Build the set of candidate clientIds: anyone with sales in prev, prev2 or prev3 months.
+    const candidateClientIds = new Set<number>();
+    for (const s of prevSales) if (clientIdSet.has(s.clientId)) candidateClientIds.add(s.clientId);
+    for (const s of prev2Sales) if (clientIdSet.has(s.clientId)) candidateClientIds.add(s.clientId);
+    for (const s of prev3Sales) if (clientIdSet.has(s.clientId)) candidateClientIds.add(s.clientId);
+
     await db.delete(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
 
     let generated = 0;
     let skipped = 0;
 
-    for (const client of allClients) {
-      let baseSales = prevMap.get(client.id) || 0;
+    for (const clientId of candidateClientIds) {
+      let baseSales = prevMap.get(clientId) || 0;
 
       if (baseSales === 0) {
-        const vals = [prev2Map.get(client.id) || 0, prev3Map.get(client.id) || 0].filter(v => v > 0);
+        const vals = [prev2Map.get(clientId) || 0, prev3Map.get(clientId) || 0].filter(v => v > 0);
         if (vals.length > 0) {
           baseSales = vals.reduce((a, b) => a + b, 0) / vals.length;
         }
@@ -1147,7 +1232,7 @@ export class DatabaseStorage implements IStorage {
 
       for (let tydzien = 1; tydzien <= 4; tydzien++) {
         await db.insert(clientSalesWeekly).values({
-          clientId: client.id,
+          clientId,
           rok,
           miesiac,
           tydzien,
@@ -1242,6 +1327,19 @@ export class DatabaseStorage implements IStorage {
     const allMonthContacts = await db.select().from(contacts)
       .where(and(gte(contacts.data, monthStart), lte(contacts.data, monthEnd)));
 
+    // Previous month's sales (for proportional comparison on dashboard)
+    const prevMonthNum = month === 0 ? 12 : month;
+    const prevYearNum = month === 0 ? year - 1 : year;
+    const prevMonthSalesRows = await db.select().from(clientSales)
+      .where(and(eq(clientSales.rok, prevYearNum), eq(clientSales.miesiac, prevMonthNum)));
+    const filteredPrevSalesRows = opiekun && rola === "handlowiec"
+      ? prevMonthSalesRows.filter(r => {
+          const client = allClients.find(c => c.id === r.clientId);
+          return client?.opiekun === opiekun;
+        })
+      : prevMonthSalesRows;
+    const prevMonthSalesTotal = filteredPrevSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+
     // monthSales: prefer iBiznes-aggregated client_sales; fall back to contacts.kwota when no data
     const monthSalesRows = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, year), eq(clientSales.miesiac, month + 1)));
@@ -1252,11 +1350,9 @@ export class DatabaseStorage implements IStorage {
         })
       : monthSalesRows;
     const ibiznesMonthSales = filteredSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
-    const monthSales = ibiznesMonthSales > 0
-      ? ibiznesMonthSales
-      : allMonthContacts
-          .filter(c => c.status === "Zamowil")
-          .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+    const contactsMonthSales = allMonthContacts
+      .filter(c => c.status === "Zamowil")
+      .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
     const countWorkdays = (y: number, m: number, upToDay: number) => {
       let count = 0;
@@ -1270,10 +1366,48 @@ export class DatabaseStorage implements IStorage {
     const totalWorkdays = countWorkdays(year, month, daysInMonth);
     const workingDaysPassed = countWorkdays(year, month, now.getDate());
     const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
+
+    // Unmatched sales for current month (WZ without client in CRM).
+    // Only added for admin/non-handlowiec views (handlowcy see only their own clients).
+    const unmatchedRows = await db.execute(sql`
+      SELECT
+        COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+        COUNT(*) AS count
+      FROM ibiznes_invoices
+      WHERE rok = ${year} AND miesiac = ${month + 1} AND client_id IS NULL
+    `);
+    const unmatchedSales = Number((unmatchedRows.rows[0] as any)?.total || 0);
+    const unmatchedCount = Number((unmatchedRows.rows[0] as any)?.count || 0);
+
+    // monthSales: prefer iBiznes (clients + unmatched WZ for admin view); fall back to contacts.kwota when no data
+    const isHandlowiecView = opiekun && rola === "handlowiec";
+    const monthSales = ibiznesMonthSales > 0
+      ? ibiznesMonthSales + (isHandlowiecView ? 0 : unmatchedSales)
+      : contactsMonthSales;
+
     const expectedSales = dailyTarget * workingDaysPassed;
     const tempo = workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0;
     const prognoza = tempo * totalWorkdays;
     const prognozaOnTrack = prognoza >= monthPlan;
+
+    // Previous month unmatched (for proportional comparison)
+    const unmatchedPrevRows = await db.execute(sql`
+      SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${prevYearNum} AND miesiac = ${prevMonthNum} AND client_id IS NULL
+    `);
+    const unmatchedPrevTotal = Number((unmatchedPrevRows.rows[0] as any)?.total || 0);
+
+    // Proportional prev-month comparison: scale prev total by same working-day ratio.
+    const prevDaysInMonth = new Date(prevYearNum, prevMonthNum, 0).getDate();
+    const prevTotalWorkdays = countWorkdays(prevYearNum, prevMonthNum - 1, prevDaysInMonth);
+    const prevCompareDays = Math.min(workingDaysPassed, prevTotalWorkdays);
+    const prevScale = prevTotalWorkdays > 0 ? prevCompareDays / prevTotalWorkdays : 0;
+    const prevTotalWithUnmatched = prevMonthSalesTotal + (isHandlowiecView ? 0 : unmatchedPrevTotal);
+    const prevMonthSalesScaled = prevTotalWithUnmatched * prevScale;
+    const prevMonthChange = prevMonthSalesScaled > 0
+      ? ((monthSales - prevMonthSalesScaled) / prevMonthSalesScaled) * 100
+      : null;
 
     const uniqueOrderedClients = new Set(allMonthContacts.filter(c => c.status === "Zamowil").map(c => c.clientId)).size;
 
@@ -1382,6 +1516,15 @@ export class DatabaseStorage implements IStorage {
       prognoza,
       prognozaOnTrack,
       uniqueOrderedClients,
+      prevMonthSalesTotal,
+      prevMonthSalesScaled,
+      prevMonthChange,
+      prevCompareDays,
+      prevTotalWorkdays,
+      prevMonthNum,
+      prevYearNum,
+      unmatchedSales,
+      unmatchedCount,
       weeklyOrders,
       handlowcy,
     };
@@ -1706,9 +1849,21 @@ export class DatabaseStorage implements IStorage {
     }
     const allMonthSalesRows = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
-    const sumaRealizacja = allMonthSalesRows
+    const matchedRealizacja = allMonthSalesRows
       .filter(r => !opiekunClientIds || opiekunClientIds.has(r.clientId))
       .reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+    // For admin/general view include WZ without a matched client (unknown NIP).
+    // For opiekun-specific view we cannot attribute them, so keep only matched.
+    let unmatchedRealizacja = 0;
+    if (!opiekunClientIds) {
+      const unmatchedRow = await db.execute(sql`
+        SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+        FROM ibiznes_invoices
+        WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NULL
+      `);
+      unmatchedRealizacja = Number((unmatchedRow.rows[0] as any)?.total || 0);
+    }
+    const sumaRealizacja = matchedRealizacja + unmatchedRealizacja;
     const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
     const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
 
