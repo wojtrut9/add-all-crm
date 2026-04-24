@@ -382,6 +382,77 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
   return out;
 }
 
+export interface IbiznesTableInfo {
+  name: string;
+  columns: Array<{ name: string; type: string }>;
+  rowCount: number;
+  sampleRow: Record<string, any> | null;
+}
+
+/**
+ * Lists iBiznes tables related to documents and their columns. Used to find
+ * the cost column (which lives on the WZ header, not in spec/lines table).
+ * Matches tables with names containing 'spka', 'firma', 'kazog', 'dok', 'wz'.
+ */
+export async function fetchIbiznesTableList(): Promise<IbiznesTableInfo[]> {
+  const db = getPool();
+  const [tableRows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT TABLE_NAME AS name
+     FROM INFORMATION_SCHEMA.TABLES
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND (
+         TABLE_NAME LIKE '%spka%'
+         OR TABLE_NAME LIKE '%firma%'
+         OR TABLE_NAME LIKE '%kazog%'
+         OR TABLE_NAME LIKE '%dok%'
+         OR TABLE_NAME LIKE '%wz%'
+       )
+     ORDER BY TABLE_NAME`
+  );
+
+  const out: IbiznesTableInfo[] = [];
+  for (const row of tableRows as any[]) {
+    const tableName = String(row.name);
+    const [colRows] = await db.query<mysql.RowDataPacket[]>(
+      `SELECT COLUMN_NAME AS name, DATA_TYPE AS type
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_NAME = ?
+       ORDER BY ORDINAL_POSITION`,
+      [tableName]
+    );
+    const columns = (colRows as any[]).map((r) => ({
+      name: String(r.name),
+      type: String(r.type),
+    }));
+
+    let rowCount = 0;
+    let sampleRow: Record<string, any> | null = null;
+    try {
+      const [cntRows] = await db.query<mysql.RowDataPacket[]>(
+        `SELECT COUNT(*) AS cnt FROM \`${tableName}\``
+      );
+      rowCount = Number((cntRows as any[])[0]?.cnt || 0);
+      if (rowCount > 0) {
+        const [sampleRows] = await db.query<mysql.RowDataPacket[]>(
+          `SELECT * FROM \`${tableName}\` LIMIT 1`
+        );
+        const raw = (sampleRows as any[])[0];
+        if (raw) {
+          sampleRow = {};
+          for (const k of Object.keys(raw)) {
+            const v = raw[k];
+            sampleRow[k] = v instanceof Date ? v.toISOString() : v == null ? null : String(v).slice(0, 100);
+          }
+        }
+      }
+    } catch {
+      // skip tables we can't count (permissions, etc.)
+    }
+    out.push({ name: tableName, columns, rowCount, sampleRow });
+  }
+  return out;
+}
+
 export interface IbiznesAuditRow {
   rok: number;
   miesiac: number;
