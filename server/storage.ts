@@ -583,20 +583,25 @@ export class DatabaseStorage implements IStorage {
     const unmatchedRows = await db.execute(sql`
       SELECT
         COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+        COALESCE(SUM(CAST(COALESCE(koszt_zakupu, 0) AS NUMERIC)), 0) AS total_cost,
         COUNT(*) AS count
       FROM ibiznes_invoices
       WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NULL
     `);
     const unmatchedSales = Number((unmatchedRows.rows[0] as any)?.total || 0);
+    const unmatchedCost = Number((unmatchedRows.rows[0] as any)?.total_cost || 0);
     const unmatchedCount = Number((unmatchedRows.rows[0] as any)?.count || 0);
 
     // Previous month unmatched (for scaled comparison)
     const unmatchedPrevRows = await db.execute(sql`
-      SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      SELECT
+        COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+        COALESCE(SUM(CAST(COALESCE(koszt_zakupu, 0) AS NUMERIC)), 0) AS total_cost
       FROM ibiznes_invoices
       WHERE rok = ${prevRok} AND miesiac = ${prevMiesiac} AND client_id IS NULL
     `);
     const unmatchedPrevSales = Number((unmatchedPrevRows.rows[0] as any)?.total || 0) * prevScale;
+    const unmatchedPrevCost = Number((unmatchedPrevRows.rows[0] as any)?.total_cost || 0) * prevScale;
 
     return {
       groups,
@@ -607,8 +612,10 @@ export class DatabaseStorage implements IStorage {
       prevTotalProfit,
       prevTotalMarza,
       unmatchedSales,
+      unmatchedCost,
       unmatchedCount,
       unmatchedPrevSales,
+      unmatchedPrevCost,
       dniRoboczeMiesiac,
       dniRoboczeMiniete,
       prevCompareDays,

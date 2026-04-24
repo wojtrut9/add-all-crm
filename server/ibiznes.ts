@@ -5,7 +5,10 @@ export interface IbiznesInvoiceRow {
   alias: string | null;
   nip: string;
   dataWyst: string; // "yyyy-MM-dd"
+  /** Net sales value (SUM(il * CN)) — misleading legacy name, kept for compat. */
   koszt: number;
+  /** Actual purchase cost (SUM(il * Cz)) — real cost from iBiznes. */
+  kosztZakupu: number;
   source: "sp_zoo" | "firma";
 }
 
@@ -58,7 +61,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
   // CN = Cena Netto (confirmed by diagnostics: CB = CN * (1 + VAT%)).
   // Filter: Anul != 'T' (nie-anulowane), Akt = 'T' (aktywne/niezarchiwizowane).
   const [spZooRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT x.NrR, x.Alias, x.Data, x.Koszt,
+    `SELECT x.NrR, x.Alias, x.Data, x.Koszt, x.KosztZakupu,
             (SELECT k.NIP FROM addallspkazogrklienci k
              WHERE k.Alias = x.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
              ORDER BY k.NIP LIMIT 1) AS NIP
@@ -66,7 +69,8 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
        SELECT NrR,
               MAX(Alias) AS Alias,
               MAX(Data) AS Data,
-              ROUND(SUM(il * CN), 2) AS Koszt
+              ROUND(SUM(il * CN), 2) AS Koszt,
+              ROUND(SUM(il * Cz), 2) AS KosztZakupu
        FROM addallspkazogrspec
        WHERE Typ = 'WZ'
          AND (Anul IS NULL OR Anul <> 'T')
@@ -80,7 +84,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
 
   // JDG: same approach for firmaspec
   const [firmaRows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT x.NrR, x.Alias, x.Data, x.Koszt,
+    `SELECT x.NrR, x.Alias, x.Data, x.Koszt, x.KosztZakupu,
             (SELECT k.NIP FROM firmaklienci k
              WHERE k.Alias = x.Alias AND k.NIP IS NOT NULL AND k.NIP <> ''
              ORDER BY k.NIP LIMIT 1) AS NIP
@@ -88,7 +92,8 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
        SELECT NrR,
               MAX(Alias) AS Alias,
               MAX(Data) AS Data,
-              ROUND(SUM(il * CN), 2) AS Koszt
+              ROUND(SUM(il * CN), 2) AS Koszt,
+              ROUND(SUM(il * Cz), 2) AS KosztZakupu
        FROM firmaspec
        WHERE Typ = 'WZ'
          AND (Anul IS NULL OR Anul <> 'T')
@@ -115,6 +120,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
       nip,
       dataWyst: date,
       koszt: Number(row.Koszt) || 0,
+      kosztZakupu: Number(row.KosztZakupu) || 0,
       source: "sp_zoo",
     });
   }
@@ -129,6 +135,7 @@ export async function fetchIbiznesInvoices(sinceDate: string): Promise<IbiznesIn
       nip,
       dataWyst: date,
       koszt: Number(row.Koszt) || 0,
+      kosztZakupu: Number(row.KosztZakupu) || 0,
       source: "firma",
     });
   }
@@ -289,6 +296,7 @@ export interface IbiznesSchemaInfo {
     totalWn: number | null;
     totalWb: number | null;
     totalKoszt: number | null;
+    totalCz: number | null;
   }>;
 }
 
@@ -353,6 +361,7 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
         const hasWn = colNamesLower.has("wn");
         const hasWb = colNamesLower.has("wb");
         const hasKoszt = colNamesLower.has("koszt");
+        const hasCz = colNamesLower.has("cz");
         const hasNrR = colNamesLower.has("nrr");
         const hasData = colNamesLower.has("data");
         const hasTyp = colNamesLower.has("typ");
@@ -387,6 +396,7 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
               extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
               extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
               extras.push(hasKoszt ? `ROUND(SUM(Koszt), 2) AS totalKoszt` : `NULL AS totalKoszt`);
+              extras.push(hasIl && hasCz ? `ROUND(SUM(il * Cz), 2) AS totalCz` : `NULL AS totalCz`);
 
               const [rows] = await conn.query<mysql.RowDataPacket[]>(
                 `SELECT LEFT(Data, 4) AS rok,
@@ -429,6 +439,7 @@ export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<Ib
             totalWn: r.totalWn == null ? null : Number(r.totalWn),
             totalWb: r.totalWb == null ? null : Number(r.totalWb),
             totalKoszt: r.totalKoszt == null ? null : Number(r.totalKoszt),
+            totalCz: r.totalCz == null ? null : Number(r.totalCz),
           })),
         });
       } catch (err: any) {

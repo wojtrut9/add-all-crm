@@ -293,6 +293,10 @@ export const ibiznesInvoices = pgTable("ibiznes_invoices", {
   rok: integer("rok").notNull(),
   miesiac: integer("miesiac").notNull(),
   koszt: decimal("koszt"),
+  // `koszt_zakupu` = actual purchase cost from iBiznes (SUM(il * Cz)).
+  // The legacy `koszt` column actually stores net sales value (SUM(il * CN))
+  // — kept for backwards compatibility, renamed in naming only.
+  kosztZakupu: decimal("koszt_zakupu"),
   syncedAt: timestamp("synced_at").defaultNow(),
 });
 

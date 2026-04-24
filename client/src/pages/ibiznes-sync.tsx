@@ -547,7 +547,8 @@ export default function IbizneSyncPage() {
                         <TableHead className="text-right" title="Il × Cn, jeśli kolumna istnieje">SUM(Il×Cn)</TableHead>
                         <TableHead className="text-right" title="SUM(Wn) — wartość netto, jeśli istnieje">SUM(Wn)</TableHead>
                         <TableHead className="text-right" title="SUM(Wb) — wartość brutto, jeśli istnieje">SUM(Wb)</TableHead>
-                        <TableHead className="text-right bg-blue-50 dark:bg-blue-950/20" title="SUM(Koszt) — koszt z nagłówka WZ">SUM(Koszt)</TableHead>
+                        <TableHead className="text-right bg-blue-50 dark:bg-blue-950/20" title="SUM(Koszt) — kolumna Koszt na linii WZ">SUM(Koszt)</TableHead>
+                        <TableHead className="text-right bg-blue-100 dark:bg-blue-900/30 font-bold" title="SUM(il × Cz) — iloczyn ilości i ceny zakupu (Cz). To odpowiada kolumnie Koszt w UI iBiznes.">SUM(il×Cz) ✓</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -571,6 +572,9 @@ export default function IbizneSyncPage() {
                           </TableCell>
                           <TableCell className="text-right text-sm font-medium bg-blue-50 dark:bg-blue-950/20">
                             {m.totalKoszt != null ? Math.round(m.totalKoszt).toLocaleString("pl-PL") : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-bold bg-blue-100 dark:bg-blue-900/30">
+                            {m.totalCz != null ? Math.round(m.totalCz).toLocaleString("pl-PL") : "—"}
                           </TableCell>
                         </TableRow>
                       ))}

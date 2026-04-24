@@ -364,19 +364,23 @@ export default function SalesAnalysisPage() {
   const prevRok = data?.prevRok;
 
   const unmatchedSales = Number(data?.unmatchedSales || 0);
+  const unmatchedCostRaw = Number(data?.unmatchedCost || 0);
   const unmatchedCount = Number(data?.unmatchedCount || 0);
   const unmatchedPrevSales = Number(data?.unmatchedPrevSales || 0);
+  const unmatchedPrevCost = Number(data?.unmatchedPrevCost || 0);
 
   // Per-client totals from groups (do NOT include unmatched — unknown client).
   const matchedSales = groups.reduce((s: number, g: any) => s + Number(g.sprzedaz || 0), 0);
   const matchedCost = groups.reduce((s: number, g: any) => s + Number(g.koszt || 0), 0);
   const matchedProfit = groups.reduce((s: number, g: any) => s + Number(g.zysk || 0), 0);
 
-  // Global totals INCLUDE unmatched WZ (full business picture).
-  // For unmatched we split into koszt/zysk using the same flat margin 35.3%.
-  const UNMATCHED_MARGIN = 0.353;
-  const unmatchedProfit = unmatchedSales * UNMATCHED_MARGIN;
-  const unmatchedCost = unmatchedSales - unmatchedProfit;
+  // Unmatched koszt/zysk comes from actual iBiznes cost (SUM(il*Cz)).
+  // Fallback to flat 35.3% if iBiznes didn't report a cost for these rows.
+  const FALLBACK_MARGIN = 0.353;
+  const unmatchedCost = unmatchedCostRaw > 0 ? unmatchedCostRaw : unmatchedSales * (1 - FALLBACK_MARGIN);
+  const unmatchedProfit = unmatchedSales - unmatchedCost;
+  const unmatchedMarginPct = unmatchedSales > 0 ? (unmatchedProfit / unmatchedSales * 100) : 0;
+
   const totalSales = matchedSales + unmatchedSales;
   const totalCost = matchedCost + unmatchedCost;
   const totalProfit = matchedProfit + unmatchedProfit;
@@ -387,10 +391,15 @@ export default function SalesAnalysisPage() {
   const totalPrev = groups.reduce((s: number, g: any) => s + Number(g.prevSprzedaz || 0), 0);
   const totalZmiana = totalPrev > 0 ? ((totalSales - totalPrev) / totalPrev * 100) : 0;
 
+  const unmatchedPrevCostFinal = unmatchedPrevCost > 0
+    ? unmatchedPrevCost
+    : unmatchedPrevSales * (1 - FALLBACK_MARGIN);
+  const unmatchedPrevProfit = unmatchedPrevSales - unmatchedPrevCostFinal;
+
   // Prev month totals (already scaled on backend) with unmatched included.
   const prevTotalSales = Number(data?.prevTotalSales || 0) + unmatchedPrevSales;
-  const prevTotalCost = Number(data?.prevTotalCost || 0) + unmatchedPrevSales * (1 - UNMATCHED_MARGIN);
-  const prevTotalProfit = Number(data?.prevTotalProfit || 0) + unmatchedPrevSales * UNMATCHED_MARGIN;
+  const prevTotalCost = Number(data?.prevTotalCost || 0) + unmatchedPrevCostFinal;
+  const prevTotalProfit = Number(data?.prevTotalProfit || 0) + unmatchedPrevProfit;
   const prevTotalMarza = Number(data?.prevTotalMarza || 0);
   const dniRoboczeMiesiac = Number(data?.dniRoboczeMiesiac || 0);
   const dniRoboczeMiniete = Number(data?.dniRoboczeMiniete || 0);
@@ -617,7 +626,7 @@ export default function SalesAnalysisPage() {
                     <TableCell className="text-right">{totalSales > 0 ? ((unmatchedSales / totalSales) * 100).toFixed(1) : "0"}%</TableCell>
                     <TableCell className="text-right">{fmtPLN(unmatchedCost)}</TableCell>
                     <TableCell className="text-right font-medium">{fmtPLN(unmatchedProfit)}</TableCell>
-                    <TableCell className="text-right">{fmtMarza(35.3)}</TableCell>
+                    <TableCell className="text-right">{fmtMarza(unmatchedMarginPct)}</TableCell>
                     <TableCell className="text-right text-muted-foreground italic">—</TableCell>
                   </TableRow>
                 )}

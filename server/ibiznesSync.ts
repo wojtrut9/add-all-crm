@@ -86,12 +86,14 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
           rok: Number(rok),
           miesiac: Number(miesiacStr),
           koszt: String(inv.koszt),
+          kosztZakupu: String(inv.kosztZakupu),
         })
         .onConflictDoUpdate({
           target: [ibiznesInvoices.nrR, ibiznesInvoices.source],
           set: {
             clientId: sql`EXCLUDED.client_id`,
             koszt: sql`EXCLUDED.koszt`,
+            kosztZakupu: sql`EXCLUDED.koszt_zakupu`,
             alias: sql`EXCLUDED.alias`,
             syncedAt: new Date(),
           },
@@ -149,12 +151,22 @@ async function getMonthsFromIbiznes(): Promise<{ rok: number; miesiac: number }[
   return (res.rows as any[]).map((r) => ({ rok: Number(r.rok), miesiac: Number(r.miesiac) }));
 }
 
-const MARZA_PROCENT = 35.3;
+// Fallback margin for clients where iBiznes doesn't report purchase cost
+// (Cz=NULL or 0 on all WZ lines — rare, typically promo/gratis items).
+const FALLBACK_MARZA_PROCENT = 35.3;
 
 /**
  * Aggregate ibiznes_invoices → client_sales (monthly totals per client).
  * Zeros out all financial columns before rebuild to prevent stale data.
- * Calculates koszt/zysk/marza using a flat 35.3% margin.
+ *
+ * Calculation:
+ *   sprzedaz = SUM(koszt)          // net sales from iBiznes (SUM(il * CN))
+ *   koszt    = SUM(koszt_zakupu)   // actual purchase cost from iBiznes (SUM(il * Cz))
+ *   zysk     = sprzedaz - koszt
+ *   marza    = zysk / sprzedaz * 100
+ *
+ * If koszt_zakupu is NULL/0 for all rows (older data before this migration),
+ * fall back to FALLBACK_MARZA_PROCENT so the UI doesn't show inflated profit.
  */
 async function aggregateClientSales() {
   const months = await getMonthsFromIbiznes();
@@ -166,7 +178,11 @@ async function aggregateClientSales() {
   }
 
   const rows = await db.execute(sql`
-    SELECT client_id, rok, miesiac, SUM(CAST(koszt AS NUMERIC)) AS total
+    SELECT client_id,
+           rok,
+           miesiac,
+           SUM(CAST(koszt AS NUMERIC)) AS sprzedaz_total,
+           SUM(CAST(COALESCE(koszt_zakupu, 0) AS NUMERIC)) AS koszt_total
     FROM ibiznes_invoices
     WHERE client_id IS NOT NULL
     GROUP BY client_id, rok, miesiac
@@ -185,14 +201,22 @@ async function aggregateClientSales() {
       )
       .limit(1);
 
-    const sprzedazNum = Math.round(Number(row.total) * 100) / 100;
-    const zyskNum = Math.round(sprzedazNum * MARZA_PROCENT) / 100;
-    const kosztNum = Math.round((sprzedazNum - zyskNum) * 100) / 100;
+    const sprzedazNum = Math.round(Number(row.sprzedaz_total) * 100) / 100;
+    let kosztNum = Math.round(Number(row.koszt_total) * 100) / 100;
+
+    // Fallback: if no purchase cost reported, use flat margin so UI is consistent.
+    if (kosztNum <= 0 && sprzedazNum > 0) {
+      const zyskFallback = sprzedazNum * (FALLBACK_MARZA_PROCENT / 100);
+      kosztNum = Math.round((sprzedazNum - zyskFallback) * 100) / 100;
+    }
+
+    const zyskNum = Math.round((sprzedazNum - kosztNum) * 100) / 100;
+    const marzaNum = sprzedazNum > 0 ? Math.round((zyskNum / sprzedazNum) * 10000) / 100 : 0;
 
     const sprzedaz = String(sprzedazNum);
     const zysk = String(zyskNum);
     const koszt = String(kosztNum);
-    const marza = String(MARZA_PROCENT);
+    const marza = String(marzaNum);
 
     if (existing.length > 0) {
       await db
