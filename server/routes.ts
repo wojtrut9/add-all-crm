@@ -1302,6 +1302,22 @@ export async function registerRoutes(
     }
   });
 
+  // 3-layer data verification for the Plan page (admin, read-only).
+  // Compares: A) client_sales.sprzedaz, B) SUM(ibiznes_invoices.koszt),
+  // and C) raw WZ straight from iBiznes MySQL — per client.
+  // Useful to confirm whether the numbers shown to handlowcy match reality.
+  app.get("/api/plan/verify", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok);
+      const miesiac = Number(req.query.miesiac);
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const result = await storage.verifyPlanData(rok, miesiac);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Błąd weryfikacji" });
+    }
+  });
+
   // Set the per-client monthly target (cel pojedynczego klienta).
   // Body: { rok, miesiac, clientId, cel }.
   app.patch("/api/plan/client-target", authMiddleware, adminOnly, async (req, res) => {

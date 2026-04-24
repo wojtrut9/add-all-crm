@@ -111,6 +111,7 @@ export interface IStorage {
   getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
   setPlanMonthTarget(rok: number, miesiac: number, planObrotu: number | null): Promise<void>;
   setClientPlanTarget(rok: number, miesiac: number, clientId: number, cel: number): Promise<void>;
+  verifyPlanData(rok: number, miesiac: number): Promise<any>;
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
   importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}>;
@@ -2013,6 +2014,209 @@ export class DatabaseStorage implements IStorage {
       }
     }
   }
+
+  /**
+   * 3-layer data verification for the Plan page (admin, read-only).
+   *
+   *   A) client_sales.sprzedaz       ← what the plan UI displays
+   *   B) SUM(ibiznes_invoices.koszt) ← our local WZ cache (aggregator input)
+   *   C) SUM(fetchIbiznesInvoices)   ← raw WZ straight from iBiznes MySQL
+   *
+   * Mismatch between A and B = aggregation drift (run Synchronizuj teraz).
+   * Mismatch between B and C = sync drift (run Synchronizuj teraz to refresh cache).
+   *
+   * Tolerance: 1 PLN (covers rounding).
+   */
+  async verifyPlanData(rok: number, miesiac: number): Promise<{
+    rok: number;
+    miesiac: number;
+    ok: boolean;
+    counts: { total: number; ok: number; aggMismatch: number; syncMismatch: number; missingClient: number };
+    totals: { clientSales: number; ibiznesInvoices: number; ibiznesLive: number };
+    rows: Array<{
+      clientId: number;
+      klient: string;
+      nip: string | null;
+      alias: string | null;
+      a_clientSales: number;
+      b_ibiznesInvoices: number;
+      c_ibiznesLive: number;
+      liveWzCount: number;
+      cachedWzCount: number;
+      diffAB: number;
+      diffBC: number;
+      status: "ok" | "agg_mismatch" | "sync_mismatch" | "both_mismatch";
+    }>;
+    unmatchedLive: {
+      sum: number;
+      count: number;
+      topNips: Array<{ nip: string; alias: string | null; sum: number; count: number }>;
+    };
+  }> {
+    const { fetchIbiznesInvoices } = await import("./ibiznes");
+    const firstDay = `${rok}-${String(miesiac).padStart(2, "0")}-01`;
+
+    // 1) Fetch raw WZ from iBiznes LIVE for the month in question.
+    // fetchIbiznesInvoices returns all WZ from sinceDate forward; we filter to this month.
+    const liveAll = await fetchIbiznesInvoices(firstDay);
+    const live = liveAll.filter((w) => {
+      const [y, m] = w.dataWyst.split("-").map(Number);
+      return y === rok && m === miesiac;
+    });
+
+    // 2) Build client maps (NIP → id, alias → id) — exactly the same way runIbiznesSync does.
+    const allClients = await db
+      .select({ id: clients.id, nip: clients.nip, klient: clients.klient, ibiznesAlias: clients.ibiznesAlias })
+      .from(clients);
+    const normalizeNip = (n: string | null | undefined) => (n ? n.replace(/[-\s]/g, "").trim() : "");
+    const normalizeAlias = (s: string) =>
+      s.toLowerCase().replace(/[–—-]/g, " ").replace(/\s+/g, " ").trim();
+    const nipToClientId = new Map<string, number>();
+    const aliasToClientId = new Map<string, number>();
+    const clientById = new Map<number, { id: number; nip: string | null; klient: string; ibiznesAlias: string | null }>();
+    for (const c of allClients) {
+      clientById.set(c.id, c);
+      if (c.nip) nipToClientId.set(normalizeNip(c.nip), c.id);
+      if (c.ibiznesAlias) aliasToClientId.set(normalizeAlias(c.ibiznesAlias), c.id);
+      if (c.klient) aliasToClientId.set(normalizeAlias(c.klient), c.id);
+    }
+
+    // 3) Per-client aggregates from iBiznes LIVE.
+    const liveSum = new Map<number, number>();
+    const liveCount = new Map<number, number>();
+    const unmatchedLiveByKey = new Map<string, { nip: string; alias: string | null; sum: number; count: number }>();
+    let unmatchedLiveSum = 0;
+    let unmatchedLiveCount = 0;
+    for (const w of live) {
+      let cid = w.nip ? nipToClientId.get(w.nip) : undefined;
+      if (cid == null && w.alias) cid = aliasToClientId.get(normalizeAlias(w.alias));
+      if (cid != null) {
+        liveSum.set(cid, (liveSum.get(cid) || 0) + Number(w.koszt || 0));
+        liveCount.set(cid, (liveCount.get(cid) || 0) + 1);
+      } else {
+        unmatchedLiveSum += Number(w.koszt || 0);
+        unmatchedLiveCount += 1;
+        const key = (w.nip || w.alias || "unknown").toLowerCase();
+        const entry = unmatchedLiveByKey.get(key) || { nip: w.nip || "", alias: w.alias || null, sum: 0, count: 0 };
+        entry.sum += Number(w.koszt || 0);
+        entry.count += 1;
+        unmatchedLiveByKey.set(key, entry);
+      }
+    }
+
+    // 4) Per-client aggregates from local DB: client_sales & ibiznes_invoices.
+    const salesRows = await db
+      .select()
+      .from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const salesMap = new Map<number, number>();
+    for (const s of salesRows) salesMap.set(s.clientId, Number(s.sprzedaz || 0));
+
+    const cacheRows = await db.execute(sql`
+      SELECT client_id,
+             COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+             COUNT(*)::int                           AS cnt
+      FROM ibiznes_invoices
+      WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NOT NULL
+      GROUP BY client_id
+    `);
+    const cacheSum = new Map<number, number>();
+    const cacheCount = new Map<number, number>();
+    for (const r of cacheRows.rows as any[]) {
+      cacheSum.set(Number(r.client_id), Number(r.total || 0));
+      cacheCount.set(Number(r.client_id), Number(r.cnt || 0));
+    }
+
+    // 5) Union of all client IDs that appear in ANY layer — so we catch missing ones too.
+    const touchedIds = new Set<number>([
+      ...liveSum.keys(),
+      ...salesMap.keys(),
+      ...cacheSum.keys(),
+    ]);
+
+    const TOLERANCE = 1;
+    const rows: Array<any> = [];
+    let okCount = 0, aggMismatch = 0, syncMismatch = 0, missingClient = 0;
+
+    for (const cid of touchedIds) {
+      const client = clientById.get(cid);
+      if (!client) {
+        missingClient += 1;
+        continue;
+      }
+      const a = Math.round(salesMap.get(cid) || 0);
+      const b = Math.round(cacheSum.get(cid) || 0);
+      const c = Math.round(liveSum.get(cid) || 0);
+      const diffAB = a - b;
+      const diffBC = b - c;
+      const aggBad = Math.abs(diffAB) > TOLERANCE;
+      const syncBad = Math.abs(diffBC) > TOLERANCE;
+      let status: "ok" | "agg_mismatch" | "sync_mismatch" | "both_mismatch" = "ok";
+      if (aggBad && syncBad) status = "both_mismatch";
+      else if (aggBad) status = "agg_mismatch";
+      else if (syncBad) status = "sync_mismatch";
+
+      if (status === "ok") okCount += 1;
+      else if (status === "agg_mismatch") aggMismatch += 1;
+      else if (status === "sync_mismatch") syncMismatch += 1;
+      else { aggMismatch += 1; syncMismatch += 1; }
+
+      rows.push({
+        clientId: cid,
+        klient: client.klient,
+        nip: client.nip,
+        alias: client.ibiznesAlias,
+        a_clientSales: a,
+        b_ibiznesInvoices: b,
+        c_ibiznesLive: c,
+        liveWzCount: liveCount.get(cid) || 0,
+        cachedWzCount: cacheCount.get(cid) || 0,
+        diffAB,
+        diffBC,
+        status,
+      });
+    }
+
+    // Show mismatches first, then sorted by |diffBC| desc (sync drift is more urgent).
+    rows.sort((x, y) => {
+      if (x.status === "ok" && y.status !== "ok") return 1;
+      if (y.status === "ok" && x.status !== "ok") return -1;
+      return Math.abs(y.diffBC) - Math.abs(x.diffBC) || Math.abs(y.diffAB) - Math.abs(x.diffAB);
+    });
+
+    const totalsClientSales = Array.from(salesMap.values()).reduce((s, n) => s + n, 0);
+    const totalsCache = Array.from(cacheSum.values()).reduce((s, n) => s + n, 0);
+    const totalsLive = Array.from(liveSum.values()).reduce((s, n) => s + n, 0);
+
+    const topUnmatched = Array.from(unmatchedLiveByKey.values())
+      .sort((a, b) => b.sum - a.sum)
+      .slice(0, 20);
+
+    return {
+      rok,
+      miesiac,
+      ok: rows.every((r) => r.status === "ok"),
+      counts: {
+        total: rows.length,
+        ok: okCount,
+        aggMismatch,
+        syncMismatch,
+        missingClient,
+      },
+      totals: {
+        clientSales: Math.round(totalsClientSales),
+        ibiznesInvoices: Math.round(totalsCache),
+        ibiznesLive: Math.round(totalsLive),
+      },
+      rows,
+      unmatchedLive: {
+        sum: Math.round(unmatchedLiveSum),
+        count: unmatchedLiveCount,
+        topNips: topUnmatched.map((e) => ({ ...e, sum: Math.round(e.sum) })),
+      },
+    };
+  }
+
   async importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}> {
     const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
     const mKey = MONTH_KEYS[miesiac - 1];

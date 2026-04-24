@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet, Pencil, AlertTriangle } from "lucide-react";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet, Pencil, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { MONTHS_ASCII as MONTHS } from "@/lib/constants";
@@ -380,6 +380,185 @@ function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
   );
 }
 
+function VerifyDataModal({
+  open, onClose, rok, miesiac,
+}: {
+  open: boolean; onClose: () => void; rok: number; miesiac: number;
+}) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [onlyMismatch, setOnlyMismatch] = useState(true);
+
+  // Fire the fetch whenever the modal opens for a new month.
+  const seedKey = `${open ? "o" : "c"}-${rok}-${miesiac}`;
+  const lastSeed = useRef<string>("");
+  if (open && lastSeed.current !== seedKey) {
+    lastSeed.current = seedKey;
+    setData(null);
+    setLoading(true);
+    authFetch(`/api/plan/verify?rok=${rok}&miesiac=${miesiac}`)
+      .then((r) => r.json())
+      .then((d) => { setData(d); setLoading(false); })
+      .catch((e) => {
+        setLoading(false);
+        toast({ title: "Błąd weryfikacji", description: e?.message || "Nie udało się pobrać danych", variant: "destructive" });
+      });
+  }
+
+  const rows: any[] = data?.rows || [];
+  const shown = onlyMismatch ? rows.filter((r) => r.status !== "ok") : rows;
+
+  const badgeFor = (s: string) => {
+    if (s === "ok") return <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-medium">OK</span>;
+    if (s === "agg_mismatch") return <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 font-medium" title="client_sales ≠ ibiznes_invoices — uruchom agregację">agregacja</span>;
+    if (s === "sync_mismatch") return <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-medium" title="ibiznes_invoices ≠ iBiznes LIVE — uruchom Synchronizuj teraz">sync</span>;
+    return <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-200 font-medium" title="Oba rozjazdy">agg+sync</span>;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-5xl">
+        <DialogHeader>
+          <DialogTitle>Weryfikacja danych sprzedaży — {MONTHS[miesiac - 1]} {rok}</DialogTitle>
+        </DialogHeader>
+
+        {loading && (
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            Pobieranie z iBiznes LIVE… (może potrwać kilka sekund)
+          </div>
+        )}
+
+        {!loading && data && (
+          <div className="space-y-4">
+            <div className="rounded-md bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-3 text-xs">
+              <p className="mb-1">Porównujemy 3 warstwy:</p>
+              <ul className="space-y-0.5 ml-4 list-disc">
+                <li><strong>A</strong> = <code>client_sales.sprzedaz</code> (co widać na planie)</li>
+                <li><strong>B</strong> = <code>SUM(ibiznes_invoices.koszt)</code> (nasz cache WZ)</li>
+                <li><strong>C</strong> = WZ prosto z iBiznes LIVE (MySQL, tu i teraz)</li>
+              </ul>
+              <p className="mt-1">Idealnie: A = B = C. <span className="text-orange-700 dark:text-orange-400">A ≠ B</span> → uruchom <em>Synchronizuj teraz</em> (agregacja). <span className="text-red-700 dark:text-red-400">B ≠ C</span> → cache out-of-date, też <em>Synchronizuj teraz</em>.</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="border rounded-md p-3 text-center">
+                <p className="text-xs text-muted-foreground">Klienci OK</p>
+                <p className="text-xl font-bold text-green-700 dark:text-green-400">{data.counts.ok}</p>
+              </div>
+              <div className="border rounded-md p-3 text-center">
+                <p className="text-xs text-muted-foreground">Rozjazd agregacji (A≠B)</p>
+                <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{data.counts.aggMismatch}</p>
+              </div>
+              <div className="border rounded-md p-3 text-center">
+                <p className="text-xs text-muted-foreground">Rozjazd sync (B≠C)</p>
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">{data.counts.syncMismatch}</p>
+              </div>
+              <div className="border rounded-md p-3 text-center">
+                <p className="text-xs text-muted-foreground">Nieznane WZ (bez klienta)</p>
+                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{fmtNum(data.unmatchedLive.sum)}</p>
+                <p className="text-[11px] text-muted-foreground">{data.unmatchedLive.count} dok.</p>
+              </div>
+            </div>
+
+            <div className="border rounded-md p-3 bg-muted/30 text-xs grid grid-cols-3 gap-2">
+              <div><span className="text-muted-foreground">Suma A (client_sales):</span> <strong>{fmtPLN(data.totals.clientSales)}</strong></div>
+              <div><span className="text-muted-foreground">Suma B (cache WZ):</span> <strong>{fmtPLN(data.totals.ibiznesInvoices)}</strong></div>
+              <div><span className="text-muted-foreground">Suma C (LIVE):</span> <strong>{fmtPLN(data.totals.ibiznesLive)}</strong></div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={onlyMismatch} onChange={(e) => setOnlyMismatch(e.target.checked)} />
+                Pokaż tylko rozjazdy ({data.counts.aggMismatch + data.counts.syncMismatch})
+              </label>
+              <p className="text-xs text-muted-foreground">{shown.length} / {rows.length} klientów</p>
+            </div>
+
+            <div className="border rounded-md max-h-[380px] overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Klient</TableHead>
+                    <TableHead className="text-right">A — client_sales</TableHead>
+                    <TableHead className="text-right">B — cache WZ</TableHead>
+                    <TableHead className="text-right">C — iBiznes LIVE</TableHead>
+                    <TableHead className="text-right">Δ A−B</TableHead>
+                    <TableHead className="text-right">Δ B−C</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {shown.map((r: any) => (
+                    <TableRow key={r.clientId} className={r.status === "ok" ? "" : "bg-amber-50/50 dark:bg-amber-900/10"}>
+                      <TableCell className="font-medium text-sm">
+                        {r.klient}
+                        <div className="text-[10px] text-muted-foreground font-mono">
+                          NIP: {r.nip || "—"} {r.alias && <span>| alias: {r.alias}</span>}
+                          {" | "}WZ: {r.cachedWzCount} cache / {r.liveWzCount} live
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">{fmtNum(r.a_clientSales)}</TableCell>
+                      <TableCell className="text-right font-mono text-sm">{fmtNum(r.b_ibiznesInvoices)}</TableCell>
+                      <TableCell className="text-right font-mono text-sm">{fmtNum(r.c_ibiznesLive)}</TableCell>
+                      <TableCell className={`text-right font-mono text-sm ${Math.abs(r.diffAB) > 1 ? "text-orange-600 dark:text-orange-400 font-bold" : "text-muted-foreground"}`}>
+                        {r.diffAB > 0 ? "+" : ""}{fmtNum(r.diffAB)}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono text-sm ${Math.abs(r.diffBC) > 1 ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground"}`}>
+                        {r.diffBC > 0 ? "+" : ""}{fmtNum(r.diffBC)}
+                      </TableCell>
+                      <TableCell>{badgeFor(r.status)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {shown.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-green-700 dark:text-green-400 py-6">
+                        ✅ Brak rozjazdów. Wszystkie warstwy się zgadzają.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {data.unmatchedLive.topNips?.length > 0 && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-muted-foreground">
+                  Top {data.unmatchedLive.topNips.length} niedopasowanych WZ (brak klienta w CRM)
+                </summary>
+                <div className="mt-2 border rounded-md max-h-[200px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>NIP / Alias</TableHead>
+                        <TableHead className="text-right">Liczba WZ</TableHead>
+                        <TableHead className="text-right">Netto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.unmatchedLive.topNips.map((u: any, i: number) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-mono text-xs">{u.nip || "—"} {u.alias && <span className="text-muted-foreground">| {u.alias}</span>}</TableCell>
+                          <TableCell className="text-right">{u.count}</TableCell>
+                          <TableCell className="text-right font-mono">{fmtNum(u.sum)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Zamknij</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function EditTargetsModal({
   open, onClose, rok, miesiac, planData,
 }: {
@@ -588,6 +767,7 @@ export default function PlanPage() {
   const [importPlanuOpen, setImportPlanuOpen] = useState(false);
   const [generujPlanOpen, setGenerujPlanOpen] = useState(false);
   const [editTargetsOpen, setEditTargetsOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("procent");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [filterOpiekun, setFilterOpiekun] = useState("all");
@@ -739,6 +919,9 @@ export default function PlanPage() {
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} /> Odswiez
           </Button>
           {isAdmin && (<>
+            <Button variant="outline" onClick={() => setVerifyOpen(true)} data-testid="button-verify-plan">
+              <ShieldCheck className="w-4 h-4 mr-2" /> Weryfikuj dane
+            </Button>
             <Button variant="outline" onClick={() => setEditTargetsOpen(true)} data-testid="button-edit-targets">
               <Pencil className="w-4 h-4 mr-2" /> Edytuj cele
             </Button>
@@ -982,6 +1165,14 @@ export default function PlanPage() {
           rok={rok}
           miesiac={miesiac}
           planData={data}
+        />
+      )}
+      {isAdmin && (
+        <VerifyDataModal
+          open={verifyOpen}
+          onClose={() => setVerifyOpen(false)}
+          rok={rok}
+          miesiac={miesiac}
         />
       )}
     </div>
