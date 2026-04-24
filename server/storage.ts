@@ -1115,7 +1115,12 @@ export class DatabaseStorage implements IStorage {
 
   async updateSalesTarget(id: number, data: {planObrotu?: number; wykonanieObrotu?: number}): Promise<any> {
     const updateData: any = {};
-    if (data.planObrotu !== undefined) updateData.planObrotu = String(data.planObrotu);
+    if (data.planObrotu !== undefined) {
+      updateData.planObrotu = String(data.planObrotu);
+      // Admin explicitly set a target via sales-dashboard UI → custom.
+      // A zero value clears the custom flag (back to auto +5%).
+      updateData.planObrotuCustom = Number(data.planObrotu) > 0;
+    }
     if (data.wykonanieObrotu !== undefined) updateData.wykonanieObrotu = String(data.wykonanieObrotu);
     const [updated] = await db.update(salesTargets).set(updateData).where(eq(salesTargets.id, id)).returning();
     return updated;
@@ -1148,11 +1153,12 @@ export class DatabaseStorage implements IStorage {
   async updateSalesTargetsBulk(rok: number, targets: Array<{miesiac: number; planObrotu: number}>): Promise<{updated: number}> {
     let updated = 0;
     for (const t of targets) {
+      const isCustom = Number(t.planObrotu) > 0;
       const existing = await db.select().from(salesTargets)
         .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, t.miesiac)));
       if (existing.length > 0) {
         await db.update(salesTargets)
-          .set({ planObrotu: String(t.planObrotu) })
+          .set({ planObrotu: String(t.planObrotu), planObrotuCustom: isCustom })
           .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, t.miesiac)));
       } else {
         await db.insert(salesTargets).values({
@@ -1160,6 +1166,7 @@ export class DatabaseStorage implements IStorage {
           miesiac: t.miesiac,
           planObrotu: String(t.planObrotu),
           wykonanieObrotu: "0",
+          planObrotuCustom: isCustom,
         });
       }
       updated++;
@@ -1907,9 +1914,13 @@ export class DatabaseStorage implements IStorage {
 
     const targetRow = await db.select().from(salesTargets)
       .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
-    const customCel = targetRow.length > 0 ? Number(targetRow[0].planObrotu || 0) : 0;
-    const celMiesiaca = customCel > 0 ? customCel : defaultCelMiesiaca;
-    const celMiesiacaIsCustom = customCel > 0;
+    // Custom goal ONLY when an admin explicitly flipped plan_obrotu_custom=true
+    // via the "Edytuj cele" UI. Historical/imported plan_obrotu values are
+    // treated as auto (derived from prev month × 1.05).
+    const hasCustomFlag = targetRow.length > 0 && Boolean(targetRow[0].planObrotuCustom);
+    const customCel = hasCustomFlag ? Number(targetRow[0].planObrotu || 0) : 0;
+    const celMiesiaca = hasCustomFlag && customCel > 0 ? customCel : defaultCelMiesiaca;
+    const celMiesiacaIsCustom = hasCustomFlag && customCel > 0;
 
     // celNaDzis for the month as a whole uses celMiesiaca (not sum of per-client cel).
     const celMiesiacaNaDzis = dniRoboczeMiesiac > 0
@@ -1946,15 +1957,18 @@ export class DatabaseStorage implements IStorage {
 
   /**
    * Set or clear the monthly company-level target (cel miesiąca).
-   * Pass planObrotu=null to reset to the default (prev month × 1.05).
+   * Pass planObrotu=null to reset to the default (prev month × 1.05) —
+   * this also clears the plan_obrotu_custom flag, so the UI stops showing
+   * "custom" for this month.
    */
   async setPlanMonthTarget(rok: number, miesiac: number, planObrotu: number | null): Promise<void> {
     const existing = await db.select().from(salesTargets)
       .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
     const value = planObrotu == null ? "0" : String(Math.round(planObrotu));
+    const isCustom = planObrotu != null && planObrotu > 0;
     if (existing.length > 0) {
       await db.update(salesTargets)
-        .set({ planObrotu: value })
+        .set({ planObrotu: value, planObrotuCustom: isCustom })
         .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
     } else {
       await db.insert(salesTargets).values({
@@ -1962,6 +1976,7 @@ export class DatabaseStorage implements IStorage {
         miesiac,
         planObrotu: value,
         wykonanieObrotu: "0",
+        planObrotuCustom: isCustom,
       });
     }
   }

@@ -214,6 +214,10 @@ export async function migrateDatabase() {
     ALTER TABLE ibiznes_invoices ALTER COLUMN nip SET DEFAULT '';
     ALTER TABLE ibiznes_invoices ADD COLUMN IF NOT EXISTS koszt_zakupu DECIMAL;
 
+    -- sales_targets: explicit flag for admin-set custom monthly goal.
+    -- Otherwise the goal is derived automatically (prev month × 1.05).
+    ALTER TABLE sales_targets ADD COLUMN IF NOT EXISTS plan_obrotu_custom BOOLEAN NOT NULL DEFAULT FALSE;
+
     CREATE TABLE IF NOT EXISTS ibiznes_sync_log (
       id SERIAL PRIMARY KEY,
       started_at TIMESTAMP NOT NULL DEFAULT NOW(),
