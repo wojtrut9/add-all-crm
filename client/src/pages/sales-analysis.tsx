@@ -376,7 +376,19 @@ export default function SalesAnalysisPage() {
   const prevTotalProfit = Number(data?.prevTotalProfit || 0);
   const prevTotalMarza = Number(data?.prevTotalMarza || 0);
 
-  const prevMonthLabel = prevMiesiac ? `${MONTHS_SHORT[prevMiesiac - 1]} ${String(prevRok).slice(2)}` : "";
+  const unmatchedSales = Number(data?.unmatchedSales || 0);
+  const unmatchedCount = Number(data?.unmatchedCount || 0);
+  const dniRoboczeMiesiac = Number(data?.dniRoboczeMiesiac || 0);
+  const dniRoboczeMiniete = Number(data?.dniRoboczeMiniete || 0);
+  const prevCompareDays = Number(data?.prevCompareDays || 0);
+  const prevTotalWorkdays = Number(data?.prevTotalWorkdays || 0);
+  const isCurrentMonth = Boolean(data?.isCurrentMonth);
+
+  const prevMonthLabel = prevMiesiac
+    ? (isCurrentMonth
+        ? `${MONTHS_SHORT[prevMiesiac - 1]} ${String(prevRok).slice(2)} (${prevCompareDays}/${prevTotalWorkdays} dni)`
+        : `${MONTHS_SHORT[prevMiesiac - 1]} ${String(prevRok).slice(2)}`)
+    : "";
 
   const pieThreshold = 3;
   const pieRaw = groups
@@ -412,6 +424,9 @@ export default function SalesAnalysisPage() {
           <h1 className="text-2xl font-bold" data-testid="text-page-title">Analiza sprzedazy</h1>
           <p className="text-sm text-muted-foreground">
             {MONTHS[miesiac - 1]} {rok} | Klientow aktywnych: {totalAktywnych}
+            {isCurrentMonth && dniRoboczeMiesiac > 0 && (
+              <> | Dni robocze: {dniRoboczeMiniete}/{dniRoboczeMiesiac}</>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -450,6 +465,22 @@ export default function SalesAnalysisPage() {
         <KpiCard label="Zysk" value={totalProfit} prevValue={prevTotalProfit} prevLabel={prevMonthLabel} />
         <KpiCard label="Marza" value={totalMargin} prevValue={prevTotalMarza} prevLabel={prevMonthLabel} isMarza />
       </div>
+
+      {unmatchedSales > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="py-4 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="text-sm font-medium">Sprzedaz do klientow spoza bazy CRM</div>
+              <div className="text-xs text-muted-foreground">
+                WZ z iBiznes z nieznanymi NIP-ami ({unmatchedCount} dokumentow). Nie wchodzi w analize per klient.
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-amber-600">
+              {fmtPLN(unmatchedSales)}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
