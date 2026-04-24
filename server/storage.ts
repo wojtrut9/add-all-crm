@@ -590,6 +590,14 @@ export class DatabaseStorage implements IStorage {
     const unmatchedSales = Number((unmatchedRows.rows[0] as any)?.total || 0);
     const unmatchedCount = Number((unmatchedRows.rows[0] as any)?.count || 0);
 
+    // Previous month unmatched (for scaled comparison)
+    const unmatchedPrevRows = await db.execute(sql`
+      SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${prevRok} AND miesiac = ${prevMiesiac} AND client_id IS NULL
+    `);
+    const unmatchedPrevSales = Number((unmatchedPrevRows.rows[0] as any)?.total || 0) * prevScale;
+
     return {
       groups,
       prevMiesiac,
@@ -600,6 +608,7 @@ export class DatabaseStorage implements IStorage {
       prevTotalMarza,
       unmatchedSales,
       unmatchedCount,
+      unmatchedPrevSales,
       dniRoboczeMiesiac,
       dniRoboczeMiniete,
       prevCompareDays,
@@ -1334,11 +1343,9 @@ export class DatabaseStorage implements IStorage {
         })
       : monthSalesRows;
     const ibiznesMonthSales = filteredSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
-    const monthSales = ibiznesMonthSales > 0
-      ? ibiznesMonthSales
-      : allMonthContacts
-          .filter(c => c.status === "Zamowil")
-          .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
+    const contactsMonthSales = allMonthContacts
+      .filter(c => c.status === "Zamowil")
+      .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
     const countWorkdays = (y: number, m: number, upToDay: number) => {
       let count = 0;
@@ -1352,22 +1359,9 @@ export class DatabaseStorage implements IStorage {
     const totalWorkdays = countWorkdays(year, month, daysInMonth);
     const workingDaysPassed = countWorkdays(year, month, now.getDate());
     const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
-    const expectedSales = dailyTarget * workingDaysPassed;
-    const tempo = workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0;
-    const prognoza = tempo * totalWorkdays;
-    const prognozaOnTrack = prognoza >= monthPlan;
 
-    // Proportional prev-month comparison: scale prev total by same working-day ratio.
-    const prevDaysInMonth = new Date(prevYearNum, prevMonthNum, 0).getDate();
-    const prevTotalWorkdays = countWorkdays(prevYearNum, prevMonthNum - 1, prevDaysInMonth);
-    const prevCompareDays = Math.min(workingDaysPassed, prevTotalWorkdays);
-    const prevScale = prevTotalWorkdays > 0 ? prevCompareDays / prevTotalWorkdays : 0;
-    const prevMonthSalesScaled = prevMonthSalesTotal * prevScale;
-    const prevMonthChange = prevMonthSalesScaled > 0
-      ? ((monthSales - prevMonthSalesScaled) / prevMonthSalesScaled) * 100
-      : null;
-
-    // Unmatched sales for current month (WZ without client in CRM)
+    // Unmatched sales for current month (WZ without client in CRM).
+    // Only added for admin/non-handlowiec views (handlowcy see only their own clients).
     const unmatchedRows = await db.execute(sql`
       SELECT
         COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
@@ -1377,6 +1371,36 @@ export class DatabaseStorage implements IStorage {
     `);
     const unmatchedSales = Number((unmatchedRows.rows[0] as any)?.total || 0);
     const unmatchedCount = Number((unmatchedRows.rows[0] as any)?.count || 0);
+
+    // monthSales: prefer iBiznes (clients + unmatched WZ for admin view); fall back to contacts.kwota when no data
+    const isHandlowiecView = opiekun && rola === "handlowiec";
+    const monthSales = ibiznesMonthSales > 0
+      ? ibiznesMonthSales + (isHandlowiecView ? 0 : unmatchedSales)
+      : contactsMonthSales;
+
+    const expectedSales = dailyTarget * workingDaysPassed;
+    const tempo = workingDaysPassed > 0 ? monthSales / workingDaysPassed : 0;
+    const prognoza = tempo * totalWorkdays;
+    const prognozaOnTrack = prognoza >= monthPlan;
+
+    // Previous month unmatched (for proportional comparison)
+    const unmatchedPrevRows = await db.execute(sql`
+      SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${prevYearNum} AND miesiac = ${prevMonthNum} AND client_id IS NULL
+    `);
+    const unmatchedPrevTotal = Number((unmatchedPrevRows.rows[0] as any)?.total || 0);
+
+    // Proportional prev-month comparison: scale prev total by same working-day ratio.
+    const prevDaysInMonth = new Date(prevYearNum, prevMonthNum, 0).getDate();
+    const prevTotalWorkdays = countWorkdays(prevYearNum, prevMonthNum - 1, prevDaysInMonth);
+    const prevCompareDays = Math.min(workingDaysPassed, prevTotalWorkdays);
+    const prevScale = prevTotalWorkdays > 0 ? prevCompareDays / prevTotalWorkdays : 0;
+    const prevTotalWithUnmatched = prevMonthSalesTotal + (isHandlowiecView ? 0 : unmatchedPrevTotal);
+    const prevMonthSalesScaled = prevTotalWithUnmatched * prevScale;
+    const prevMonthChange = prevMonthSalesScaled > 0
+      ? ((monthSales - prevMonthSalesScaled) / prevMonthSalesScaled) * 100
+      : null;
 
     const uniqueOrderedClients = new Set(allMonthContacts.filter(c => c.status === "Zamowil").map(c => c.clientId)).size;
 
@@ -1818,9 +1842,21 @@ export class DatabaseStorage implements IStorage {
     }
     const allMonthSalesRows = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
-    const sumaRealizacja = allMonthSalesRows
+    const matchedRealizacja = allMonthSalesRows
       .filter(r => !opiekunClientIds || opiekunClientIds.has(r.clientId))
       .reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+    // For admin/general view include WZ without a matched client (unknown NIP).
+    // For opiekun-specific view we cannot attribute them, so keep only matched.
+    let unmatchedRealizacja = 0;
+    if (!opiekunClientIds) {
+      const unmatchedRow = await db.execute(sql`
+        SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+        FROM ibiznes_invoices
+        WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NULL
+      `);
+      unmatchedRealizacja = Number((unmatchedRow.rows[0] as any)?.total || 0);
+    }
+    const sumaRealizacja = matchedRealizacja + unmatchedRealizacja;
     const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
     const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
 

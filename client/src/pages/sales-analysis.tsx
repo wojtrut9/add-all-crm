@@ -362,22 +362,36 @@ export default function SalesAnalysisPage() {
   const groups: any[] = data?.groups || [];
   const prevMiesiac = data?.prevMiesiac;
   const prevRok = data?.prevRok;
-  const totalSales = groups.reduce((s: number, g: any) => s + Number(g.sprzedaz || 0), 0);
-  const totalCost = groups.reduce((s: number, g: any) => s + Number(g.koszt || 0), 0);
-  const totalProfit = groups.reduce((s: number, g: any) => s + Number(g.zysk || 0), 0);
+
+  const unmatchedSales = Number(data?.unmatchedSales || 0);
+  const unmatchedCount = Number(data?.unmatchedCount || 0);
+  const unmatchedPrevSales = Number(data?.unmatchedPrevSales || 0);
+
+  // Per-client totals from groups (do NOT include unmatched — unknown client).
+  const matchedSales = groups.reduce((s: number, g: any) => s + Number(g.sprzedaz || 0), 0);
+  const matchedCost = groups.reduce((s: number, g: any) => s + Number(g.koszt || 0), 0);
+  const matchedProfit = groups.reduce((s: number, g: any) => s + Number(g.zysk || 0), 0);
+
+  // Global totals INCLUDE unmatched WZ (full business picture).
+  // For unmatched we split into koszt/zysk using the same flat margin 35.3%.
+  const UNMATCHED_MARGIN = 0.353;
+  const unmatchedProfit = unmatchedSales * UNMATCHED_MARGIN;
+  const unmatchedCost = unmatchedSales - unmatchedProfit;
+  const totalSales = matchedSales + unmatchedSales;
+  const totalCost = matchedCost + unmatchedCost;
+  const totalProfit = matchedProfit + unmatchedProfit;
   const totalMargin = totalSales > 0 ? (totalProfit / totalSales * 100) : 0;
+
   const totalKlientow = groups.reduce((s: number, g: any) => s + (g.klientow || 0), 0);
   const totalAktywnych = groups.reduce((s: number, g: any) => s + (g.aktywnych || 0), 0);
   const totalPrev = groups.reduce((s: number, g: any) => s + Number(g.prevSprzedaz || 0), 0);
   const totalZmiana = totalPrev > 0 ? ((totalSales - totalPrev) / totalPrev * 100) : 0;
 
-  const prevTotalSales = Number(data?.prevTotalSales || 0);
-  const prevTotalCost = Number(data?.prevTotalCost || 0);
-  const prevTotalProfit = Number(data?.prevTotalProfit || 0);
+  // Prev month totals (already scaled on backend) with unmatched included.
+  const prevTotalSales = Number(data?.prevTotalSales || 0) + unmatchedPrevSales;
+  const prevTotalCost = Number(data?.prevTotalCost || 0) + unmatchedPrevSales * (1 - UNMATCHED_MARGIN);
+  const prevTotalProfit = Number(data?.prevTotalProfit || 0) + unmatchedPrevSales * UNMATCHED_MARGIN;
   const prevTotalMarza = Number(data?.prevTotalMarza || 0);
-
-  const unmatchedSales = Number(data?.unmatchedSales || 0);
-  const unmatchedCount = Number(data?.unmatchedCount || 0);
   const dniRoboczeMiesiac = Number(data?.dniRoboczeMiesiac || 0);
   const dniRoboczeMiniete = Number(data?.dniRoboczeMiniete || 0);
   const prevCompareDays = Number(data?.prevCompareDays || 0);
@@ -391,13 +405,20 @@ export default function SalesAnalysisPage() {
     : "";
 
   const pieThreshold = 3;
-  const pieRaw = groups
-    .filter((g: any) => Number(g.sprzedaz || 0) > 0)
-    .map((g: any) => ({
-      name: g.grupa,
-      value: Number(g.sprzedaz || 0),
-      pct: totalSales > 0 ? (Number(g.sprzedaz || 0) / totalSales * 100) : 0,
-    }));
+  const pieRaw = [
+    ...groups
+      .filter((g: any) => Number(g.sprzedaz || 0) > 0)
+      .map((g: any) => ({
+        name: g.grupa,
+        value: Number(g.sprzedaz || 0),
+        pct: totalSales > 0 ? (Number(g.sprzedaz || 0) / totalSales * 100) : 0,
+      })),
+    ...(unmatchedSales > 0 ? [{
+      name: "Spoza bazy",
+      value: unmatchedSales,
+      pct: totalSales > 0 ? (unmatchedSales / totalSales * 100) : 0,
+    }] : []),
+  ];
 
   const pieMain = pieRaw.filter(p => p.pct >= pieThreshold);
   const pieInne = pieRaw.filter(p => p.pct < pieThreshold);
@@ -406,11 +427,18 @@ export default function SalesAnalysisPage() {
     ? [...pieMain, { name: "Inne", value: pieInneTotal, pct: totalSales > 0 ? (pieInneTotal / totalSales * 100) : 0 }]
     : pieMain;
 
-  const barData = groups.map((g: any) => ({
-    grupa: g.grupa.length > 15 ? g.grupa.replace("Weryfikacja ", "Wer. ") : g.grupa,
-    sprzedaz: Number(g.sprzedaz || 0),
-    prevSprzedaz: Number(g.prevSprzedaz || 0),
-  }));
+  const barData = [
+    ...groups.map((g: any) => ({
+      grupa: g.grupa.length > 15 ? g.grupa.replace("Weryfikacja ", "Wer. ") : g.grupa,
+      sprzedaz: Number(g.sprzedaz || 0),
+      prevSprzedaz: Number(g.prevSprzedaz || 0),
+    })),
+    ...(unmatchedSales > 0 || unmatchedPrevSales > 0 ? [{
+      grupa: "Spoza bazy",
+      sprzedaz: unmatchedSales,
+      prevSprzedaz: unmatchedPrevSales,
+    }] : []),
+  ];
 
   const renderPieLabel = ({ name, pct }: any) => {
     const shortName = name.length > 12 ? name.replace("Weryfikacja ", "W.").replace("Premium", "P.").replace("Standard", "St.") : name;
@@ -577,6 +605,22 @@ export default function SalesAnalysisPage() {
                     </TableRow>
                   );
                 })}
+                {unmatchedSales > 0 && (
+                  <TableRow className="bg-amber-500/5">
+                    <TableCell className="font-medium italic text-amber-700">
+                      <div className="flex items-center gap-1 pl-5">
+                        Spoza bazy (nieznane NIP)
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground italic">— / {unmatchedCount}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtPLN(unmatchedSales)}</TableCell>
+                    <TableCell className="text-right">{totalSales > 0 ? ((unmatchedSales / totalSales) * 100).toFixed(1) : "0"}%</TableCell>
+                    <TableCell className="text-right">{fmtPLN(unmatchedCost)}</TableCell>
+                    <TableCell className="text-right font-medium">{fmtPLN(unmatchedProfit)}</TableCell>
+                    <TableCell className="text-right">{fmtMarza(35.3)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground italic">—</TableCell>
+                  </TableRow>
+                )}
                 <TableRow className="bg-muted/50">
                   <TableCell className="font-bold text-base">RAZEM</TableCell>
                   <TableCell className="text-right font-bold text-base">{totalAktywnych} / {totalKlientow}</TableCell>
