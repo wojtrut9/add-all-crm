@@ -169,6 +169,9 @@ export const salesTargets = pgTable("sales_targets", {
   miesiac: integer("miesiac").notNull(),
   planObrotu: decimal("plan_obrotu"),
   wykonanieObrotu: decimal("wykonanie_obrotu"),
+  // TRUE only when an admin explicitly set a custom goal in the plan UI.
+  // Otherwise the monthly goal is derived automatically (prev month × 1.05).
+  planObrotuCustom: boolean("plan_obrotu_custom").notNull().default(false),
 });
 
 export const insertSalesTargetSchema = createInsertSchema(salesTargets).omit({ id: true });

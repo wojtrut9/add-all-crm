@@ -109,6 +109,9 @@ export interface IStorage {
 
   importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>): Promise<void>;
   getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
+  setPlanMonthTarget(rok: number, miesiac: number, planObrotu: number | null): Promise<void>;
+  setClientPlanTarget(rok: number, miesiac: number, clientId: number, cel: number): Promise<void>;
+  verifyPlanData(rok: number, miesiac: number): Promise<any>;
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
   importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}>;
@@ -1113,7 +1116,12 @@ export class DatabaseStorage implements IStorage {
 
   async updateSalesTarget(id: number, data: {planObrotu?: number; wykonanieObrotu?: number}): Promise<any> {
     const updateData: any = {};
-    if (data.planObrotu !== undefined) updateData.planObrotu = String(data.planObrotu);
+    if (data.planObrotu !== undefined) {
+      updateData.planObrotu = String(data.planObrotu);
+      // Admin explicitly set a target via sales-dashboard UI → custom.
+      // A zero value clears the custom flag (back to auto +5%).
+      updateData.planObrotuCustom = Number(data.planObrotu) > 0;
+    }
     if (data.wykonanieObrotu !== undefined) updateData.wykonanieObrotu = String(data.wykonanieObrotu);
     const [updated] = await db.update(salesTargets).set(updateData).where(eq(salesTargets.id, id)).returning();
     return updated;
@@ -1146,11 +1154,12 @@ export class DatabaseStorage implements IStorage {
   async updateSalesTargetsBulk(rok: number, targets: Array<{miesiac: number; planObrotu: number}>): Promise<{updated: number}> {
     let updated = 0;
     for (const t of targets) {
+      const isCustom = Number(t.planObrotu) > 0;
       const existing = await db.select().from(salesTargets)
         .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, t.miesiac)));
       if (existing.length > 0) {
         await db.update(salesTargets)
-          .set({ planObrotu: String(t.planObrotu) })
+          .set({ planObrotu: String(t.planObrotu), planObrotuCustom: isCustom })
           .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, t.miesiac)));
       } else {
         await db.insert(salesTargets).values({
@@ -1158,6 +1167,7 @@ export class DatabaseStorage implements IStorage {
           miesiac: t.miesiac,
           planObrotu: String(t.planObrotu),
           wykonanieObrotu: "0",
+          planObrotuCustom: isCustom,
         });
       }
       updated++;
@@ -1793,16 +1803,31 @@ export class DatabaseStorage implements IStorage {
 
     const weeklyData = await db.select().from(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+    // Per-client monthly cel = 4 × weekly plan (all 4 weeks carry the same amount after
+    // import/generate). We SUM all weeks instead of picking the first, so partial
+    // edits / mixed weeks still produce the correct total.
     const weeklyByClient = new Map<number, number>();
     for (const w of weeklyData) {
-      if (!weeklyByClient.has(w.clientId)) {
-        weeklyByClient.set(w.clientId, Number(w.plan || 0));
-      }
+      const curr = weeklyByClient.get(w.clientId) || 0;
+      weeklyByClient.set(w.clientId, curr + Number(w.plan || 0));
     }
 
     const currentSales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
     const salesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    // Cross-check: compare client_sales.sprzedaz with raw sum of ibiznes_invoices.koszt
+    // per client for the same month. If they diverge the aggregator is out of sync.
+    const ibiznesRawRows = await db.execute(sql`
+      SELECT client_id, COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NOT NULL
+      GROUP BY client_id
+    `);
+    const ibiznesMap = new Map<number, number>();
+    for (const r of ibiznesRawRows.rows as any[]) {
+      ibiznesMap.set(Number(r.client_id), Number(r.total || 0));
+    }
 
     const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
     const prevYear = miesiac === 1 ? rok - 1 : rok;
@@ -1819,6 +1844,10 @@ export class DatabaseStorage implements IStorage {
       }
 
       const realizacja = salesMap.get(client.id) || 0;
+      const realizacjaIbiznes = ibiznesMap.get(client.id) || 0;
+      // Flag if client_sales differs from raw iBiznes by > 1 PLN (tolerance for rounding).
+      const rozjazdIbiznes = Math.abs(realizacja - realizacjaIbiznes) > 1;
+
       const celNaDzis = dniRoboczeMiesiac > 0 ? (cel / dniRoboczeMiesiac) * dniRoboczeMiniete : 0;
       const roznica = realizacja - celNaDzis;
       const procent = celNaDzis > 0 ? (realizacja / celNaDzis) * 100 : (realizacja > 0 ? 100 : 0);
@@ -1831,6 +1860,8 @@ export class DatabaseStorage implements IStorage {
         cel: Math.round(cel),
         celNaDzis: Math.round(celNaDzis),
         realizacja: Math.round(realizacja),
+        realizacjaIbiznes: Math.round(realizacjaIbiznes),
+        rozjazdIbiznes,
         roznica: Math.round(roznica),
         procent: Math.round(procent * 10) / 10,
       });
@@ -1864,8 +1895,40 @@ export class DatabaseStorage implements IStorage {
       unmatchedRealizacja = Number((unmatchedRow.rows[0] as any)?.total || 0);
     }
     const sumaRealizacja = matchedRealizacja + unmatchedRealizacja;
-    const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
-    const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
+
+    // --- Cel miesiąca (global) --------------------------------------------------
+    // Priority:
+    //   1. sales_targets.plan_obrotu if set & > 0  → customowy cel ustawiony przez admina.
+    //   2. default = realizacja poprzedniego miesiąca × 1.05 (w tym unmatched WZ dla admin).
+    const prevMonthSalesAll = prevSales.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+    let prevUnmatched = 0;
+    if (!opiekunClientIds) {
+      const prevUnmatchedRow = await db.execute(sql`
+        SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+        FROM ibiznes_invoices
+        WHERE rok = ${prevYear} AND miesiac = ${prevMonth} AND client_id IS NULL
+      `);
+      prevUnmatched = Number((prevUnmatchedRow.rows[0] as any)?.total || 0);
+    }
+    const prevTotalRealizacja = prevMonthSalesAll + prevUnmatched;
+    const defaultCelMiesiaca = Math.round(prevTotalRealizacja * 1.05);
+
+    const targetRow = await db.select().from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    // Custom goal ONLY when an admin explicitly flipped plan_obrotu_custom=true
+    // via the "Edytuj cele" UI. Historical/imported plan_obrotu values are
+    // treated as auto (derived from prev month × 1.05).
+    const hasCustomFlag = targetRow.length > 0 && Boolean(targetRow[0].planObrotuCustom);
+    const customCel = hasCustomFlag ? Number(targetRow[0].planObrotu || 0) : 0;
+    const celMiesiaca = hasCustomFlag && customCel > 0 ? customCel : defaultCelMiesiaca;
+    const celMiesiacaIsCustom = hasCustomFlag && customCel > 0;
+
+    // celNaDzis for the month as a whole uses celMiesiaca (not sum of per-client cel).
+    const celMiesiacaNaDzis = dniRoboczeMiesiac > 0
+      ? (celMiesiaca / dniRoboczeMiesiac) * dniRoboczeMiniete
+      : 0;
+    const sumaRoznica = sumaRealizacja - celMiesiacaNaDzis;
+    const sumaProcent = celMiesiacaNaDzis > 0 ? (sumaRealizacja / celMiesiacaNaDzis) * 100 : 0;
 
     const perOpiekun: Record<string, {realizacja: number; celNaDzis: number; cel: number}> = {};
     for (const r of rows) {
@@ -1881,12 +1944,279 @@ export class DatabaseStorage implements IStorage {
       dniRoboczeMiesiac,
       sumaCel,
       sumaCelNaDzis: Math.round(sumaCelNaDzis),
+      celMiesiaca,
+      celMiesiacaIsCustom,
+      defaultCelMiesiaca,
+      celMiesiacaNaDzis: Math.round(celMiesiacaNaDzis),
+      prevMonthRealizacja: Math.round(prevTotalRealizacja),
       sumaRealizacja,
       sumaRoznica: Math.round(sumaRoznica),
       sumaProcent: Math.round(sumaProcent * 10) / 10,
       perOpiekun,
     };
   }
+
+  /**
+   * Set or clear the monthly company-level target (cel miesiąca).
+   * Pass planObrotu=null to reset to the default (prev month × 1.05) —
+   * this also clears the plan_obrotu_custom flag, so the UI stops showing
+   * "custom" for this month.
+   */
+  async setPlanMonthTarget(rok: number, miesiac: number, planObrotu: number | null): Promise<void> {
+    const existing = await db.select().from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    const value = planObrotu == null ? "0" : String(Math.round(planObrotu));
+    const isCustom = planObrotu != null && planObrotu > 0;
+    if (existing.length > 0) {
+      await db.update(salesTargets)
+        .set({ planObrotu: value, planObrotuCustom: isCustom })
+        .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    } else {
+      await db.insert(salesTargets).values({
+        rok,
+        miesiac,
+        planObrotu: value,
+        wykonanieObrotu: "0",
+        planObrotuCustom: isCustom,
+      });
+    }
+  }
+
+  /**
+   * Set the per-client monthly target. Writes 4 weekly rows with plan = cel / 4.
+   * Preserves existing `realizacja` and `notatki` when a row already exists.
+   */
+  async setClientPlanTarget(rok: number, miesiac: number, clientId: number, cel: number): Promise<void> {
+    const perWeek = String(Math.round((cel / 4) * 100) / 100);
+    const existing = await db.select().from(clientSalesWeekly)
+      .where(and(
+        eq(clientSalesWeekly.rok, rok),
+        eq(clientSalesWeekly.miesiac, miesiac),
+        eq(clientSalesWeekly.clientId, clientId),
+      ));
+    if (existing.length > 0) {
+      for (const row of existing) {
+        await db.update(clientSalesWeekly)
+          .set({ plan: perWeek })
+          .where(eq(clientSalesWeekly.id, row.id));
+      }
+      // If for some reason fewer than 4 rows exist, top up.
+      for (let t = existing.length + 1; t <= 4; t++) {
+        await db.insert(clientSalesWeekly).values({
+          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0",
+        });
+      }
+    } else {
+      for (let t = 1; t <= 4; t++) {
+        await db.insert(clientSalesWeekly).values({
+          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0",
+        });
+      }
+    }
+  }
+
+  /**
+   * 3-layer data verification for the Plan page (admin, read-only).
+   *
+   *   A) client_sales.sprzedaz       ← what the plan UI displays
+   *   B) SUM(ibiznes_invoices.koszt) ← our local WZ cache (aggregator input)
+   *   C) SUM(fetchIbiznesInvoices)   ← raw WZ straight from iBiznes MySQL
+   *
+   * Mismatch between A and B = aggregation drift (run Synchronizuj teraz).
+   * Mismatch between B and C = sync drift (run Synchronizuj teraz to refresh cache).
+   *
+   * Tolerance: 1 PLN (covers rounding).
+   */
+  async verifyPlanData(rok: number, miesiac: number): Promise<{
+    rok: number;
+    miesiac: number;
+    ok: boolean;
+    counts: { total: number; ok: number; aggMismatch: number; syncMismatch: number; missingClient: number };
+    totals: { clientSales: number; ibiznesInvoices: number; ibiznesLive: number };
+    rows: Array<{
+      clientId: number;
+      klient: string;
+      nip: string | null;
+      alias: string | null;
+      a_clientSales: number;
+      b_ibiznesInvoices: number;
+      c_ibiznesLive: number;
+      liveWzCount: number;
+      cachedWzCount: number;
+      diffAB: number;
+      diffBC: number;
+      status: "ok" | "agg_mismatch" | "sync_mismatch" | "both_mismatch";
+    }>;
+    unmatchedLive: {
+      sum: number;
+      count: number;
+      topNips: Array<{ nip: string; alias: string | null; sum: number; count: number }>;
+    };
+  }> {
+    const { fetchIbiznesInvoices } = await import("./ibiznes");
+    const firstDay = `${rok}-${String(miesiac).padStart(2, "0")}-01`;
+
+    // 1) Fetch raw WZ from iBiznes LIVE for the month in question.
+    // fetchIbiznesInvoices returns all WZ from sinceDate forward; we filter to this month.
+    const liveAll = await fetchIbiznesInvoices(firstDay);
+    const live = liveAll.filter((w) => {
+      const [y, m] = w.dataWyst.split("-").map(Number);
+      return y === rok && m === miesiac;
+    });
+
+    // 2) Build client maps (NIP → id, alias → id) — exactly the same way runIbiznesSync does.
+    const allClients = await db
+      .select({ id: clients.id, nip: clients.nip, klient: clients.klient, ibiznesAlias: clients.ibiznesAlias })
+      .from(clients);
+    const normalizeNip = (n: string | null | undefined) => (n ? n.replace(/[-\s]/g, "").trim() : "");
+    const normalizeAlias = (s: string) =>
+      s.toLowerCase().replace(/[–—-]/g, " ").replace(/\s+/g, " ").trim();
+    const nipToClientId = new Map<string, number>();
+    const aliasToClientId = new Map<string, number>();
+    const clientById = new Map<number, { id: number; nip: string | null; klient: string; ibiznesAlias: string | null }>();
+    for (const c of allClients) {
+      clientById.set(c.id, c);
+      if (c.nip) nipToClientId.set(normalizeNip(c.nip), c.id);
+      if (c.ibiznesAlias) aliasToClientId.set(normalizeAlias(c.ibiznesAlias), c.id);
+      if (c.klient) aliasToClientId.set(normalizeAlias(c.klient), c.id);
+    }
+
+    // 3) Per-client aggregates from iBiznes LIVE.
+    const liveSum = new Map<number, number>();
+    const liveCount = new Map<number, number>();
+    const unmatchedLiveByKey = new Map<string, { nip: string; alias: string | null; sum: number; count: number }>();
+    let unmatchedLiveSum = 0;
+    let unmatchedLiveCount = 0;
+    for (const w of live) {
+      let cid = w.nip ? nipToClientId.get(w.nip) : undefined;
+      if (cid == null && w.alias) cid = aliasToClientId.get(normalizeAlias(w.alias));
+      if (cid != null) {
+        liveSum.set(cid, (liveSum.get(cid) || 0) + Number(w.koszt || 0));
+        liveCount.set(cid, (liveCount.get(cid) || 0) + 1);
+      } else {
+        unmatchedLiveSum += Number(w.koszt || 0);
+        unmatchedLiveCount += 1;
+        const key = (w.nip || w.alias || "unknown").toLowerCase();
+        const entry = unmatchedLiveByKey.get(key) || { nip: w.nip || "", alias: w.alias || null, sum: 0, count: 0 };
+        entry.sum += Number(w.koszt || 0);
+        entry.count += 1;
+        unmatchedLiveByKey.set(key, entry);
+      }
+    }
+
+    // 4) Per-client aggregates from local DB: client_sales & ibiznes_invoices.
+    const salesRows = await db
+      .select()
+      .from(clientSales)
+      .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
+    const salesMap = new Map<number, number>();
+    for (const s of salesRows) salesMap.set(s.clientId, Number(s.sprzedaz || 0));
+
+    const cacheRows = await db.execute(sql`
+      SELECT client_id,
+             COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total,
+             COUNT(*)::int                           AS cnt
+      FROM ibiznes_invoices
+      WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NOT NULL
+      GROUP BY client_id
+    `);
+    const cacheSum = new Map<number, number>();
+    const cacheCount = new Map<number, number>();
+    for (const r of cacheRows.rows as any[]) {
+      cacheSum.set(Number(r.client_id), Number(r.total || 0));
+      cacheCount.set(Number(r.client_id), Number(r.cnt || 0));
+    }
+
+    // 5) Union of all client IDs that appear in ANY layer — so we catch missing ones too.
+    const touchedIds = new Set<number>([
+      ...liveSum.keys(),
+      ...salesMap.keys(),
+      ...cacheSum.keys(),
+    ]);
+
+    const TOLERANCE = 1;
+    const rows: Array<any> = [];
+    let okCount = 0, aggMismatch = 0, syncMismatch = 0, missingClient = 0;
+
+    for (const cid of touchedIds) {
+      const client = clientById.get(cid);
+      if (!client) {
+        missingClient += 1;
+        continue;
+      }
+      const a = Math.round(salesMap.get(cid) || 0);
+      const b = Math.round(cacheSum.get(cid) || 0);
+      const c = Math.round(liveSum.get(cid) || 0);
+      const diffAB = a - b;
+      const diffBC = b - c;
+      const aggBad = Math.abs(diffAB) > TOLERANCE;
+      const syncBad = Math.abs(diffBC) > TOLERANCE;
+      let status: "ok" | "agg_mismatch" | "sync_mismatch" | "both_mismatch" = "ok";
+      if (aggBad && syncBad) status = "both_mismatch";
+      else if (aggBad) status = "agg_mismatch";
+      else if (syncBad) status = "sync_mismatch";
+
+      if (status === "ok") okCount += 1;
+      else if (status === "agg_mismatch") aggMismatch += 1;
+      else if (status === "sync_mismatch") syncMismatch += 1;
+      else { aggMismatch += 1; syncMismatch += 1; }
+
+      rows.push({
+        clientId: cid,
+        klient: client.klient,
+        nip: client.nip,
+        alias: client.ibiznesAlias,
+        a_clientSales: a,
+        b_ibiznesInvoices: b,
+        c_ibiznesLive: c,
+        liveWzCount: liveCount.get(cid) || 0,
+        cachedWzCount: cacheCount.get(cid) || 0,
+        diffAB,
+        diffBC,
+        status,
+      });
+    }
+
+    // Show mismatches first, then sorted by |diffBC| desc (sync drift is more urgent).
+    rows.sort((x, y) => {
+      if (x.status === "ok" && y.status !== "ok") return 1;
+      if (y.status === "ok" && x.status !== "ok") return -1;
+      return Math.abs(y.diffBC) - Math.abs(x.diffBC) || Math.abs(y.diffAB) - Math.abs(x.diffAB);
+    });
+
+    const totalsClientSales = Array.from(salesMap.values()).reduce((s, n) => s + n, 0);
+    const totalsCache = Array.from(cacheSum.values()).reduce((s, n) => s + n, 0);
+    const totalsLive = Array.from(liveSum.values()).reduce((s, n) => s + n, 0);
+
+    const topUnmatched = Array.from(unmatchedLiveByKey.values())
+      .sort((a, b) => b.sum - a.sum)
+      .slice(0, 20);
+
+    return {
+      rok,
+      miesiac,
+      ok: rows.every((r) => r.status === "ok"),
+      counts: {
+        total: rows.length,
+        ok: okCount,
+        aggMismatch,
+        syncMismatch,
+        missingClient,
+      },
+      totals: {
+        clientSales: Math.round(totalsClientSales),
+        ibiznesInvoices: Math.round(totalsCache),
+        ibiznesLive: Math.round(totalsLive),
+      },
+      rows,
+      unmatchedLive: {
+        sum: Math.round(unmatchedLiveSum),
+        count: unmatchedLiveCount,
+        topNips: topUnmatched.map((e) => ({ ...e, sum: Math.round(e.sum) })),
+      },
+    };
+  }
+
   async importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}> {
     const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
     const mKey = MONTH_KEYS[miesiac - 1];

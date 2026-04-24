@@ -1284,6 +1284,59 @@ export async function registerRoutes(
     }
   });
 
+  // Set / reset the monthly company-level target (cel miesiąca).
+  // Body: { rok, miesiac, planObrotu: number | null }.
+  // planObrotu=null resets to the default (prev month realization × 1.05).
+  app.patch("/api/plan/target", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, planObrotu } = req.body;
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const value = planObrotu == null || planObrotu === "" ? null : Number(planObrotu);
+      if (value != null && (!Number.isFinite(value) || value < 0)) {
+        return res.status(400).json({ message: "planObrotu musi być liczbą >= 0" });
+      }
+      await storage.setPlanMonthTarget(Number(rok), Number(miesiac), value);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // 3-layer data verification for the Plan page (admin, read-only).
+  // Compares: A) client_sales.sprzedaz, B) SUM(ibiznes_invoices.koszt),
+  // and C) raw WZ straight from iBiznes MySQL — per client.
+  // Useful to confirm whether the numbers shown to handlowcy match reality.
+  app.get("/api/plan/verify", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok);
+      const miesiac = Number(req.query.miesiac);
+      if (!rok || !miesiac) return res.status(400).json({ message: "Brak rok/miesiac" });
+      const result = await storage.verifyPlanData(rok, miesiac);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Błąd weryfikacji" });
+    }
+  });
+
+  // Set the per-client monthly target (cel pojedynczego klienta).
+  // Body: { rok, miesiac, clientId, cel }.
+  app.patch("/api/plan/client-target", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { rok, miesiac, clientId, cel } = req.body;
+      if (!rok || !miesiac || !clientId) {
+        return res.status(400).json({ message: "Brak rok/miesiac/clientId" });
+      }
+      const celNum = Number(cel);
+      if (!Number.isFinite(celNum) || celNum < 0) {
+        return res.status(400).json({ message: "cel musi być liczbą >= 0" });
+      }
+      await storage.setClientPlanTarget(Number(rok), Number(miesiac), Number(clientId), celNum);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.patch("/api/sales-targets/:id", authMiddleware, adminOnly, async (req, res) => {
     try {
       const id = Number(req.params.id);
