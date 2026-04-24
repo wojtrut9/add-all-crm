@@ -298,139 +298,148 @@ export interface IbiznesSchemaInfo {
  * Lets us see which column is netto vs brutto without guessing.
  */
 export async function fetchIbiznesDeepDiagnostics(sinceDate: string): Promise<IbiznesSchemaInfo[]> {
-  const db = getPool();
   const sinceDwy = sinceDate.replace(/-/g, "");
-  // Inspect BOTH line tables (spec) and header tables — the "Koszt" shown in iBiznes UI
-  // likely lives on the WZ header (addallspkazogr / firma), not on the line items.
-  const tables: Array<{ source: "sp_zoo" | "firma"; table: string }> = [
-    { source: "sp_zoo", table: "addallspkazogr" },      // WZ header
-    { source: "sp_zoo", table: "addallspkazogrspec" },  // WZ lines
-    { source: "firma", table: "firma" },                 // WZ header (JDG)
-    { source: "firma", table: "firmaspec" },             // WZ lines (JDG)
-  ];
 
-  const out: IbiznesSchemaInfo[] = [];
-
-  for (const { source, table } of tables) {
+  // IMPORTANT: Use a *dedicated* short-lived connection so diagnostics never
+  // blocks the main pool (connectionLimit=1). Also apply statement_timeout to
+  // prevent runaway table scans on huge tables shared with the Skalo app.
+  const url = process.env.IBIZNES_DB_URL;
+  if (!url) throw new Error("IBIZNES_DB_URL is not set");
+  const conn = await mysql.createConnection(
+    url + (url.includes("?") ? "&" : "?") + "connectTimeout=15000"
+  );
+  try {
+    // Max 8 seconds per query (MySQL 5.7+: max_execution_time in ms via hint).
+    // Also set session-level timeouts to be sure.
     try {
-    // 1) Column list
-    const [colRows] = await db.query<mysql.RowDataPacket[]>(
-      `SELECT COLUMN_NAME AS name, DATA_TYPE AS type, IS_NULLABLE AS nullable
-       FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_NAME = ?
-       ORDER BY ORDINAL_POSITION`,
-      [table]
-    );
+      await conn.query("SET SESSION MAX_EXECUTION_TIME = 8000");
+    } catch { /* older MySQL — ignore */ }
 
-    // If table doesn't exist in DB, skip silently.
-    if ((colRows as any[]).length === 0) {
-      console.warn(`[diag] table ${table} not found, skipping`);
-      continue;
-    }
+    // Line tables are the ones we know are indexed and light to query.
+    // Header tables are included ONLY for column/sample inspection — no SUM/GROUP BY.
+    const tables: Array<{ source: "sp_zoo" | "firma"; table: string; kind: "header" | "spec" }> = [
+      { source: "sp_zoo", table: "addallspkazogr", kind: "header" },
+      { source: "sp_zoo", table: "addallspkazogrspec", kind: "spec" },
+      { source: "firma", table: "firma", kind: "header" },
+      { source: "firma", table: "firmaspec", kind: "spec" },
+    ];
 
-    const columns = (colRows as any[]).map((r) => ({
-      name: String(r.name),
-      type: String(r.type),
-      nullable: String(r.nullable),
-    }));
-    const colNames = new Set(columns.map((c) => c.name));
-    const colNamesLower = new Set(columns.map((c) => c.name.toLowerCase()));
-    const hasIl = colNamesLower.has("il");
-    const hasCN = colNamesLower.has("cn");
-    const hasCB = colNamesLower.has("cb");
-    const hasWn = colNamesLower.has("wn");
-    const hasWb = colNamesLower.has("wb");
-    const hasKoszt = colNamesLower.has("koszt");
-    const hasNrR = colNamesLower.has("nrr");
-    const hasData = colNamesLower.has("data");
-    const hasTyp = colNamesLower.has("typ");
+    const out: IbiznesSchemaInfo[] = [];
 
-    // 2) Sample WZ rows (3 most recent). Guard against tables that lack Typ/Data.
-    let sampleRows: mysql.RowDataPacket[] = [];
-    try {
-      if (hasTyp && hasData) {
-        const [rows] = await db.query<mysql.RowDataPacket[]>(
-          `SELECT * FROM ${table} WHERE Typ = 'WZ' AND Data >= ? ORDER BY Data DESC LIMIT 3`,
-          [sinceDwy]
+    for (const { source, table, kind } of tables) {
+      try {
+        const [colRows] = await conn.query<mysql.RowDataPacket[]>(
+          `SELECT COLUMN_NAME AS name, DATA_TYPE AS type, IS_NULLABLE AS nullable
+           FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE TABLE_NAME = ?
+           ORDER BY ORDINAL_POSITION`,
+          [table]
         );
-        sampleRows = rows;
-      } else if (hasData) {
-        const [rows] = await db.query<mysql.RowDataPacket[]>(
-          `SELECT * FROM ${table} WHERE Data >= ? ORDER BY Data DESC LIMIT 3`,
-          [sinceDwy]
-        );
-        sampleRows = rows;
-      } else {
-        const [rows] = await db.query<mysql.RowDataPacket[]>(
-          `SELECT * FROM ${table} LIMIT 3`
-        );
-        sampleRows = rows;
-      }
-    } catch (err: any) {
-      console.warn(`[diag] sample query failed for ${table}:`, err.message);
-      sampleRows = [];
-    }
 
-    // 3) Monthly breakdown using il*CN (netto) and il*CB (brutto).
-
-    let monthlyRows: mysql.RowDataPacket[] = [];
-    try {
-      if (hasData && hasTyp && hasNrR) {
-        const extras: string[] = [];
-        extras.push(hasIl && hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
-        extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
-        extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
-        extras.push(hasKoszt ? `ROUND(SUM(Koszt), 2) AS totalKoszt` : `NULL AS totalKoszt`);
-
-        const [rows] = await db.query<mysql.RowDataPacket[]>(
-          `SELECT LEFT(Data, 4) AS rok,
-                  SUBSTRING(Data, 5, 2) AS miesiac,
-                  COUNT(DISTINCT NrR) AS cnt,
-                  ${hasIl && hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
-                  ${extras.join(", ")}
-           FROM ${table}
-           WHERE Typ = 'WZ' AND Data >= ?
-           GROUP BY rok, miesiac
-           ORDER BY rok, miesiac`,
-          [sinceDwy]
-        );
-        monthlyRows = rows;
-      }
-    } catch (err: any) {
-      console.warn(`[diag] monthly query failed for ${table}:`, err.message);
-      monthlyRows = [];
-    }
-
-    out.push({
-      source,
-      table,
-      columns,
-      sampleWZ: (sampleRows as any[]).map((r) => {
-        const obj: Record<string, any> = {};
-        for (const k of Object.keys(r)) {
-          const v = r[k];
-          obj[k] = v instanceof Date ? v.toISOString() : v == null ? null : String(v);
+        if ((colRows as any[]).length === 0) {
+          console.warn(`[diag] table ${table} not found, skipping`);
+          continue;
         }
-        return obj;
-      }),
-      monthlyWZ: (monthlyRows as any[]).map((r) => ({
-        rok: Number(r.rok),
-        miesiac: Number(r.miesiac),
-        documentsCount: Number(r.cnt) || 0,
-        totalCb: Number(r.totalCb) || 0,
-        totalCn: r.totalCn == null ? null : Number(r.totalCn),
-        totalWn: r.totalWn == null ? null : Number(r.totalWn),
-        totalWb: r.totalWb == null ? null : Number(r.totalWb),
-        totalKoszt: r.totalKoszt == null ? null : Number(r.totalKoszt),
-      })),
-    });
-    } catch (err: any) {
-      console.error(`[diag] failed for table ${table}:`, err.message);
-      // Keep going with the remaining tables.
-    }
-  }
 
-  return out;
+        const columns = (colRows as any[]).map((r) => ({
+          name: String(r.name),
+          type: String(r.type),
+          nullable: String(r.nullable),
+        }));
+        const colNamesLower = new Set(columns.map((c) => c.name.toLowerCase()));
+        const hasIl = colNamesLower.has("il");
+        const hasCN = colNamesLower.has("cn");
+        const hasCB = colNamesLower.has("cb");
+        const hasWn = colNamesLower.has("wn");
+        const hasWb = colNamesLower.has("wb");
+        const hasKoszt = colNamesLower.has("koszt");
+        const hasNrR = colNamesLower.has("nrr");
+        const hasData = colNamesLower.has("data");
+        const hasTyp = colNamesLower.has("typ");
+
+        // 2) Sample WZ rows — cheap `LIMIT 3` without ORDER BY (avoids full scan).
+        let sampleRows: mysql.RowDataPacket[] = [];
+        try {
+          if (hasTyp) {
+            const [rows] = await conn.query<mysql.RowDataPacket[]>(
+              `SELECT * FROM ${table} WHERE Typ = 'WZ' LIMIT 3`
+            );
+            sampleRows = rows;
+          } else {
+            const [rows] = await conn.query<mysql.RowDataPacket[]>(
+              `SELECT * FROM ${table} LIMIT 3`
+            );
+            sampleRows = rows;
+          }
+        } catch (err: any) {
+          console.warn(`[diag] sample query failed for ${table}:`, err.message);
+          sampleRows = [];
+        }
+
+        // 3) Monthly breakdown — ONLY for spec tables (indexed & already used by sync).
+        // Header tables are skipped to avoid heavy full-scans that choke the shared DB.
+        let monthlyRows: mysql.RowDataPacket[] = [];
+        if (kind === "spec") {
+          try {
+            if (hasData && hasTyp && hasNrR) {
+              const extras: string[] = [];
+              extras.push(hasIl && hasCN ? `ROUND(SUM(il * CN), 2) AS totalCn` : `NULL AS totalCn`);
+              extras.push(hasWn ? `ROUND(SUM(Wn), 2) AS totalWn` : `NULL AS totalWn`);
+              extras.push(hasWb ? `ROUND(SUM(Wb), 2) AS totalWb` : `NULL AS totalWb`);
+              extras.push(hasKoszt ? `ROUND(SUM(Koszt), 2) AS totalKoszt` : `NULL AS totalKoszt`);
+
+              const [rows] = await conn.query<mysql.RowDataPacket[]>(
+                `SELECT LEFT(Data, 4) AS rok,
+                        SUBSTRING(Data, 5, 2) AS miesiac,
+                        COUNT(DISTINCT NrR) AS cnt,
+                        ${hasIl && hasCB ? "ROUND(SUM(il * CB), 2)" : "NULL"} AS totalCb,
+                        ${extras.join(", ")}
+                 FROM ${table}
+                 WHERE Typ = 'WZ' AND Data >= ?
+                 GROUP BY rok, miesiac
+                 ORDER BY rok, miesiac`,
+                [sinceDwy]
+              );
+              monthlyRows = rows;
+            }
+          } catch (err: any) {
+            console.warn(`[diag] monthly query failed for ${table}:`, err.message);
+            monthlyRows = [];
+          }
+        }
+
+        out.push({
+          source,
+          table,
+          columns,
+          sampleWZ: (sampleRows as any[]).map((r) => {
+            const obj: Record<string, any> = {};
+            for (const k of Object.keys(r)) {
+              const v = r[k];
+              obj[k] = v instanceof Date ? v.toISOString() : v == null ? null : String(v);
+            }
+            return obj;
+          }),
+          monthlyWZ: (monthlyRows as any[]).map((r) => ({
+            rok: Number(r.rok),
+            miesiac: Number(r.miesiac),
+            documentsCount: Number(r.cnt) || 0,
+            totalCb: Number(r.totalCb) || 0,
+            totalCn: r.totalCn == null ? null : Number(r.totalCn),
+            totalWn: r.totalWn == null ? null : Number(r.totalWn),
+            totalWb: r.totalWb == null ? null : Number(r.totalWb),
+            totalKoszt: r.totalKoszt == null ? null : Number(r.totalKoszt),
+          })),
+        });
+      } catch (err: any) {
+        console.error(`[diag] failed for table ${table}:`, err.message);
+      }
+    }
+
+    return out;
+  } finally {
+    try { await conn.end(); } catch { /* ignore */ }
+  }
 }
 
 export interface IbiznesAuditRow {
