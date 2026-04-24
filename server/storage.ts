@@ -109,6 +109,8 @@ export interface IStorage {
 
   importWzData(rok: number, miesiac: number, data: Array<{clientId: number; sprzedaz: number}>): Promise<void>;
   getPlanRealization(rok: number, miesiac: number, opiekun?: string): Promise<any>;
+  setPlanMonthTarget(rok: number, miesiac: number, planObrotu: number | null): Promise<void>;
+  setClientPlanTarget(rok: number, miesiac: number, clientId: number, cel: number): Promise<void>;
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
   importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}>;
@@ -1793,16 +1795,31 @@ export class DatabaseStorage implements IStorage {
 
     const weeklyData = await db.select().from(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
+    // Per-client monthly cel = 4 × weekly plan (all 4 weeks carry the same amount after
+    // import/generate). We SUM all weeks instead of picking the first, so partial
+    // edits / mixed weeks still produce the correct total.
     const weeklyByClient = new Map<number, number>();
     for (const w of weeklyData) {
-      if (!weeklyByClient.has(w.clientId)) {
-        weeklyByClient.set(w.clientId, Number(w.plan || 0));
-      }
+      const curr = weeklyByClient.get(w.clientId) || 0;
+      weeklyByClient.set(w.clientId, curr + Number(w.plan || 0));
     }
 
     const currentSales = await db.select().from(clientSales)
       .where(and(eq(clientSales.rok, rok), eq(clientSales.miesiac, miesiac)));
     const salesMap = new Map(currentSales.map(s => [s.clientId, Number(s.sprzedaz || 0)]));
+
+    // Cross-check: compare client_sales.sprzedaz with raw sum of ibiznes_invoices.koszt
+    // per client for the same month. If they diverge the aggregator is out of sync.
+    const ibiznesRawRows = await db.execute(sql`
+      SELECT client_id, COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${rok} AND miesiac = ${miesiac} AND client_id IS NOT NULL
+      GROUP BY client_id
+    `);
+    const ibiznesMap = new Map<number, number>();
+    for (const r of ibiznesRawRows.rows as any[]) {
+      ibiznesMap.set(Number(r.client_id), Number(r.total || 0));
+    }
 
     const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
     const prevYear = miesiac === 1 ? rok - 1 : rok;
@@ -1819,6 +1836,10 @@ export class DatabaseStorage implements IStorage {
       }
 
       const realizacja = salesMap.get(client.id) || 0;
+      const realizacjaIbiznes = ibiznesMap.get(client.id) || 0;
+      // Flag if client_sales differs from raw iBiznes by > 1 PLN (tolerance for rounding).
+      const rozjazdIbiznes = Math.abs(realizacja - realizacjaIbiznes) > 1;
+
       const celNaDzis = dniRoboczeMiesiac > 0 ? (cel / dniRoboczeMiesiac) * dniRoboczeMiniete : 0;
       const roznica = realizacja - celNaDzis;
       const procent = celNaDzis > 0 ? (realizacja / celNaDzis) * 100 : (realizacja > 0 ? 100 : 0);
@@ -1831,6 +1852,8 @@ export class DatabaseStorage implements IStorage {
         cel: Math.round(cel),
         celNaDzis: Math.round(celNaDzis),
         realizacja: Math.round(realizacja),
+        realizacjaIbiznes: Math.round(realizacjaIbiznes),
+        rozjazdIbiznes,
         roznica: Math.round(roznica),
         procent: Math.round(procent * 10) / 10,
       });
@@ -1864,8 +1887,36 @@ export class DatabaseStorage implements IStorage {
       unmatchedRealizacja = Number((unmatchedRow.rows[0] as any)?.total || 0);
     }
     const sumaRealizacja = matchedRealizacja + unmatchedRealizacja;
-    const sumaRoznica = sumaRealizacja - sumaCelNaDzis;
-    const sumaProcent = sumaCelNaDzis > 0 ? (sumaRealizacja / sumaCelNaDzis) * 100 : 0;
+
+    // --- Cel miesiąca (global) --------------------------------------------------
+    // Priority:
+    //   1. sales_targets.plan_obrotu if set & > 0  → customowy cel ustawiony przez admina.
+    //   2. default = realizacja poprzedniego miesiąca × 1.05 (w tym unmatched WZ dla admin).
+    const prevMonthSalesAll = prevSales.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+    let prevUnmatched = 0;
+    if (!opiekunClientIds) {
+      const prevUnmatchedRow = await db.execute(sql`
+        SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+        FROM ibiznes_invoices
+        WHERE rok = ${prevYear} AND miesiac = ${prevMonth} AND client_id IS NULL
+      `);
+      prevUnmatched = Number((prevUnmatchedRow.rows[0] as any)?.total || 0);
+    }
+    const prevTotalRealizacja = prevMonthSalesAll + prevUnmatched;
+    const defaultCelMiesiaca = Math.round(prevTotalRealizacja * 1.05);
+
+    const targetRow = await db.select().from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    const customCel = targetRow.length > 0 ? Number(targetRow[0].planObrotu || 0) : 0;
+    const celMiesiaca = customCel > 0 ? customCel : defaultCelMiesiaca;
+    const celMiesiacaIsCustom = customCel > 0;
+
+    // celNaDzis for the month as a whole uses celMiesiaca (not sum of per-client cel).
+    const celMiesiacaNaDzis = dniRoboczeMiesiac > 0
+      ? (celMiesiaca / dniRoboczeMiesiac) * dniRoboczeMiniete
+      : 0;
+    const sumaRoznica = sumaRealizacja - celMiesiacaNaDzis;
+    const sumaProcent = celMiesiacaNaDzis > 0 ? (sumaRealizacja / celMiesiacaNaDzis) * 100 : 0;
 
     const perOpiekun: Record<string, {realizacja: number; celNaDzis: number; cel: number}> = {};
     for (const r of rows) {
@@ -1881,11 +1932,71 @@ export class DatabaseStorage implements IStorage {
       dniRoboczeMiesiac,
       sumaCel,
       sumaCelNaDzis: Math.round(sumaCelNaDzis),
+      celMiesiaca,
+      celMiesiacaIsCustom,
+      defaultCelMiesiaca,
+      celMiesiacaNaDzis: Math.round(celMiesiacaNaDzis),
+      prevMonthRealizacja: Math.round(prevTotalRealizacja),
       sumaRealizacja,
       sumaRoznica: Math.round(sumaRoznica),
       sumaProcent: Math.round(sumaProcent * 10) / 10,
       perOpiekun,
     };
+  }
+
+  /**
+   * Set or clear the monthly company-level target (cel miesiąca).
+   * Pass planObrotu=null to reset to the default (prev month × 1.05).
+   */
+  async setPlanMonthTarget(rok: number, miesiac: number, planObrotu: number | null): Promise<void> {
+    const existing = await db.select().from(salesTargets)
+      .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    const value = planObrotu == null ? "0" : String(Math.round(planObrotu));
+    if (existing.length > 0) {
+      await db.update(salesTargets)
+        .set({ planObrotu: value })
+        .where(and(eq(salesTargets.rok, rok), eq(salesTargets.miesiac, miesiac)));
+    } else {
+      await db.insert(salesTargets).values({
+        rok,
+        miesiac,
+        planObrotu: value,
+        wykonanieObrotu: "0",
+      });
+    }
+  }
+
+  /**
+   * Set the per-client monthly target. Writes 4 weekly rows with plan = cel / 4.
+   * Preserves existing `realizacja` and `notatki` when a row already exists.
+   */
+  async setClientPlanTarget(rok: number, miesiac: number, clientId: number, cel: number): Promise<void> {
+    const perWeek = String(Math.round((cel / 4) * 100) / 100);
+    const existing = await db.select().from(clientSalesWeekly)
+      .where(and(
+        eq(clientSalesWeekly.rok, rok),
+        eq(clientSalesWeekly.miesiac, miesiac),
+        eq(clientSalesWeekly.clientId, clientId),
+      ));
+    if (existing.length > 0) {
+      for (const row of existing) {
+        await db.update(clientSalesWeekly)
+          .set({ plan: perWeek })
+          .where(eq(clientSalesWeekly.id, row.id));
+      }
+      // If for some reason fewer than 4 rows exist, top up.
+      for (let t = existing.length + 1; t <= 4; t++) {
+        await db.insert(clientSalesWeekly).values({
+          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0",
+        });
+      }
+    } else {
+      for (let t = 1; t <= 4; t++) {
+        await db.insert(clientSalesWeekly).values({
+          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0",
+        });
+      }
+    }
   }
   async importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}> {
     const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];

@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet } from "lucide-react";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet, Pencil, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { MONTHS_ASCII as MONTHS } from "@/lib/constants";
@@ -380,6 +380,191 @@ function ImportWzModal({ open, onClose, defaultRok, defaultMiesiac }: {
   );
 }
 
+function EditTargetsModal({
+  open, onClose, rok, miesiac, planData,
+}: {
+  open: boolean;
+  onClose: () => void;
+  rok: number;
+  miesiac: number;
+  planData: any;
+}) {
+  const { toast } = useToast();
+  const rows: any[] = planData?.rows || [];
+  const celMiesiacaCurrent: number = planData?.celMiesiaca || 0;
+  const celMiesiacaIsCustom: boolean = Boolean(planData?.celMiesiacaIsCustom);
+  const defaultCel: number = planData?.defaultCelMiesiaca || 0;
+  const prevMonthRealizacja: number = planData?.prevMonthRealizacja || 0;
+
+  // Local editable state, seeded each time the modal opens.
+  const [celMiesiaca, setCelMiesiaca] = useState<string>("");
+  const [clientCele, setClientCele] = useState<Record<number, string>>({});
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Seed on open + when data changes.
+  const seedKey = `${rok}-${miesiac}-${rows.length}-${celMiesiacaCurrent}`;
+  const lastSeed = useRef<string>("");
+  if (open && lastSeed.current !== seedKey) {
+    lastSeed.current = seedKey;
+    setCelMiesiaca(celMiesiacaIsCustom ? String(celMiesiacaCurrent) : "");
+    const initial: Record<number, string> = {};
+    for (const r of rows) initial[r.clientId] = String(r.cel || 0);
+    setClientCele(initial);
+    setSearch("");
+  }
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // 1) Month-level target: empty string → reset to default (null).
+      const celVal = celMiesiaca.trim() === "" ? null : Number(celMiesiaca.replace(/\s/g, ""));
+      if (celVal != null && (!Number.isFinite(celVal) || celVal < 0)) {
+        throw new Error("Cel miesiąca musi być liczbą ≥ 0");
+      }
+      const r1 = await authFetch("/api/plan/target", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rok, miesiac, planObrotu: celVal }),
+      });
+      if (!r1.ok) {
+        const b = await r1.json().catch(() => ({}));
+        throw new Error(b.message || "Nie udało się zapisać celu miesiąca");
+      }
+
+      // 2) Per-client targets — only those actually changed.
+      const changed: Array<{ clientId: number; cel: number }> = [];
+      for (const r of rows) {
+        const newVal = Number(String(clientCele[r.clientId] ?? r.cel).replace(/\s/g, ""));
+        if (!Number.isFinite(newVal) || newVal < 0) continue;
+        if (Math.round(newVal) !== Math.round(Number(r.cel))) {
+          changed.push({ clientId: r.clientId, cel: newVal });
+        }
+      }
+      for (const c of changed) {
+        const r2 = await authFetch("/api/plan/client-target", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rok, miesiac, clientId: c.clientId, cel: c.cel }),
+        });
+        if (!r2.ok) {
+          const b = await r2.json().catch(() => ({}));
+          throw new Error(b.message || `Błąd zapisu klienta #${c.clientId}`);
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+      toast({
+        title: "Cele zapisane",
+        description: `Cel miesiąca${celVal == null ? " przywrócony do domyślnego" : ""}. Zaktualizowano klientów: ${changed.length}.`,
+      });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Błąd zapisu", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const filtered = search.trim()
+    ? rows.filter((r) => (r.klient || "").toLowerCase().includes(search.trim().toLowerCase()))
+    : rows;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Edytuj cele — {MONTHS[miesiac - 1]} {rok}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-md bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-3 text-sm">
+            <p className="font-medium mb-1">Cel miesiąca (globalny)</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Domyślny = realizacja poprzedniego miesiąca × 1,05 = <strong>{fmtPLN(defaultCel)}</strong>{" "}
+              (realizacja prev: {fmtPLN(prevMonthRealizacja)}). Zostaw puste, aby używać domyślnego.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder={`domyślny: ${fmtNum(defaultCel)}`}
+                value={celMiesiaca}
+                onChange={(e) => setCelMiesiaca(e.target.value)}
+                className="max-w-[220px]"
+              />
+              <span className="text-sm text-muted-foreground">PLN</span>
+              {celMiesiacaIsCustom && celMiesiaca !== "" && (
+                <Button size="sm" variant="ghost" onClick={() => setCelMiesiaca("")}>
+                  Przywróć domyślny
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <Label className="text-sm font-medium">Cele per klient</Label>
+              <Input
+                placeholder="Szukaj klienta..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-[240px]"
+              />
+            </div>
+            <div className="border rounded-md max-h-[350px] overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Klient</TableHead>
+                    <TableHead className="text-right w-[120px]">Realizacja</TableHead>
+                    <TableHead className="text-right w-[170px]">Cel (PLN)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((r) => (
+                    <TableRow key={r.clientId}>
+                      <TableCell className="font-medium text-sm">{r.klient}</TableCell>
+                      <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                        {fmtNum(r.realizacja)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={clientCele[r.clientId] ?? String(r.cel || 0)}
+                          onChange={(e) =>
+                            setClientCele((prev) => ({ ...prev, [r.clientId]: e.target.value }))
+                          }
+                          className="text-right font-mono h-8"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                        Brak klientów pasujących do wyszukiwania.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Anuluj</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Zapisywanie..." : "Zapisz cele"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function getRowBgClass(procent: number, realizacja: number) {
   if (realizacja === 0) return "bg-muted/30 italic";
   if (procent >= 100) return "bg-green-50 dark:bg-green-900/10";
@@ -402,6 +587,7 @@ export default function PlanPage() {
   const [importWzOpen, setImportWzOpen] = useState(false);
   const [importPlanuOpen, setImportPlanuOpen] = useState(false);
   const [generujPlanOpen, setGenerujPlanOpen] = useState(false);
+  const [editTargetsOpen, setEditTargetsOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("procent");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [filterOpiekun, setFilterOpiekun] = useState("all");
@@ -465,6 +651,11 @@ export default function PlanPage() {
   const sumaRealizacja = data?.sumaRealizacja || 0;
   const sumaRoznica = data?.sumaRoznica || 0;
   const sumaProcent = data?.sumaProcent || 0;
+  const celMiesiaca = data?.celMiesiaca || 0;
+  const celMiesiacaIsCustom = Boolean(data?.celMiesiacaIsCustom);
+  const defaultCelMiesiaca = data?.defaultCelMiesiaca || 0;
+  const celMiesiacaNaDzis = data?.celMiesiacaNaDzis || 0;
+  const prevMonthRealizacja = data?.prevMonthRealizacja || 0;
   const perOpiekun: Record<string, {realizacja: number; celNaDzis: number; cel: number}> = data?.perOpiekun || {};
 
   let filteredRows = rows;
@@ -505,8 +696,9 @@ export default function PlanPage() {
   const filteredSumaRoznica = filteredSumaRealizacja - filteredSumaCelNaDzis;
   const filteredSumaProcent = filteredSumaCelNaDzis > 0 ? (filteredSumaRealizacja / filteredSumaCelNaDzis) * 100 : 0;
 
-  const isAbovePlan = sumaRealizacja >= sumaCelNaDzis;
-  const statusDiff = Math.abs(sumaRealizacja - sumaCelNaDzis);
+  const isAbovePlan = sumaRealizacja >= celMiesiacaNaDzis;
+  const statusDiff = Math.abs(sumaRealizacja - celMiesiacaNaDzis);
+  const rozjazdCount = rows.filter((r: any) => r.rozjazdIbiznes).length;
 
   const SortableHead = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
     <TableHead
@@ -547,6 +739,9 @@ export default function PlanPage() {
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} /> Odswiez
           </Button>
           {isAdmin && (<>
+            <Button variant="outline" onClick={() => setEditTargetsOpen(true)} data-testid="button-edit-targets">
+              <Pencil className="w-4 h-4 mr-2" /> Edytuj cele
+            </Button>
             <Button variant="outline" onClick={() => setImportPlanuOpen(true)}>
               <FileSpreadsheet className="w-4 h-4 mr-2" /> Import planu
             </Button>
@@ -589,21 +784,36 @@ export default function PlanPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">Cel miesiaca</p>
-            <p className="text-xl font-bold" data-testid="text-cel-miesiaca">{fmtPLN(sumaCel)}</p>
+            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+              Cel miesiaca
+              {celMiesiacaIsCustom ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-medium">custom</span>
+              ) : (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium" title="Domyślny cel = realizacja z poprzedniego miesiąca × 1,05">auto +5%</span>
+              )}
+            </p>
+            <p className="text-xl font-bold" data-testid="text-cel-miesiaca">{fmtPLN(celMiesiaca)}</p>
+            <p className="text-xs text-muted-foreground">
+              Suma per klient: {fmtPLN(sumaCel)}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-muted-foreground">Cel na dzis</p>
-            <p className="text-xl font-bold" data-testid="text-cel-na-dzis">{fmtPLN(sumaCelNaDzis)}</p>
-            <p className="text-xs text-muted-foreground">{fmtPLN(sumaCel)} / {dniRoboczeMiesiac} x {dniRoboczeMiniete}</p>
+            <p className="text-xl font-bold" data-testid="text-cel-na-dzis">{fmtPLN(celMiesiacaNaDzis)}</p>
+            <p className="text-xs text-muted-foreground">{fmtPLN(celMiesiaca)} / {dniRoboczeMiesiac} x {dniRoboczeMiniete}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-muted-foreground">Realizacja (WZ)</p>
             <p className="text-xl font-bold" data-testid="text-realizacja">{fmtPLN(sumaRealizacja)}</p>
+            {rozjazdCount > 0 && isAdmin && (
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 flex items-center justify-center gap-1 mt-1" title="Liczba klientów u których client_sales różni się od ibiznes_invoices. Uruchom ponowną synchronizację.">
+                <AlertTriangle className="w-3 h-3" /> {rozjazdCount} klient. z rozjazdem vs iBiznes
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card className={isAbovePlan ? "border-green-400 dark:border-green-600" : "border-red-400 dark:border-red-600"}>
@@ -679,7 +889,19 @@ export default function PlanPage() {
             {sortedRows.map((row, idx) => (
               <TableRow key={row.clientId} className={getRowBgClass(row.procent, row.realizacja)} data-testid={`row-plan-${row.clientId}`}>
                 <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
-                <TableCell className="font-medium">{row.klient}</TableCell>
+                <TableCell className="font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    {row.klient}
+                    {row.rozjazdIbiznes && isAdmin && (
+                      <span
+                        className="text-amber-600 dark:text-amber-400"
+                        title={`Rozjazd: client_sales ${fmtNum(row.realizacja)} vs iBiznes ${fmtNum(row.realizacjaIbiznes)}. Odśwież sync.`}
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                  </span>
+                </TableCell>
                 <TableCell>{row.opiekun}</TableCell>
                 <TableCell>
                   <span className="text-xs text-muted-foreground">{grupaShort(row.grupa)}</span>
@@ -753,6 +975,15 @@ export default function PlanPage() {
       <ImportPlanuModal open={importPlanuOpen} onClose={() => setImportPlanuOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
       <GenerujPlanModal open={generujPlanOpen} onClose={() => setGenerujPlanOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
       <ImportWzModal open={importWzOpen} onClose={() => setImportWzOpen(false)} defaultRok={rok} defaultMiesiac={miesiac} />
+      {isAdmin && (
+        <EditTargetsModal
+          open={editTargetsOpen}
+          onClose={() => setEditTargetsOpen(false)}
+          rok={rok}
+          miesiac={miesiac}
+          planData={data}
+        />
+      )}
     </div>
   );
 }
