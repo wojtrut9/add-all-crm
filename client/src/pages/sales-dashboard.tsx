@@ -103,6 +103,9 @@ export default function SalesDashboard() {
   const plan2026 = data?.plan2026 || [];
   const history = data?.history || [];
 
+  // In edit mode we want to show the raw (stored) value for custom months, and
+  // the auto +5% suggestion for non-custom months — so the user sees the same
+  // numbers as the main plan but can still override them.
   const getEditedPlan = (i: number) => {
     if (i in editedPlans) return editedPlans[i];
     return Number(plan2026[i]?.planObrotu || 0);
@@ -132,6 +135,7 @@ export default function SalesDashboard() {
   const monthExec = Number(currentMonthData?.wykonanieObrotu || 0);
   const monthDiff = monthExec - monthPlan;
   const monthPct = monthPlan > 0 ? (monthExec / monthPlan * 100) : 0;
+  const monthPlanIsCustom = Boolean(currentMonthData?.planObrotuCustom);
 
   const MONTHS_FULL = ["Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec", "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien"];
 
@@ -173,7 +177,14 @@ export default function SalesDashboard() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm text-muted-foreground">Plan - {MONTHS_FULL[currentMonth]}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  Plan - {MONTHS_FULL[currentMonth]}
+                  {monthPlanIsCustom ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-medium">custom</span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium" title="Realizacja poprzedniego miesiąca × 1,05">auto +5%</span>
+                  )}
+                </p>
                 <p className="text-xl font-bold" data-testid="text-month-plan">{monthPlan.toLocaleString("pl-PL")} PLN</p>
               </div>
               <Target className="w-5 h-5 text-primary" />
@@ -281,6 +292,7 @@ export default function SalesDashboard() {
                   return plan2026.map((p: any, i: number) => {
                     const plan = editMode ? getEditedPlan(i) : Number(p.planObrotu || 0);
                     const exec = Number(p.wykonanieObrotu || 0);
+                    const isCustom = Boolean(p.planObrotuCustom);
                     cumPlan += plan;
                     cumExec += exec;
                     const diff = exec - plan;
@@ -289,12 +301,19 @@ export default function SalesDashboard() {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{MONTHS[i]}</TableCell>
                         <TableCell className="text-right">
-                          <EditablePlanCell
-                            value={plan}
-                            editing={editMode && isAdmin}
-                            onChange={(v) => setEditedPlans(prev => ({ ...prev, [i]: v }))}
-                            onSave={() => {}}
-                          />
+                          <div className="inline-flex items-center justify-end gap-2">
+                            <EditablePlanCell
+                              value={plan}
+                              editing={editMode && isAdmin}
+                              onChange={(v) => setEditedPlans(prev => ({ ...prev, [i]: v }))}
+                              onSave={() => {}}
+                            />
+                            {!editMode && (
+                              isCustom
+                                ? <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-medium">custom</span>
+                                : <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium" title="Auto = realizacja poprzedniego miesiąca × 1,05">auto</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">{exec.toLocaleString("pl-PL")}</TableCell>
                         <TableCell className={`text-right ${diff >= 0 ? '' : 'text-destructive'}`}>{diff.toLocaleString("pl-PL")}</TableCell>

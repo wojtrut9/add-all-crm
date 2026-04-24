@@ -629,28 +629,106 @@ export class DatabaseStorage implements IStorage {
 
   async getSalesDashboard(): Promise<any> {
     const currentYear = new Date().getFullYear();
-    const targets = await db.select().from(salesTargets).where(eq(salesTargets.rok, currentYear)).orderBy(asc(salesTargets.miesiac));
-    const historyData = await db.select().from(salesHistory).orderBy(asc(salesHistory.rok), asc(salesHistory.miesiac));
+    const prevYear = currentYear - 1;
 
+    // --- All targets for this year (for custom-goal detection) ----------------
+    const targets = await db
+      .select()
+      .from(salesTargets)
+      .where(eq(salesTargets.rok, currentYear))
+      .orderBy(asc(salesTargets.miesiac));
+    const targetByMonth = new Map<number, { planObrotu: number; planObrotuCustom: boolean }>();
+    for (const t of targets) {
+      targetByMonth.set(t.miesiac, {
+        planObrotu: Number(t.planObrotu || 0),
+        planObrotuCustom: Boolean(t.planObrotuCustom),
+      });
+    }
+
+    // --- Sum realized sales per month (SAME logic as Plan miesiąca) -----------
+    // matched (client_sales) + unmatched WZ (ibiznes_invoices where client_id IS NULL)
+    const matchedThisYear = await db.execute(sql`
+      SELECT miesiac, COALESCE(SUM(CAST(sprzedaz AS NUMERIC)), 0) AS total
+      FROM client_sales
+      WHERE rok = ${currentYear}
+      GROUP BY miesiac
+    `);
+    const matchedMap = new Map<number, number>();
+    for (const r of matchedThisYear.rows as any[]) {
+      matchedMap.set(Number(r.miesiac), Number(r.total || 0));
+    }
+    const unmatchedThisYear = await db.execute(sql`
+      SELECT miesiac, COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${currentYear} AND client_id IS NULL
+      GROUP BY miesiac
+    `);
+    const unmatchedMap = new Map<number, number>();
+    for (const r of unmatchedThisYear.rows as any[]) {
+      unmatchedMap.set(Number(r.miesiac), Number(r.total || 0));
+    }
+
+    // December of the previous year — needed for January's default (+5%).
+    const matchedPrevDec = await db.execute(sql`
+      SELECT COALESCE(SUM(CAST(sprzedaz AS NUMERIC)), 0) AS total
+      FROM client_sales
+      WHERE rok = ${prevYear} AND miesiac = 12
+    `);
+    const unmatchedPrevDec = await db.execute(sql`
+      SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+      FROM ibiznes_invoices
+      WHERE rok = ${prevYear} AND miesiac = 12 AND client_id IS NULL
+    `);
+    const prevDecRealizacja =
+      Number((matchedPrevDec.rows[0] as any)?.total || 0) +
+      Number((unmatchedPrevDec.rows[0] as any)?.total || 0);
+
+    // --- Build final plan + wykonanie for every month of the year ------------
+    // wykonanie[m] = matched[m] + unmatched[m]
+    // plan[m]:
+    //   - if targets[m].planObrotuCustom && > 0  → custom value
+    //   - else                                   → wykonanie[m-1] × 1.05  (or prevDec × 1.05 for Jan)
+    const plan2026: Array<{
+      miesiac: number;
+      planObrotu: number;
+      planObrotuCustom: boolean;
+      planObrotuRaw: number;
+      wykonanieObrotu: number;
+    }> = [];
+
+    for (let m = 1; m <= 12; m++) {
+      const wykonanie = Math.round(
+        (matchedMap.get(m) || 0) + (unmatchedMap.get(m) || 0)
+      );
+      const prevRealizacja = m === 1 ? prevDecRealizacja : (matchedMap.get(m - 1) || 0) + (unmatchedMap.get(m - 1) || 0);
+      const autoPlan = Math.round(prevRealizacja * 1.05);
+      const t = targetByMonth.get(m) || { planObrotu: 0, planObrotuCustom: false };
+      const plan = t.planObrotuCustom && t.planObrotu > 0 ? Math.round(t.planObrotu) : autoPlan;
+      plan2026.push({
+        miesiac: m,
+        planObrotu: plan,
+        planObrotuCustom: t.planObrotuCustom && t.planObrotu > 0,
+        planObrotuRaw: Math.round(t.planObrotu || 0),
+        wykonanieObrotu: wykonanie,
+      });
+    }
+
+    // --- History (unchanged) --------------------------------------------------
+    const historyData = await db
+      .select()
+      .from(salesHistory)
+      .orderBy(asc(salesHistory.rok), asc(salesHistory.miesiac));
     const historyByYear: Record<number, any[]> = {};
     for (const h of historyData) {
       if (!historyByYear[h.rok]) historyByYear[h.rok] = [];
       historyByYear[h.rok].push(h);
     }
-
     const history = Object.entries(historyByYear).map(([rok, months]) => ({
       rok: Number(rok),
-      months: months.map(m => ({ miesiac: m.miesiac, wartosc: Number(m.wartosc) })),
+      months: months.map((m) => ({ miesiac: m.miesiac, wartosc: Number(m.wartosc) })),
     }));
 
-    return {
-      plan2026: targets.map(t => ({
-        miesiac: t.miesiac,
-        planObrotu: Number(t.planObrotu || 0),
-        wykonanieObrotu: Number(t.wykonanieObrotu || 0),
-      })),
-      history,
-    };
+    return { plan2026, history };
   }
 
   async getFinanceData(miesiac?: number): Promise<any> {
