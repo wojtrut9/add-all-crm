@@ -24,6 +24,20 @@ function syncSinceDays(days: number): string {
   return d.toISOString().split("T")[0];
 }
 
+/**
+ * Returns the 1st day of the month that is `monthsBack` months before today.
+ * We use the 1st of the month so we always capture *full* months, not partial ranges.
+ * Example: today=2026-04-24, monthsBack=3 → "2026-01-01".
+ */
+function syncSinceMonthStart(monthsBack: number): string {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - monthsBack);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}-01`;
+}
+
 export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promise<{
   invoicesSynced: number;
   clientsMatched: number;
@@ -42,8 +56,10 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
   const unmatchedNips = new Set<string>();
 
   try {
-    // Sync last 90 days (covers current + 2 previous months fully)
-    const since = syncSinceDays(90);
+    // Sync from the 1st of the month 3 months ago. This guarantees full months
+    // (not partial ranges) so comparisons "iBiznes LIVE" vs "ibiznes_invoices"
+    // are apples-to-apples. For 2026-04-24 this is 2026-01-01.
+    const since = syncSinceMonthStart(3);
     const invoices = await fetchIbiznesInvoices(since);
 
     // Build NIP → clientId AND alias → clientId maps from CRM
@@ -63,7 +79,23 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
     const matchedClientIds = new Set<number>();
 
-    // Upsert each invoice — match by NIP first, then by alias name
+    // CRITICAL: Delete existing rows for months present in this fetch, then insert
+    // fresh data. Without this, cancelled/deleted WZ from iBiznes stay forever
+    // in our table because the fetch query filters them out (Anul='T') — our old
+    // upsert-only approach never removed them.
+    const monthsInFetch = new Set<string>();
+    for (const inv of invoices) {
+      const [rok, mies] = inv.dataWyst.split("-");
+      monthsInFetch.add(`${rok}-${mies}`);
+    }
+    for (const key of monthsInFetch) {
+      const [rok, mies] = key.split("-").map(Number);
+      await db
+        .delete(ibiznesInvoices)
+        .where(and(eq(ibiznesInvoices.rok, rok), eq(ibiznesInvoices.miesiac, mies)));
+    }
+
+    // Now insert each invoice fresh — no conflict possible because we just cleared.
     for (const inv of invoices) {
       let clientId = (inv.nip ? nipToClientId.get(inv.nip) : undefined) ?? null;
       if (!clientId && inv.alias) {
@@ -89,6 +121,8 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
           kosztZakupu: String(inv.kosztZakupu),
         })
         .onConflictDoUpdate({
+          // Defensive: in case two WZ share the same NrR+source (shouldn't happen
+          // after our cleanup but keeps the sync idempotent under retries).
           target: [ibiznesInvoices.nrR, ibiznesInvoices.source],
           set: {
             clientId: sql`EXCLUDED.client_id`,
