@@ -160,6 +160,29 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
       `[ibiznes-sync] Done: ${invoicesSynced} invoices, ${clientsMatched} matched, ${unmatchedNips.size} unmatched NIPs`
     );
 
+    // Diagnostic: surface top unmatched NIPs/aliases — these are WZ that did not
+    // attribute to any CRM client, so the affected clients may show realizacja
+    // lower than reality. Operator can fix by adding NIP/ibiznesAlias.
+    if (unmatchedNips.size > 0) {
+      const topUnmatched = await db.execute(sql`
+        SELECT COALESCE(NULLIF(nip,''), alias, 'unknown') AS key,
+               COUNT(*)::int AS cnt,
+               ROUND(SUM(CAST(koszt AS NUMERIC))::numeric, 2) AS total
+        FROM ibiznes_invoices
+        WHERE client_id IS NULL
+          AND rok = EXTRACT(YEAR FROM CURRENT_DATE)::int
+        GROUP BY key
+        ORDER BY total DESC
+        LIMIT 10
+      `);
+      const lines = (topUnmatched.rows as any[]).map(
+        (r) => `  - ${r.key}: ${r.cnt} WZ, ${r.total} PLN`
+      );
+      if (lines.length > 0) {
+        console.log(`[ibiznes-sync] Top unmatched (${new Date().getFullYear()}):\n${lines.join("\n")}`);
+      }
+    }
+
     return { invoicesSynced, clientsMatched, clientsUnmatched: unmatchedNips.size };
   } catch (err: any) {
     console.error("[ibiznes-sync] Error:", err.message);

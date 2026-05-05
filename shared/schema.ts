@@ -157,6 +157,11 @@ export const clientSalesWeekly = pgTable("client_sales_weekly", {
   realizacja: decimal("realizacja"),
   notatki: text("notatki"),
   status: text("status"),
+  // TRUE only when an admin/handlowiec explicitly set this target via UI
+  // (setClientPlanTarget / autoGeneratePlan / Excel import). Otherwise the
+  // monthly cel for this client is derived automatically (prev month × 1.05),
+  // so stale historic plan rows never block the auto rule.
+  planUserSet: boolean("plan_user_set").notNull().default(false),
 });
 
 export const insertClientSalesWeeklySchema = createInsertSchema(clientSalesWeekly).omit({ id: true });
