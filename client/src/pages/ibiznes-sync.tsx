@@ -7,8 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2, AlertTriangle, BarChart3 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RefreshCw, CheckCircle2, XCircle, Clock, Wifi, WifiOff, Database, Trash2, AlertTriangle, BarChart3, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
+
+const OPIEKUN_OPTIONS = ["Gosia", "Magda", "Weryfikacja"];
+const SEGMENT_OPTIONS = ["Premium", "Standard", "Weryfikacja"];
+const STATUS_OPTIONS = ["Aktywny", "Nieaktywny", "Weryfikacja", "Zawieszony"];
+const GRUPA_OPTIONS = ["Gosia Premium", "Magda Premium", "Magda Standard", "Weryfikacja - zostana", "Weryfikacja - odejda"];
 
 function formatDate(val: string | null | undefined) {
   if (!val) return "-";
@@ -114,6 +123,88 @@ export default function IbizneSyncPage() {
     },
     refetchInterval: 60000,
   });
+
+  // --- Unmatched WZ: ignore + add-as-client mutations ---
+  const ignoreUnmatchedMutation = useMutation({
+    mutationFn: async (row: { nip: string; alias: string | null; source: string }) => {
+      const res = await authFetch("/api/ibiznes/unmatched/ignore", {
+        method: "POST",
+        body: JSON.stringify({ nip: row.nip || "", alias: row.alias, source: row.source }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || "Błąd");
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Usunięto z niedopasowanych",
+        description: `Skasowano ${data.removed} WZ. Obroty zostały przeliczone.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/unmatched"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/audit"] });
+    },
+    onError: (err: any) => toast({ title: "Błąd", description: err.message, variant: "destructive" }),
+  });
+
+  const [addClientOpen, setAddClientOpen] = useState(false);
+  const [addClientForm, setAddClientForm] = useState({
+    nip: "",
+    alias: "" as string | null,
+    source: "" as string,
+    klient: "",
+    opiekun: "Weryfikacja",
+    segment: "Weryfikacja",
+    grupaMvp: "",
+    status: "Aktywny",
+    telefon: "",
+    email: "",
+    ibiznesAlias: "",
+  });
+
+  const addAsClientMutation = useMutation({
+    mutationFn: async (payload: typeof addClientForm) => {
+      const res = await authFetch("/api/ibiznes/unmatched/add-as-client", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || "Błąd");
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Klient dodany",
+        description: `${data.client?.klient || "Nowy klient"} dopisany do CRM. WZ zostały przepisane na niego.`,
+      });
+      setAddClientOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/unmatched"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales-dashboard"] });
+    },
+    onError: (err: any) => toast({ title: "Błąd", description: err.message, variant: "destructive" }),
+  });
+
+  const openAddClient = (row: any) => {
+    setAddClientForm({
+      nip: row.nip || "",
+      alias: row.alias || null,
+      source: row.source || "",
+      klient: row.alias || "",
+      opiekun: "Weryfikacja",
+      segment: "Weryfikacja",
+      grupaMvp: "",
+      status: "Aktywny",
+      telefon: "",
+      email: "",
+      ibiznesAlias: row.alias || "",
+    });
+    setAddClientOpen(true);
+  };
 
   const [diagDays, setDiagDays] = useState(90);
   const [diagEnabled, setDiagEnabled] = useState(false);
@@ -733,6 +824,7 @@ export default function IbizneSyncPage() {
                     <TableHead className="text-right">Faktur</TableHead>
                     <TableHead className="text-right">Wartość (PLN)</TableHead>
                     <TableHead className="text-right">Ostatnia</TableHead>
+                    <TableHead className="text-right">Akcje</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -748,6 +840,37 @@ export default function IbizneSyncPage() {
                         {Math.round(row.total).toLocaleString("pl-PL")}
                       </TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">{row.last_date}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 gap-1"
+                            onClick={() => openAddClient(row)}
+                            title="Dodaj jako klienta CRM (przepisze WZ na niego)"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" /> Dodaj
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 gap-1 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                            disabled={ignoreUnmatchedMutation.isPending}
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Usunąć ${row.invoice_count} WZ (${Math.round(row.total).toLocaleString("pl-PL")} PLN) z obrotu?\n\nKlucz zostanie zapamiętany — kolejne sync też je pominą.`
+                                )
+                              ) {
+                                ignoreUnmatchedMutation.mutate({ nip: row.nip, alias: row.alias, source: row.source });
+                              }
+                            }}
+                            title="Usuń z niedopasowanych i odlicz od obrotu"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Usuń
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -768,6 +891,114 @@ export default function IbizneSyncPage() {
           <p>Po uzupełnieniu NIP-ów uruchom sync ponownie — faktury zostaną przypisane, a <strong>realizacja sprzedaży</strong> zaktualizuje się automatycznie.</p>
         </CardContent>
       </Card>
+
+      {/* Add as client dialog */}
+      <Dialog open={addClientOpen} onOpenChange={setAddClientOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><UserPlus className="w-4 h-4" /> Dodaj klienta z iBiznes</DialogTitle>
+            <DialogDescription>
+              NIP i alias zostaną automatycznie powiązane z WZ z iBiznes — od następnego sync ten klient nie będzie już niedopasowany.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-3 py-2">
+            <div className="col-span-2">
+              <Label className="text-xs">Nazwa klienta *</Label>
+              <Input
+                value={addClientForm.klient}
+                onChange={(e) => setAddClientForm({ ...addClientForm, klient: e.target.value })}
+                placeholder="np. Orzo Konstytucji sp. z o.o."
+              />
+            </div>
+            <div>
+              <Label className="text-xs">NIP</Label>
+              <Input
+                value={addClientForm.nip}
+                onChange={(e) => setAddClientForm({ ...addClientForm, nip: e.target.value })}
+                placeholder="bez kresek"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Alias iBiznes</Label>
+              <Input
+                value={addClientForm.ibiznesAlias}
+                onChange={(e) => setAddClientForm({ ...addClientForm, ibiznesAlias: e.target.value })}
+                placeholder="dokładnie jak w iBiznes"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Opiekun *</Label>
+              <Select value={addClientForm.opiekun} onValueChange={(v) => setAddClientForm({ ...addClientForm, opiekun: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {OPIEKUN_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Segment *</Label>
+              <Select value={addClientForm.segment} onValueChange={(v) => setAddClientForm({ ...addClientForm, segment: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SEGMENT_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Grupa MVP</Label>
+              <Select value={addClientForm.grupaMvp || "__none"} onValueChange={(v) => setAddClientForm({ ...addClientForm, grupaMvp: v === "__none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">— brak —</SelectItem>
+                  {GRUPA_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Status</Label>
+              <Select value={addClientForm.status} onValueChange={(v) => setAddClientForm({ ...addClientForm, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input
+                value={addClientForm.telefon}
+                onChange={(e) => setAddClientForm({ ...addClientForm, telefon: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input
+                value={addClientForm.email}
+                onChange={(e) => setAddClientForm({ ...addClientForm, email: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddClientOpen(false)}>Anuluj</Button>
+            <Button
+              onClick={() => {
+                if (!addClientForm.klient.trim()) {
+                  toast({ title: "Brak nazwy klienta", variant: "destructive" });
+                  return;
+                }
+                addAsClientMutation.mutate(addClientForm);
+              }}
+              disabled={addAsClientMutation.isPending}
+            >
+              {addAsClientMutation.isPending ? "Dodaję..." : "Dodaj klienta"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Sync history */}
       <Card>

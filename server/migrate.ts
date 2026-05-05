@@ -223,6 +223,20 @@ export async function migrateDatabase() {
     -- legacy auto-generated weekly plans still sit in the table.
     ALTER TABLE client_sales_weekly ADD COLUMN IF NOT EXISTS plan_user_set BOOLEAN NOT NULL DEFAULT FALSE;
 
+    -- iBiznes "unmatched" entries that admin chose to permanently ignore.
+    -- Sync skips matching invoices, so they never count in any turnover total.
+    CREATE TABLE IF NOT EXISTS ibiznes_ignored (
+      id SERIAL PRIMARY KEY,
+      nip TEXT NOT NULL DEFAULT '',
+      alias TEXT,
+      source TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      created_by TEXT,
+      note TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_ibiznes_ignored_unique
+      ON ibiznes_ignored(nip, COALESCE(alias, ''), source);
+
     -- One-shot cleanup: clear stale "custom" monthly goals for the current and
     -- future months so the +5% rule kicks in immediately. Past months keep
     -- their custom values so historical reporting stays intact.

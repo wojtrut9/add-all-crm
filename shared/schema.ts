@@ -183,6 +183,21 @@ export const insertSalesTargetSchema = createInsertSchema(salesTargets).omit({ i
 export type InsertSalesTarget = z.infer<typeof insertSalesTargetSchema>;
 export type SalesTarget = typeof salesTargets.$inferSelect;
 
+// iBiznes WZ keys (nip + alias + source) marked as "ignored" by an admin —
+// these never become CRM clients and never count towards turnover totals.
+// The sync skips matching invoices on insert and existing rows are deleted
+// when the key is added.
+export const ibiznesIgnored = pgTable("ibiznes_ignored", {
+  id: serial("id").primaryKey(),
+  nip: text("nip").notNull().default(""),
+  alias: text("alias"),
+  source: text("source").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: text("created_by"),
+  note: text("note"),
+});
+export type IbizneIgnored = typeof ibiznesIgnored.$inferSelect;
+
 export const salaries = pgTable("salaries", {
   id: serial("id").primaryKey(),
   osoba: text("osoba").notNull(),
