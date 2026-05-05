@@ -1407,8 +1407,6 @@ export class DatabaseStorage implements IStorage {
     const currentTargets = await db.select().from(salesTargets)
       .where(and(eq(salesTargets.rok, now.getFullYear()), eq(salesTargets.miesiac, now.getMonth() + 1)));
 
-    const monthPlan = currentTargets.length > 0 ? Number(currentTargets[0].planObrotu || 0) : 0;
-
     const year = now.getFullYear();
     const month = now.getMonth();
     const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
@@ -1429,6 +1427,25 @@ export class DatabaseStorage implements IStorage {
         })
       : prevMonthSalesRows;
     const prevMonthSalesTotal = filteredPrevSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+
+    // monthPlan: same logic as Plan miesiąca / Analiza sprzedaży —
+    //   default = previous month realizacja × 1.05 (incl. unmatched WZ for admin),
+    //   custom only when plan_obrotu_custom = true AND plan_obrotu > 0.
+    const isHandlowiecPlan = opiekun && rola === "handlowiec";
+    let prevUnmatchedForPlan = 0;
+    if (!isHandlowiecPlan) {
+      const prevUnmatchedRow = await db.execute(sql`
+        SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+        FROM ibiznes_invoices
+        WHERE rok = ${prevYearNum} AND miesiac = ${prevMonthNum} AND client_id IS NULL
+      `);
+      prevUnmatchedForPlan = Number((prevUnmatchedRow.rows[0] as any)?.total || 0);
+    }
+    const prevTotalForPlan = prevMonthSalesTotal + prevUnmatchedForPlan;
+    const defaultMonthPlan = Math.round(prevTotalForPlan * 1.05);
+    const hasCustomFlag = currentTargets.length > 0 && Boolean(currentTargets[0].planObrotuCustom);
+    const customMonthPlan = hasCustomFlag ? Number(currentTargets[0].planObrotu || 0) : 0;
+    const monthPlan = hasCustomFlag && customMonthPlan > 0 ? customMonthPlan : defaultMonthPlan;
 
     // monthSales: prefer iBiznes-aggregated client_sales; fall back to contacts.kwota when no data
     const monthSalesRows = await db.select().from(clientSales)
