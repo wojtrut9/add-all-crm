@@ -1706,8 +1706,7 @@ export async function registerRoutes(
   app.get("/api/ibiznes/unmatched", authMiddleware, adminOnly, async (_req, res) => {
     try {
       const { db } = await import("./db");
-      const { ibiznesInvoices } = await import("../shared/schema");
-      const { sql, isNull } = await import("drizzle-orm");
+      const { sql } = await import("drizzle-orm");
 
       const rows = await db.execute(sql`
         SELECT
@@ -1725,6 +1724,118 @@ export async function registerRoutes(
       `);
 
       res.json(rows.rows);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Mark an unmatched (nip, alias, source) tuple as permanently ignored.
+  // Deletes existing rows from ibiznes_invoices, registers the key in
+  // ibiznes_ignored, and rebuilds aggregates so company turnover drops
+  // by exactly the deleted amount.
+  app.post("/api/ibiznes/unmatched/ignore", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { nip = "", alias = null, source, note } = req.body || {};
+      if (!source) return res.status(400).json({ message: "Brak source" });
+      const user = (req as any).user;
+
+      const { db } = await import("./db");
+      const { ibiznesInvoices, ibiznesIgnored } = await import("../shared/schema");
+      const { sql, and, eq } = await import("drizzle-orm");
+
+      // Insert ignore key (idempotent on unique index).
+      await db.execute(sql`
+        INSERT INTO ibiznes_ignored (nip, alias, source, created_by, note)
+        VALUES (${nip || ""}, ${alias}, ${source}, ${user?.imie || null}, ${note || null})
+        ON CONFLICT (nip, COALESCE(alias, ''), source) DO NOTHING
+      `);
+
+      // Drop matching unmatched rows from ibiznes_invoices.
+      const conditions = [eq(ibiznesInvoices.source, source), eq(ibiznesInvoices.nip, nip || "")];
+      if (alias === null) {
+        conditions.push(sql`${ibiznesInvoices.alias} IS NULL` as any);
+      } else {
+        conditions.push(eq(ibiznesInvoices.alias, alias));
+      }
+      conditions.push(sql`${ibiznesInvoices.clientId} IS NULL` as any);
+      const deleted = await db.delete(ibiznesInvoices).where(and(...conditions)).returning({ id: ibiznesInvoices.id });
+
+      // Rebuild aggregates so totals drop right away.
+      try {
+        const { runAggregatesOnly } = await import("./ibiznesSync");
+        await runAggregatesOnly();
+      } catch (_e) { /* aggregator export is optional; sync also rebuilds */ }
+
+      res.json({ ok: true, removed: deleted.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Create a new CRM client from an unmatched WZ entry, then re-attribute
+  // existing unmatched ibiznes_invoices to it (by NIP or normalized alias).
+  // Body: { nip, alias, source, klient, opiekun, segment, grupaMvp?, status?,
+  //         telefon?, email?, ibiznesAlias?, note? }
+  app.post("/api/ibiznes/unmatched/add-as-client", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const {
+        nip = "",
+        alias: srcAlias = null,
+        klient,
+        opiekun,
+        segment,
+        grupaMvp,
+        status,
+        telefon,
+        email,
+        ibiznesAlias,
+      } = req.body || {};
+
+      if (!klient || !opiekun || !segment) {
+        return res.status(400).json({ message: "Brak klient/opiekun/segment" });
+      }
+
+      const { db } = await import("./db");
+      const { ibiznesInvoices } = await import("../shared/schema");
+      const { sql, and, eq, or } = await import("drizzle-orm");
+
+      const nextId = await storage.getNextClientId();
+      const cleanNip = String(nip || "").replace(/[-\s]/g, "").trim();
+
+      const created = await storage.createClient({
+        klient,
+        clientId: nextId,
+        opiekun,
+        segment,
+        grupaMvp: grupaMvp || null,
+        status: status || "Aktywny",
+        aktywny: (status || "Aktywny") === "Aktywny",
+        telefon: telefon || null,
+        email: email || null,
+        nip: cleanNip || null,
+        ibiznesAlias: ibiznesAlias || srcAlias || null,
+        brakiZamowien: 0,
+      } as any);
+
+      // Re-attribute existing unmatched WZ for this NIP / alias to the new client.
+      const normalize = (s: string) => s.toLowerCase().replace(/[–—-]/g, " ").replace(/\s+/g, " ").trim();
+      const aliasNorm = normalize(srcAlias || "");
+      const matchConds: any[] = [];
+      if (cleanNip) matchConds.push(eq(ibiznesInvoices.nip, cleanNip));
+      if (srcAlias) matchConds.push(sql`LOWER(REGEXP_REPLACE(${ibiznesInvoices.alias}, '[\\-–—\\s]+', ' ', 'g')) = ${aliasNorm}`);
+      if (matchConds.length > 0) {
+        await db
+          .update(ibiznesInvoices)
+          .set({ clientId: created.id })
+          .where(and(sql`${ibiznesInvoices.clientId} IS NULL` as any, or(...matchConds) as any));
+      }
+
+      try {
+        const { runAggregatesOnly } = await import("./ibiznesSync");
+        await runAggregatesOnly();
+      } catch (_e) { /* see above */ }
+
+      res.json({ ok: true, client: created });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

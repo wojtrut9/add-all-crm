@@ -218,6 +218,36 @@ export async function migrateDatabase() {
     -- Otherwise the goal is derived automatically (prev month × 1.05).
     ALTER TABLE sales_targets ADD COLUMN IF NOT EXISTS plan_obrotu_custom BOOLEAN NOT NULL DEFAULT FALSE;
 
+    -- client_sales_weekly: explicit flag for admin/handlowiec set per-client target.
+    -- Without it, getPlanRealization defaults to prev month × 1.05 even when
+    -- legacy auto-generated weekly plans still sit in the table.
+    ALTER TABLE client_sales_weekly ADD COLUMN IF NOT EXISTS plan_user_set BOOLEAN NOT NULL DEFAULT FALSE;
+
+    -- iBiznes "unmatched" entries that admin chose to permanently ignore.
+    -- Sync skips matching invoices, so they never count in any turnover total.
+    CREATE TABLE IF NOT EXISTS ibiznes_ignored (
+      id SERIAL PRIMARY KEY,
+      nip TEXT NOT NULL DEFAULT '',
+      alias TEXT,
+      source TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      created_by TEXT,
+      note TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_ibiznes_ignored_unique
+      ON ibiznes_ignored(nip, COALESCE(alias, ''), source);
+
+    -- One-shot cleanup: clear stale "custom" monthly goals for the current and
+    -- future months so the +5% rule kicks in immediately. Past months keep
+    -- their custom values so historical reporting stays intact.
+    UPDATE sales_targets
+       SET plan_obrotu_custom = FALSE,
+           plan_obrotu = '0'
+     WHERE plan_obrotu_custom = TRUE
+       AND ((rok > EXTRACT(YEAR FROM CURRENT_DATE)::int)
+         OR (rok = EXTRACT(YEAR FROM CURRENT_DATE)::int
+             AND miesiac >= EXTRACT(MONTH FROM CURRENT_DATE)::int));
+
     CREATE TABLE IF NOT EXISTS ibiznes_sync_log (
       id SERIAL PRIMARY KEY,
       started_at TIMESTAMP NOT NULL DEFAULT NOW(),

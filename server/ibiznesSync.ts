@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly, dailyAnalysis, salesHistory, salesTargets } from "../shared/schema";
+import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly, dailyAnalysis, salesHistory, salesTargets, ibiznesIgnored } from "../shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { fetchIbiznesInvoices, testIbiznesConnection } from "./ibiznes";
 
@@ -79,6 +79,14 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
 
     const matchedClientIds = new Set<number>();
 
+    // Load ignored keys so we never re-create WZ that admin chose to drop.
+    const ignoredRows = await db.select().from(ibiznesIgnored);
+    const ignoredKey = (nip: string, alias: string | null, source: string) =>
+      `${nip || ""}||${normalizeAlias(alias || "")}||${source}`;
+    const ignoredSet = new Set<string>(
+      ignoredRows.map((r) => ignoredKey(r.nip, r.alias, r.source))
+    );
+
     // CRITICAL: Delete existing rows for months present in this fetch, then insert
     // fresh data. Without this, cancelled/deleted WZ from iBiznes stay forever
     // in our table because the fetch query filters them out (Anul='T') — our old
@@ -96,10 +104,17 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
     }
 
     // Now insert each invoice fresh — no conflict possible because we just cleared.
+    let invoicesIgnored = 0;
     for (const inv of invoices) {
       let clientId = (inv.nip ? nipToClientId.get(inv.nip) : undefined) ?? null;
       if (!clientId && inv.alias) {
         clientId = aliasToClientId.get(normalizeAlias(inv.alias)) ?? null;
+      }
+      // Skip invoices admin marked as ignored (only meaningful when unmatched —
+      // matched ones go to a real CRM client, so let them through).
+      if (!clientId && ignoredSet.has(ignoredKey(inv.nip, inv.alias, inv.source))) {
+        invoicesIgnored++;
+        continue;
       }
       if (clientId) matchedClientIds.add(clientId);
       else unmatchedNips.add(inv.nip || inv.alias || "unknown");
@@ -157,8 +172,31 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
       .where(eq(ibizneSyncLog.id, logEntry.id));
 
     console.log(
-      `[ibiznes-sync] Done: ${invoicesSynced} invoices, ${clientsMatched} matched, ${unmatchedNips.size} unmatched NIPs`
+      `[ibiznes-sync] Done: ${invoicesSynced} invoices, ${clientsMatched} matched, ${unmatchedNips.size} unmatched NIPs, ${invoicesIgnored} ignored`
     );
+
+    // Diagnostic: surface top unmatched NIPs/aliases — these are WZ that did not
+    // attribute to any CRM client, so the affected clients may show realizacja
+    // lower than reality. Operator can fix by adding NIP/ibiznesAlias.
+    if (unmatchedNips.size > 0) {
+      const topUnmatched = await db.execute(sql`
+        SELECT COALESCE(NULLIF(nip,''), alias, 'unknown') AS key,
+               COUNT(*)::int AS cnt,
+               ROUND(SUM(CAST(koszt AS NUMERIC))::numeric, 2) AS total
+        FROM ibiznes_invoices
+        WHERE client_id IS NULL
+          AND rok = EXTRACT(YEAR FROM CURRENT_DATE)::int
+        GROUP BY key
+        ORDER BY total DESC
+        LIMIT 10
+      `);
+      const lines = (topUnmatched.rows as any[]).map(
+        (r) => `  - ${r.key}: ${r.cnt} WZ, ${r.total} PLN`
+      );
+      if (lines.length > 0) {
+        console.log(`[ibiznes-sync] Top unmatched (${new Date().getFullYear()}):\n${lines.join("\n")}`);
+      }
+    }
 
     return { invoicesSynced, clientsMatched, clientsUnmatched: unmatchedNips.size };
   } catch (err: any) {
@@ -489,6 +527,20 @@ export async function getSyncLogs(limit = 20) {
     .from(ibizneSyncLog)
     .orderBy(sql`${ibizneSyncLog.id} DESC`)
     .limit(limit);
+}
+
+/**
+ * Re-run all post-sync aggregations (client_sales, weekly, daily, history,
+ * sales_targets execution) without re-fetching iBiznes. Useful right after
+ * admin-side mutations to ibiznes_invoices (ignore key, manual rebind to
+ * a new client) so totals reflect changes immediately.
+ */
+export async function runAggregatesOnly(): Promise<void> {
+  await aggregateClientSales();
+  await aggregateClientSalesWeekly();
+  await aggregateDailyAnalysis();
+  await aggregateSalesHistory();
+  await aggregateSalesTargetsExecution();
 }
 
 export { testIbiznesConnection };

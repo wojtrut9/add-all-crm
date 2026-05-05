@@ -1176,6 +1176,7 @@ export class DatabaseStorage implements IStorage {
             tydzien,
             plan: weeklyPlan,
             realizacja: "0",
+            planUserSet: true,
           });
         }
       }
@@ -1326,6 +1327,7 @@ export class DatabaseStorage implements IStorage {
           tydzien,
           plan: weeklyPlan,
           realizacja: "0",
+          planUserSet: true,
         });
       }
       generated++;
@@ -1405,8 +1407,6 @@ export class DatabaseStorage implements IStorage {
     const currentTargets = await db.select().from(salesTargets)
       .where(and(eq(salesTargets.rok, now.getFullYear()), eq(salesTargets.miesiac, now.getMonth() + 1)));
 
-    const monthPlan = currentTargets.length > 0 ? Number(currentTargets[0].planObrotu || 0) : 0;
-
     const year = now.getFullYear();
     const month = now.getMonth();
     const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
@@ -1427,6 +1427,25 @@ export class DatabaseStorage implements IStorage {
         })
       : prevMonthSalesRows;
     const prevMonthSalesTotal = filteredPrevSalesRows.reduce((s, r) => s + Number(r.sprzedaz || 0), 0);
+
+    // monthPlan: same logic as Plan miesiąca / Analiza sprzedaży —
+    //   default = previous month realizacja × 1.05 (incl. unmatched WZ for admin),
+    //   custom only when plan_obrotu_custom = true AND plan_obrotu > 0.
+    const isHandlowiecPlan = opiekun && rola === "handlowiec";
+    let prevUnmatchedForPlan = 0;
+    if (!isHandlowiecPlan) {
+      const prevUnmatchedRow = await db.execute(sql`
+        SELECT COALESCE(SUM(CAST(koszt AS NUMERIC)), 0) AS total
+        FROM ibiznes_invoices
+        WHERE rok = ${prevYearNum} AND miesiac = ${prevMonthNum} AND client_id IS NULL
+      `);
+      prevUnmatchedForPlan = Number((prevUnmatchedRow.rows[0] as any)?.total || 0);
+    }
+    const prevTotalForPlan = prevMonthSalesTotal + prevUnmatchedForPlan;
+    const defaultMonthPlan = Math.round(prevTotalForPlan * 1.05);
+    const hasCustomFlag = currentTargets.length > 0 && Boolean(currentTargets[0].planObrotuCustom);
+    const customMonthPlan = hasCustomFlag ? Number(currentTargets[0].planObrotu || 0) : 0;
+    const monthPlan = hasCustomFlag && customMonthPlan > 0 ? customMonthPlan : defaultMonthPlan;
 
     // monthSales: prefer iBiznes-aggregated client_sales; fall back to contacts.kwota when no data
     const monthSalesRows = await db.select().from(clientSales)
@@ -1881,13 +1900,16 @@ export class DatabaseStorage implements IStorage {
 
     const weeklyData = await db.select().from(clientSalesWeekly)
       .where(and(eq(clientSalesWeekly.rok, rok), eq(clientSalesWeekly.miesiac, miesiac)));
-    // Per-client monthly cel = 4 × weekly plan (all 4 weeks carry the same amount after
-    // import/generate). We SUM all weeks instead of picking the first, so partial
-    // edits / mixed weeks still produce the correct total.
+    // Per-client monthly cel: only treat stored weekly plans as the cel
+    // when at least one week was explicitly user-set (planUserSet=true).
+    // Otherwise the cel falls back to prev_month_realizacja × 1.05 below.
+    // This prevents stale auto-generated weekly plans from blocking the rule.
     const weeklyByClient = new Map<number, number>();
+    const userSetByClient = new Set<number>();
     for (const w of weeklyData) {
       const curr = weeklyByClient.get(w.clientId) || 0;
       weeklyByClient.set(w.clientId, curr + Number(w.plan || 0));
+      if (w.planUserSet) userSetByClient.add(w.clientId);
     }
 
     const currentSales = await db.select().from(clientSales)
@@ -1915,11 +1937,12 @@ export class DatabaseStorage implements IStorage {
 
     const rows: any[] = [];
     for (const client of allClients) {
-      let cel = weeklyByClient.get(client.id) || 0;
-      if (cel === 0) {
-        const prevSale = prevMap.get(client.id) || 0;
-        if (prevSale > 0) cel = prevSale * 1.05;
-      }
+      // Default: prev month realizacja × 1.05.
+      // Override: stored weekly plans, but only when explicitly user-set.
+      const prevSale = prevMap.get(client.id) || 0;
+      const autoCel = prevSale > 0 ? prevSale * 1.05 : 0;
+      const userCel = userSetByClient.has(client.id) ? (weeklyByClient.get(client.id) || 0) : 0;
+      const cel = userCel > 0 ? userCel : autoCel;
 
       const realizacja = salesMap.get(client.id) || 0;
       const realizacjaIbiznes = ibiznesMap.get(client.id) || 0;
@@ -2065,6 +2088,18 @@ export class DatabaseStorage implements IStorage {
    * Preserves existing `realizacja` and `notatki` when a row already exists.
    */
   async setClientPlanTarget(rok: number, miesiac: number, clientId: number, cel: number): Promise<void> {
+    // cel = 0 → reset to auto (+5% rule). Clears the user-set flag and
+    // wipes weekly plans so getPlanRealization falls back to prev × 1.05.
+    if (!cel || cel <= 0) {
+      await db.update(clientSalesWeekly)
+        .set({ plan: "0", planUserSet: false })
+        .where(and(
+          eq(clientSalesWeekly.rok, rok),
+          eq(clientSalesWeekly.miesiac, miesiac),
+          eq(clientSalesWeekly.clientId, clientId),
+        ));
+      return;
+    }
     const perWeek = String(Math.round((cel / 4) * 100) / 100);
     const existing = await db.select().from(clientSalesWeekly)
       .where(and(
@@ -2075,19 +2110,18 @@ export class DatabaseStorage implements IStorage {
     if (existing.length > 0) {
       for (const row of existing) {
         await db.update(clientSalesWeekly)
-          .set({ plan: perWeek })
+          .set({ plan: perWeek, planUserSet: true })
           .where(eq(clientSalesWeekly.id, row.id));
       }
-      // If for some reason fewer than 4 rows exist, top up.
       for (let t = existing.length + 1; t <= 4; t++) {
         await db.insert(clientSalesWeekly).values({
-          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0",
+          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0", planUserSet: true,
         });
       }
     } else {
       for (let t = 1; t <= 4; t++) {
         await db.insert(clientSalesWeekly).values({
-          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0",
+          clientId, rok, miesiac, tydzien: t, plan: perWeek, realizacja: "0", planUserSet: true,
         });
       }
     }

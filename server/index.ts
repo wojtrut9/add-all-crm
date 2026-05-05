@@ -76,19 +76,23 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 
-  // iBiznes daily sync at 05:00
+  // iBiznes sync twice daily at 13:00 and 16:00 (Europe/Warsaw)
   if (process.env.IBIZNES_DB_URL) {
-    cron.schedule("0 5 * * *", async () => {
-      log("Starting scheduled iBiznes sync", "ibiznes-cron");
-      try {
-        const { runIbiznesSync } = await import("./ibiznesSync");
-        await runIbiznesSync("cron");
-        log("Scheduled iBiznes sync completed", "ibiznes-cron");
-      } catch (err: any) {
-        log(`Scheduled iBiznes sync failed: ${err.message}`, "ibiznes-cron");
-      }
-    });
-    log("iBiznes daily sync scheduled (05:00)", "ibiznes-cron");
+    cron.schedule(
+      "0 13,16 * * *",
+      async () => {
+        log("Starting scheduled iBiznes sync", "ibiznes-cron");
+        try {
+          const { runIbiznesSync } = await import("./ibiznesSync");
+          await runIbiznesSync("cron");
+          log("Scheduled iBiznes sync completed", "ibiznes-cron");
+        } catch (err: any) {
+          log(`Scheduled iBiznes sync failed: ${err.message}`, "ibiznes-cron");
+        }
+      },
+      { timezone: "Europe/Warsaw" }
+    );
+    log("iBiznes sync scheduled (13:00 & 16:00 Europe/Warsaw)", "ibiznes-cron");
   }
 
   } catch (err) {

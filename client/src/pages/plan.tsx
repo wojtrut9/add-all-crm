@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet, Pencil, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Target, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, ArrowRight, Upload, TrendingUp, TrendingDown, RefreshCw, Wand2, FileSpreadsheet, Pencil, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { MONTHS_ASCII as MONTHS } from "@/lib/constants";
@@ -43,8 +43,16 @@ function fmtNum(val: number) {
   return Math.round(val).toLocaleString("pl-PL");
 }
 
-type SortKey = "klient" | "opiekun" | "cel" | "celNaDzis" | "realizacja" | "roznica" | "procent";
+type SortKey = "opiekun" | "grupa" | "cel" | "celNaDzis" | "realizacja" | "roznica" | "procent";
 type SortDir = "asc" | "desc";
+
+// "Premium" > "Standard" > "Weryfikacja" > "Inne" — useful when sorting by group.
+const GRUPA_RANK: Record<string, number> = { premium: 3, standard: 2, weryfikacja: 1 };
+function grupaRank(g: string | null | undefined): number {
+  const k = (g || "").toLowerCase();
+  for (const key of Object.keys(GRUPA_RANK)) if (k.includes(key)) return GRUPA_RANK[key];
+  return 0;
+}
 
 function ImportPlanuModal({ open, onClose, defaultRok, defaultMiesiac }: {
   open: boolean; onClose: () => void; defaultRok: number; defaultMiesiac: number;
@@ -804,7 +812,8 @@ export default function PlanPage() {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDir(key === "klient" || key === "opiekun" ? "asc" : "desc");
+      // Strings (opiekun / grupa) default to ascending, numbers descending.
+      setSortDir(key === "opiekun" || key === "grupa" ? "asc" : "desc");
     }
   };
 
@@ -860,6 +869,11 @@ export default function PlanPage() {
   }
 
   const sortedRows = [...filteredRows].sort((a, b) => {
+    if (sortKey === "grupa") {
+      const aRank = grupaRank(a.grupa);
+      const bRank = grupaRank(b.grupa);
+      return sortDir === "asc" ? aRank - bRank : bRank - aRank;
+    }
     let aVal = a[sortKey];
     let bVal = b[sortKey];
     if (typeof aVal === "string") {
@@ -880,20 +894,26 @@ export default function PlanPage() {
   const statusDiff = Math.abs(sumaRealizacja - celMiesiacaNaDzis);
   const rozjazdCount = rows.filter((r: any) => r.rozjazdIbiznes).length;
 
-  const SortableHead = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => (
-    <TableHead
-      className={`cursor-pointer select-none hover-elevate ${className || ""}`}
-      onClick={() => handleSort(field)}
-      data-testid={`sort-${field}`}
-    >
-      <span className="flex items-center gap-1">
-        {label}
-        {sortKey === field && (
-          sortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-        )}
-      </span>
-    </TableHead>
-  );
+  const SortableHead = ({ label, field, className }: { label: string; field: SortKey; className?: string }) => {
+    const isActive = sortKey === field;
+    const isRight = (className || "").includes("text-right");
+    return (
+      <TableHead
+        className={`cursor-pointer select-none hover-elevate ${className || ""}`}
+        onClick={() => handleSort(field)}
+        data-testid={`sort-${field}`}
+      >
+        <span className={`flex items-center gap-1 ${isRight ? "justify-end" : ""}`}>
+          {label}
+          {isActive ? (
+            sortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+          ) : (
+            <ArrowUpDown className="w-3 h-3 opacity-30" />
+          )}
+        </span>
+      </TableHead>
+    );
+  };
 
   const grupaShort = (g: string) => {
     if (!g) return "-";
@@ -1057,9 +1077,9 @@ export default function PlanPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-10">#</TableHead>
-              <SortableHead label="Klient" field="klient" />
+              <TableHead>Klient</TableHead>
               <SortableHead label="Opiekun" field="opiekun" />
-              <TableHead>Grupa</TableHead>
+              <SortableHead label="Grupa" field="grupa" />
               <SortableHead label="Cel miesiaca" field="cel" className="text-right" />
               <SortableHead label="Cel na dzis" field="celNaDzis" className="text-right" />
               <SortableHead label="Realizacja (WZ)" field="realizacja" className="text-right" />

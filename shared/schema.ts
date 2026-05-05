@@ -157,6 +157,11 @@ export const clientSalesWeekly = pgTable("client_sales_weekly", {
   realizacja: decimal("realizacja"),
   notatki: text("notatki"),
   status: text("status"),
+  // TRUE only when an admin/handlowiec explicitly set this target via UI
+  // (setClientPlanTarget / autoGeneratePlan / Excel import). Otherwise the
+  // monthly cel for this client is derived automatically (prev month × 1.05),
+  // so stale historic plan rows never block the auto rule.
+  planUserSet: boolean("plan_user_set").notNull().default(false),
 });
 
 export const insertClientSalesWeeklySchema = createInsertSchema(clientSalesWeekly).omit({ id: true });
@@ -177,6 +182,21 @@ export const salesTargets = pgTable("sales_targets", {
 export const insertSalesTargetSchema = createInsertSchema(salesTargets).omit({ id: true });
 export type InsertSalesTarget = z.infer<typeof insertSalesTargetSchema>;
 export type SalesTarget = typeof salesTargets.$inferSelect;
+
+// iBiznes WZ keys (nip + alias + source) marked as "ignored" by an admin —
+// these never become CRM clients and never count towards turnover totals.
+// The sync skips matching invoices on insert and existing rows are deleted
+// when the key is added.
+export const ibiznesIgnored = pgTable("ibiznes_ignored", {
+  id: serial("id").primaryKey(),
+  nip: text("nip").notNull().default(""),
+  alias: text("alias"),
+  source: text("source").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: text("created_by"),
+  note: text("note"),
+});
+export type IbizneIgnored = typeof ibiznesIgnored.$inferSelect;
 
 export const salaries = pgTable("salaries", {
   id: serial("id").primaryKey(),
