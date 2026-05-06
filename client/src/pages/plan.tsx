@@ -1067,6 +1067,23 @@ export default function PlanPage() {
             <SelectItem value="below">Ponizej planu</SelectItem>
           </SelectContent>
         </Select>
+        {(filterOpiekun !== "all" || filterGrupa !== "all" || filterStatus !== "all" || sortKey !== "procent" || sortDir !== "desc") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground hover-elevate"
+            onClick={() => {
+              setFilterOpiekun("all");
+              setFilterGrupa("all");
+              setFilterStatus("all");
+              setSortKey("procent");
+              setSortDir("desc");
+            }}
+            data-testid="button-reset-filters"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Resetuj
+          </Button>
+        )}
         <span className="text-sm text-muted-foreground">
           {sortedRows.length} klientow
         </span>

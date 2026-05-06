@@ -52,6 +52,128 @@ const GRUPA_OPTIONS = ["Gosia Premium", "Magda Premium", "Magda Standard", "Wery
 const RYTM_OPTIONS = ["1x/tydz", "2x/mies", "1x/mies", "1x/2tyg", "Na zamowienie"];
 const FORMA_KONTAKTU_OPTIONS = ["Telefon", "Sms", "Email", "WhatsApp"];
 
+/**
+ * Manage additional NIPs for a client (e.g. school + gmina sharing same buyer).
+ * Primary NIP stays on `clients.nip`. Adding here triggers immediate WZ
+ * re-attribution and turnover recalc on the server.
+ */
+function ClientNipsManager({ clientId, readOnly = false }: { clientId: number; readOnly?: boolean }) {
+  const [newNip, setNewNip] = useState("");
+  const { toast } = useToast();
+
+  const { data: nips = [], isLoading } = useQuery<Array<{ id: number; nip: string; note: string | null }>>({
+    queryKey: [`/api/clients/${clientId}/nips`],
+    queryFn: async () => {
+      const res = await authFetch(`/api/clients/${clientId}/nips`);
+      return res.json();
+    },
+  });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/nips`] });
+    queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/ibiznes/unmatched"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/plan/realization"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+  };
+
+  const addMut = useMutation({
+    mutationFn: async (nip: string) => {
+      const res = await authFetch(`/api/clients/${clientId}/nips`, {
+        method: "POST",
+        body: JSON.stringify({ nip }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.message) throw new Error(data.message || "Błąd");
+      return data;
+    },
+    onSuccess: (data) => {
+      setNewNip("");
+      toast({
+        title: "NIP dodany",
+        description: data.rebound > 0 ? `Przepisano ${data.rebound} WZ na klienta. Obroty zaktualizowane.` : "Zapisano. Następny sync użyje tego NIP-u do dopasowania.",
+      });
+      invalidateAll();
+    },
+    onError: (err: any) => toast({ title: "Nie udało się dodać NIP-u", description: err.message, variant: "destructive" }),
+  });
+
+  const delMut = useMutation({
+    mutationFn: async (nipId: number) => {
+      const res = await authFetch(`/api/clients/${clientId}/nips/${nipId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok || data.message) throw new Error(data.message || "Błąd");
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "NIP usunięty" });
+      invalidateAll();
+    },
+    onError: (err: any) => toast({ title: "Błąd", description: err.message, variant: "destructive" }),
+  });
+
+  if (readOnly && nips.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">Dodatkowe NIPy</Label>
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground">Ładuję...</p>
+      ) : nips.length === 0 ? (
+        !readOnly && <p className="text-xs text-muted-foreground">Brak. Dodaj poniżej, jeśli klient ma drugi NIP (np. gmina + szkoła).</p>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {nips.map((n) => (
+            <Badge key={n.id} variant="secondary" className="font-mono text-xs gap-1 pr-1">
+              {n.nip}
+              {!readOnly && (
+                <button
+                  type="button"
+                  className="hover:bg-destructive/20 rounded p-0.5"
+                  onClick={() => {
+                    if (confirm(`Usunąć NIP ${n.nip}?\n\nWZ z tym NIP-em zostaną odpięte od klienta.`)) {
+                      delMut.mutate(n.id);
+                    }
+                  }}
+                  disabled={delMut.isPending}
+                  aria-label="Usuń NIP"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </Badge>
+          ))}
+        </div>
+      )}
+      {!readOnly && (
+        <div className="flex gap-2">
+          <Input
+            value={newNip}
+            onChange={(e) => setNewNip(e.target.value.replace(/[-\s]/g, ""))}
+            placeholder="np. 1234567890"
+            className="font-mono text-xs h-8"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newNip.trim()) {
+                e.preventDefault();
+                addMut.mutate(newNip.trim());
+              }
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1"
+            onClick={() => newNip.trim() && addMut.mutate(newNip.trim())}
+            disabled={!newNip.trim() || addMut.isPending}
+          >
+            <Plus className="w-3.5 h-3.5" /> Dodaj
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
   const hasAlert = (client.brakiZamowien || 0) >= 2;
   return (
@@ -461,6 +583,7 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
               <EditField label="Kraj" value={form.kraj} onChange={(v) => setField("kraj", v)} />
               <EditField label="Ubezpieczenie" value={form.ubezpieczenieStatus} onChange={(v) => setField("ubezpieczenieStatus", v)} />
             </div>
+            <ClientNipsManager clientId={client.id} />
           </TabsContent>
           <TabsContent value="handlowe" className="space-y-3 pt-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -567,6 +690,7 @@ function ClientDetail({ client, onClose }: { client: Client; onClose: () => void
             {client.kraj && <InfoRow label="Kraj" value={client.kraj} />}
             {client.ubezpieczenieStatus && <InfoRow label="Ubezpieczenie" value={client.ubezpieczenieStatus} />}
           </div>
+          <ClientNipsManager clientId={client.id} readOnly />
           <div className="flex items-center justify-between gap-3 p-3 rounded-md border">
             <div>
               <p className="text-sm font-medium">Klient przekazany</p>

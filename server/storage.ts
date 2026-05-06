@@ -4,6 +4,7 @@ import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
   fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts, clientProducts,
+  clientNips,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -2191,6 +2192,12 @@ export class DatabaseStorage implements IStorage {
       if (c.nip) nipToClientId.set(normalizeNip(c.nip), c.id);
       if (c.ibiznesAlias) aliasToClientId.set(normalizeAlias(c.ibiznesAlias), c.id);
       if (c.klient) aliasToClientId.set(normalizeAlias(c.klient), c.id);
+    }
+    // Additional NIPs (multi-NIP clients, e.g. school + gmina).
+    const extraNips = await db.select().from(clientNips);
+    for (const cn of extraNips) {
+      const norm = normalizeNip(cn.nip);
+      if (norm) nipToClientId.set(norm, cn.clientId);
     }
 
     // 3) Per-client aggregates from iBiznes LIVE.

@@ -126,6 +126,117 @@ export async function registerRoutes(
     }
   });
 
+  // --- Client additional NIPs (multi-NIP per client) ---
+  app.get("/api/clients/:id/nips", authMiddleware, async (req, res) => {
+    try {
+      const { db } = await import("./db");
+      const { clientNips } = await import("../shared/schema");
+      const { eq } = await import("drizzle-orm");
+      const rows = await db.select().from(clientNips).where(eq(clientNips.clientId, Number(req.params.id)));
+      res.json(rows);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/clients/:id/nips", authMiddleware, async (req, res) => {
+    try {
+      const clientId = Number(req.params.id);
+      const nipRaw = String(req.body?.nip || "").replace(/[-\s]/g, "").trim();
+      const note = req.body?.note || null;
+      if (!nipRaw) return res.status(400).json({ message: "Brak NIP" });
+
+      const { db } = await import("./db");
+      const schema = await import("../shared/schema");
+      const { clientNips, clients } = schema;
+      const { eq, ne, and } = await import("drizzle-orm");
+
+      // Refuse if NIP already taken by another client (primary or additional).
+      const primaryConflict = await db
+        .select({ id: clients.id, klient: clients.klient })
+        .from(clients)
+        .where(and(eq(clients.nip, nipRaw), ne(clients.id, clientId)));
+      if (primaryConflict.length > 0) {
+        return res.status(409).json({ message: `NIP ${nipRaw} ma już klient: ${primaryConflict[0].klient}` });
+      }
+      const altConflict = await db
+        .select({ id: clientNips.id, clientId: clientNips.clientId })
+        .from(clientNips)
+        .where(and(eq(clientNips.nip, nipRaw), ne(clientNips.clientId, clientId)));
+      if (altConflict.length > 0) {
+        return res.status(409).json({ message: `NIP ${nipRaw} jest już dodany do innego klienta.` });
+      }
+
+      // Skip if it equals the primary NIP of this client (no need to duplicate).
+      const me = await db.select({ nip: clients.nip }).from(clients).where(eq(clients.id, clientId));
+      if (me[0]?.nip && me[0].nip.replace(/[-\s]/g, "").trim() === nipRaw) {
+        return res.status(400).json({ message: "Ten NIP jest już głównym NIP-em klienta." });
+      }
+
+      const [created] = await db.insert(clientNips).values({ clientId, nip: nipRaw, note }).returning();
+
+      // Re-attribute existing unmatched WZ that match this NIP to this client.
+      const { ibiznesInvoices } = schema;
+      const { sql } = await import("drizzle-orm");
+      const updated = await db
+        .update(ibiznesInvoices)
+        .set({ clientId })
+        .where(and(eq(ibiznesInvoices.nip, nipRaw), sql`${ibiznesInvoices.clientId} IS NULL` as any))
+        .returning({ id: ibiznesInvoices.id });
+
+      // Rebuild aggregates so totals update right away.
+      try {
+        const { runAggregatesOnly } = await import("./ibiznesSync");
+        await runAggregatesOnly();
+      } catch (_e) { /* aggregator export is optional */ }
+
+      res.json({ ok: true, row: created, rebound: updated.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/clients/:clientId/nips/:nipId", authMiddleware, async (req, res) => {
+    try {
+      const clientId = Number(req.params.clientId);
+      const nipId = Number(req.params.nipId);
+      const { db } = await import("./db");
+      const schema = await import("../shared/schema");
+      const { clientNips, ibiznesInvoices, clients } = schema;
+      const { and, eq } = await import("drizzle-orm");
+
+      const existing = await db
+        .select()
+        .from(clientNips)
+        .where(and(eq(clientNips.id, nipId), eq(clientNips.clientId, clientId)));
+      if (existing.length === 0) return res.status(404).json({ message: "Nie znaleziono" });
+
+      const removedNip = existing[0].nip.replace(/[-\s]/g, "").trim();
+      await db.delete(clientNips).where(eq(clientNips.id, nipId));
+
+      // Detach matching WZ that no longer have a NIP path to this client.
+      // (Primary NIP may still match if it's the same; we only orphan rows
+      //  that matched ONLY through the just-removed alt NIP.)
+      const me = await db.select({ nip: clients.nip }).from(clients).where(eq(clients.id, clientId));
+      const primary = me[0]?.nip ? me[0].nip.replace(/[-\s]/g, "").trim() : "";
+      if (primary !== removedNip) {
+        await db
+          .update(ibiznesInvoices)
+          .set({ clientId: null })
+          .where(and(eq(ibiznesInvoices.clientId, clientId), eq(ibiznesInvoices.nip, removedNip)));
+      }
+
+      try {
+        const { runAggregatesOnly } = await import("./ibiznesSync");
+        await runAggregatesOnly();
+      } catch (_e) { /* see above */ }
+
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // --- Client Contacts (knowledge base) ---
   app.get("/api/clients/:id/contacts", authMiddleware, async (req, res) => {
     try {

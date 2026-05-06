@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly, dailyAnalysis, salesHistory, salesTargets, ibiznesIgnored } from "../shared/schema";
+import { clients, ibiznesInvoices, ibizneSyncLog, clientSales, clientSalesWeekly, dailyAnalysis, salesHistory, salesTargets, ibiznesIgnored, clientNips } from "../shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { fetchIbiznesInvoices, testIbiznesConnection } from "./ibiznes";
 
@@ -75,6 +75,13 @@ export async function runIbiznesSync(trigger: "cron" | "manual" = "cron"): Promi
       // ibiznesAlias takes priority over klient for alias matching (exact override)
       if (c.ibiznesAlias) aliasToClientId.set(normalizeAlias(c.ibiznesAlias), c.id);
       if (c.klient) aliasToClientId.set(normalizeAlias(c.klient), c.id);
+    }
+
+    // Additional NIPs (one client → many NIPs, e.g. school + gmina).
+    const extraNips = await db.select().from(clientNips);
+    for (const cn of extraNips) {
+      const norm = normalizeNip(cn.nip);
+      if (norm) nipToClientId.set(norm, cn.clientId);
     }
 
     const matchedClientIds = new Set<number>();
