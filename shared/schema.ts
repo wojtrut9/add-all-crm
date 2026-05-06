@@ -198,6 +198,18 @@ export const ibiznesIgnored = pgTable("ibiznes_ignored", {
 });
 export type IbizneIgnored = typeof ibiznesIgnored.$inferSelect;
 
+// Additional NIPs per CRM client. The primary NIP still lives on `clients.nip`
+// (unchanged for back-compat). When iBiznes invoice carries any of the listed
+// NIPs, the sync attributes the WZ to this client.
+export const clientNips = pgTable("client_nips", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  nip: text("nip").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export type ClientNip = typeof clientNips.$inferSelect;
+
 export const salaries = pgTable("salaries", {
   id: serial("id").primaryKey(),
   osoba: text("osoba").notNull(),

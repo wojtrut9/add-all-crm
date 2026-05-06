@@ -237,6 +237,42 @@ export async function migrateDatabase() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_ibiznes_ignored_unique
       ON ibiznes_ignored(nip, COALESCE(alias, ''), source);
 
+    -- Additional NIPs per CRM client (for "same legal entity, multiple NIPs"
+    -- — e.g. school + gmina sharing same buyer).
+    CREATE TABLE IF NOT EXISTS client_nips (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      nip TEXT NOT NULL,
+      note TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_client_nips_nip ON client_nips(nip);
+    CREATE INDEX IF NOT EXISTS idx_client_nips_client_id ON client_nips(client_id);
+
+    -- One-shot backfill: known multi-NIP clients. Idempotent via UNIQUE(nip).
+    INSERT INTO client_nips (client_id, nip, note)
+    SELECT id, '7971930946', 'Gmina Belsk (auto-backfill)'
+    FROM clients
+    WHERE klient ILIKE '%szko%belsk%'
+    ORDER BY id
+    LIMIT 1
+    ON CONFLICT (nip) DO NOTHING;
+
+    INSERT INTO client_nips (client_id, nip, note)
+    SELECT id, '1231217438', 'Gmina Konstancin-Jeziorna (auto-backfill)'
+    FROM clients
+    WHERE klient ILIKE '%t%czowe przedszkole%'
+    ORDER BY id
+    LIMIT 1
+    ON CONFLICT (nip) DO NOTHING;
+
+    -- Re-attribute any unmatched WZ matching the new NIPs to the right client.
+    UPDATE ibiznes_invoices ii
+       SET client_id = cn.client_id
+      FROM client_nips cn
+     WHERE ii.client_id IS NULL
+       AND ii.nip = cn.nip;
+
     -- One-shot cleanup: clear stale "custom" monthly goals for the current and
     -- future months so the +5% rule kicks in immediately. Past months keep
     -- their custom values so historical reporting stays intact.
