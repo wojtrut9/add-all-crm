@@ -53,9 +53,20 @@ type CostBreakdown = {
   departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
   vatTotal: number;
   fixedTotal: number;
+  ksefTotal: number;
   grandTotal: number;
-  source: "vat_import" | "fixed_costs" | "both";
+  source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs";
 };
+
+function sourceLabel(source: CostBreakdown["source"] | undefined): string {
+  switch (source) {
+    case "ksef": return "KSeF";
+    case "ksef+fixed": return "KSeF + koszty stale";
+    case "vat_import": return "Import VAT";
+    case "fixed_costs":
+    default: return "Koszty stale";
+  }
+}
 
 export default function DailyAnalysisPage() {
   const now = new Date();
@@ -310,7 +321,7 @@ export default function DailyAnalysisPage() {
                 <p className="text-xs text-muted-foreground">Koszty miesieczne</p>
                 <p className="text-lg font-bold tabular-nums" data-testid="text-fixed-costs">{formatPLN(fixedCosts)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {costBreakdown?.source === "vat_import" ? "Z importu VAT" : "Koszty stale"}
+                  {sourceLabel(costBreakdown?.source)}
                 </p>
               </div>
               <DollarSign className="w-4 h-4 text-destructive" />
@@ -397,7 +408,7 @@ export default function DailyAnalysisPage() {
             <CardTitle className="text-base flex items-center gap-2">
               Koszty wg dzialow
               <Badge variant="outline" className="text-xs">
-                {costBreakdown.source === "vat_import" ? "Import VAT" : "Koszty stale"}
+                {sourceLabel(costBreakdown.source)}
               </Badge>
             </CardTitle>
           </CardHeader>

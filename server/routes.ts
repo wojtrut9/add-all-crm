@@ -5,6 +5,14 @@ import { authMiddleware, adminOnly, generateToken, comparePassword } from "./aut
 import { seedDatabase } from "./seed";
 import { migrateDatabase } from "./migrate";
 import { runIbiznesSync, getLastSyncStatus, getSyncLogs, testIbiznesConnection } from "./ibiznesSync";
+import {
+  runKsefSync,
+  getLastKsefSyncStatus,
+  getKsefSyncLogs,
+  recategorizeInvoices,
+  getTopUnclassifiedSuppliers,
+} from "./ksefSync";
+import { testKsefConnection, isKsefConfigured, getKsefEnv, getKsefNip } from "./ksef";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -1075,7 +1083,7 @@ export async function registerRoutes(
       const miesiac = Number(req.query.miesiac) || (new Date().getMonth() + 1);
       const entries = await storage.getDailyAnalysis(rok, miesiac);
       const dniRobocze = await storage.getDniRobocze(rok, miesiac);
-      const costBreakdown = await storage.getCostBreakdownForMonth(miesiac);
+      const costBreakdown = await storage.getCostBreakdownForMonth(miesiac, rok);
       res.json({ entries, fixedCosts: costBreakdown.grandTotal, dniRobocze, costBreakdown });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -1947,6 +1955,171 @@ export async function registerRoutes(
       } catch (_e) { /* see above */ }
 
       res.json({ ok: true, client: created });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ── KSeF Sync ───────────────────────────────────────────────────────────────
+
+  app.get("/api/ksef/status", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const configured = isKsefConfigured();
+      const lastSync = await getLastKsefSyncStatus();
+      const env = getKsefEnv();
+      const nip = getKsefNip();
+      let connection: { ok: boolean; message?: string } = { ok: false, message: "Brak konfiguracji" };
+      if (configured) connection = await testKsefConnection();
+      res.json({ configured, connected: connection.ok, error: connection.message, lastSync, env, nip });
+    } catch (err: any) {
+      res.json({ configured: isKsefConfigured(), connected: false, error: err.message, lastSync: null });
+    }
+  });
+
+  app.get("/api/ksef/logs", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const limit = Number(req.query.limit) || 20;
+      const logs = await getKsefSyncLogs(limit);
+      res.json(logs);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/ksef/sync", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const monthsBack = req.body?.monthsBack ? Number(req.body.monthsBack) : undefined;
+      const result = await runKsefSync("manual", { monthsBack });
+      res.json({ ok: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  // Lista pobranych faktur kosztowych, z filtrowaniem po (rok, miesiac)
+  // i opcjonalnie po kategorii. Używane przez panel /ksef.
+  app.get("/api/ksef/invoices", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { db: pg } = await import("./db");
+      const { ksefInvoices } = await import("../shared/schema");
+      const { and: andOp, eq: eqOp, desc: descOp } = await import("drizzle-orm");
+      const rok = req.query.rok ? Number(req.query.rok) : undefined;
+      const miesiac = req.query.miesiac ? Number(req.query.miesiac) : undefined;
+      const kategoria = typeof req.query.kategoria === "string" ? req.query.kategoria : undefined;
+
+      const conds: any[] = [];
+      if (rok) conds.push(eqOp(ksefInvoices.rok, rok));
+      if (miesiac) conds.push(eqOp(ksefInvoices.miesiac, miesiac));
+      if (kategoria) conds.push(eqOp(ksefInvoices.kategoria, kategoria));
+
+      const rows = await pg
+        .select()
+        .from(ksefInvoices)
+        .where(conds.length > 0 ? andOp(...conds) : undefined)
+        .orderBy(descOp(ksefInvoices.issueDate));
+      res.json(rows);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/ksef/invoices/:id/kategoria", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { kategoria } = req.body;
+      if (!kategoria || typeof kategoria !== "string") {
+        return res.status(400).json({ message: "Wymagane pole 'kategoria'" });
+      }
+      const { db: pg } = await import("./db");
+      const { ksefInvoices } = await import("../shared/schema");
+      const { eq: eqOp } = await import("drizzle-orm");
+      await pg
+        .update(ksefInvoices)
+        .set({ kategoria, kategoriaManual: true })
+        .where(eqOp(ksefInvoices.id, id));
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  app.get("/api/ksef/supplier-categories", authMiddleware, adminOnly, async (_req, res) => {
+    try {
+      const { db: pg } = await import("./db");
+      const { ksefSupplierCategories } = await import("../shared/schema");
+      const rows = await pg.select().from(ksefSupplierCategories);
+      res.json(rows);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/ksef/supplier-categories", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { nip, nazwa, kategoria } = req.body;
+      if (!nip || !kategoria) {
+        return res.status(400).json({ message: "Wymagane pola: nip, kategoria" });
+      }
+      const cleanNip = String(nip).replace(/[-\s]/g, "");
+      const { db: pg } = await import("./db");
+      const { ksefSupplierCategories } = await import("../shared/schema");
+      const { sql: pgsql } = await import("drizzle-orm");
+      await pg.insert(ksefSupplierCategories)
+        .values({ nip: cleanNip, nazwa: nazwa || null, kategoria })
+        .onConflictDoUpdate({
+          target: ksefSupplierCategories.nip,
+          set: { nazwa: pgsql`EXCLUDED.nazwa`, kategoria: pgsql`EXCLUDED.kategoria` },
+        });
+      const result = await recategorizeInvoices();
+      res.json({ ok: true, recategorized: result.updated });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  app.delete("/api/ksef/supplier-categories/:nip", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const cleanNip = String(req.params.nip).replace(/[-\s]/g, "");
+      const { db: pg } = await import("./db");
+      const { ksefSupplierCategories } = await import("../shared/schema");
+      const { eq: eqOp } = await import("drizzle-orm");
+      await pg.delete(ksefSupplierCategories).where(eqOp(ksefSupplierCategories.nip, cleanNip));
+      const result = await recategorizeInvoices();
+      res.json({ ok: true, recategorized: result.updated });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
+  });
+
+  app.get("/api/ksef/unclassified", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const limit = Number(req.query.limit) || 20;
+      const rows = await getTopUnclassifiedSuppliers(limit);
+      res.json(rows);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Podsumowanie miesięczne KSeF: koszt netto wg kategorii za (rok, miesiac).
+  // Używane przez panel KSeF do podglądu agregatów bez kompletnego breakdownu.
+  app.get("/api/ksef/summary", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = Number(req.query.rok) || new Date().getFullYear();
+      const miesiac = Number(req.query.miesiac) || (new Date().getMonth() + 1);
+      const { db: pg } = await import("./db");
+      const { sql: pgsql } = await import("drizzle-orm");
+      const rows = await pg.execute(pgsql`
+        SELECT COALESCE(kategoria, 'Inne') AS kategoria,
+               COUNT(*)::int AS faktur,
+               ROUND(SUM(CAST(net_amount AS NUMERIC)), 2)::float AS netto,
+               ROUND(SUM(CAST(gross_amount AS NUMERIC)), 2)::float AS brutto
+        FROM ksef_invoices
+        WHERE rok = ${rok} AND miesiac = ${miesiac}
+        GROUP BY COALESCE(kategoria, 'Inne')
+        ORDER BY netto DESC NULLS LAST
+      `);
+      res.json({ rok, miesiac, categories: rows.rows });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

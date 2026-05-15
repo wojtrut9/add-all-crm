@@ -4,7 +4,7 @@ import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
   fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts, clientProducts,
-  clientNips,
+  clientNips, ksefInvoices,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -99,12 +99,13 @@ export interface IStorage {
   upsertDailyAnalysis(rok: number, miesiac: number, dzien: number, sprzedaz: string | null): Promise<DailyAnalysis>;
   updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void>;
   getMonthlyFixedCosts(miesiac: number): Promise<number>;
-  getCostBreakdownForMonth(miesiac: number): Promise<{
+  getCostBreakdownForMonth(miesiac: number, rok?: number): Promise<{
     departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
     vatTotal: number;
     fixedTotal: number;
+    ksefTotal: number;
     grandTotal: number;
-    source: "vat_import" | "fixed_costs" | "both";
+    source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs";
   }>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 
@@ -1717,16 +1718,20 @@ export class DatabaseStorage implements IStorage {
     return totalSalaries + totalCosts + totalFleet;
   }
 
-  async getCostBreakdownForMonth(miesiac: number): Promise<{
+  async getCostBreakdownForMonth(miesiac: number, rok?: number): Promise<{
     departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
     vatTotal: number;
     fixedTotal: number;
+    ksefTotal: number;
     grandTotal: number;
-    source: "vat_import" | "fixed_costs";
+    source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs";
   }> {
     const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
     const mKey = MONTH_KEYS[miesiac - 1];
+    const targetRok = rok ?? new Date().getFullYear();
 
+    // Mapowanie kategoria → dział. Spójne z `finance.tsx` (CATEGORY_COLORS)
+    // i z auto-kategoryzacją z `ksefSync.ts`.
     const DEPT_MAP: Record<string, string> = {
       "Wynagrodzenia": "Kadry i place",
       "Wynagrodzenia zarząd (JDG)": "Kadry i place",
@@ -1749,6 +1754,16 @@ export class DatabaseStorage implements IStorage {
       "Inne": "Pozostale",
     };
 
+    // ── 1. KSeF: pobierz faktury kosztowe dla danego (rok, miesiac) ─────
+    const ksefRows = await db
+      .select()
+      .from(ksefInvoices)
+      .where(and(eq(ksefInvoices.rok, targetRok), eq(ksefInvoices.miesiac, miesiac)));
+
+    const ksefTotal = ksefRows.reduce((s, r) => s + Number(r.netAmount || 0), 0);
+    const hasKsef = ksefRows.length > 0;
+
+    // ── 2. VAT_IMPORT (legacy CSV import) ───────────────────────────────
     const allCosts = await db.select().from(costs);
     const vatForMonth = allCosts.filter((c) => {
       if (c.firma !== "IMPORT_VAT") return false;
@@ -1756,45 +1771,74 @@ export class DatabaseStorage implements IStorage {
       if (!am) return false;
       return am[mKey] === true;
     });
-
     const hasVat = vatForMonth.length > 0;
     const vatTotal = vatForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
 
-    const deptTotals: Record<string, Record<string, number>> = {};
+    // ── 3. Koszty stałe (wynagrodzenia, ZUS, raty leasingowe wpisywane
+    //       ręcznie, ubezpieczenia, …) — czytane zawsze, doklejane do KSeF.
+    const salariesData = await db.select().from(salaries);
+    const nonVatCosts = allCosts.filter((c) => c.firma !== "IMPORT_VAT");
+    const fleetData = await db.select().from(fleet);
 
-    if (hasVat) {
+    const isActiveInMonth = (item: any) => {
+      const am = item.aktywnyMiesiace as Record<string, boolean> | null;
+      return !am || am[mKey] !== false;
+    };
+
+    const deptTotals: Record<string, Record<string, number>> = {};
+    const bump = (dept: string, cat: string, value: number) => {
+      if (!value) return;
+      if (!deptTotals[dept]) deptTotals[dept] = {};
+      deptTotals[dept][cat] = (deptTotals[dept][cat] || 0) + value;
+    };
+
+    if (hasKsef) {
+      // KSeF jako podstawowe źródło — pełna granularność per kategoria.
+      for (const inv of ksefRows) {
+        const cat = inv.kategoria || "Inne";
+        const dept = DEPT_MAP[cat] || "Pozostale";
+        bump(dept, cat, Number(inv.netAmount || 0));
+      }
+      // Dokładaj koszty stałe (wynagrodzenia/ZUS/raty kredytów/ubezpieczenia)
+      // — to są pozycje, których KSeF z definicji nie obejmuje. Pomijamy
+      // kategorie pokryte przez KSeF, żeby nie liczyć podwójnie.
+      const ksefCategories = new Set(ksefRows.map((r) => r.kategoria || "Inne"));
+
+      for (const s of salariesData) {
+        if (!isActiveInMonth(s)) continue;
+        // Wynagrodzenia/ZUS NIGDY nie są w KSeF — zawsze doliczamy.
+        bump("Kadry i place", "Wynagrodzenia i ZUS", Number(s.kosztPracodawcy || 0));
+      }
+      for (const c of nonVatCosts) {
+        if (!isActiveInMonth(c)) continue;
+        const cat = c.dzial || c.kategoria || "Inne";
+        if (ksefCategories.has(cat)) continue;
+        bump(DEPT_MAP[cat] || "Pozostale", cat, Number(c.koszt || 0));
+      }
+      for (const f of fleetData) {
+        if (!isActiveInMonth(f)) continue;
+        const cat = f.dzial || f.rodzaj || "Inne";
+        if (ksefCategories.has(cat)) continue;
+        bump(DEPT_MAP[cat] || "Flota", cat, Number(f.koszt || 0));
+      }
+    } else if (hasVat) {
+      // Legacy: import VAT z deklaracji (CSV).
       for (const c of vatForMonth) {
         const cat = c.dzial || c.kategoria || "Inne";
-        const dept = DEPT_MAP[cat] || "Pozostale";
-        if (!deptTotals[dept]) deptTotals[dept] = {};
-        deptTotals[dept][cat] = (deptTotals[dept][cat] || 0) + Number(c.netto || 0);
+        bump(DEPT_MAP[cat] || "Pozostale", cat, Number(c.netto || 0));
       }
     } else {
-      const salariesData = await db.select().from(salaries);
-      const nonVatCosts = allCosts.filter(c => c.firma !== "IMPORT_VAT");
-      const fleetData = await db.select().from(fleet);
-
-      const sumActive = (items: any[], costField: string) => {
-        return items.reduce((sum: number, item: any) => {
-          const am = item.aktywnyMiesiace as Record<string, boolean> | null;
-          if (am && am[mKey] === false) return sum;
-          return sum + Number(item[costField] || 0);
-        }, 0);
-      };
+      // Pełny tryb kosztów stałych (stara ścieżka).
+      const sumActive = (items: any[], costField: string) =>
+        items.reduce((sum, item) => (isActiveInMonth(item) ? sum + Number(item[costField] || 0) : sum), 0);
 
       const totalSalaries = sumActive(salariesData, "kosztPracodawcy");
       const totalCosts = sumActive(nonVatCosts, "koszt");
       const totalFleet = sumActive(fleetData, "koszt");
 
-      if (totalSalaries > 0) {
-        deptTotals["Kadry i place"] = { "Wynagrodzenia i ZUS": totalSalaries };
-      }
-      if (totalCosts > 0) {
-        deptTotals["Biuro i administracja"] = { "Koszty operacyjne": totalCosts };
-      }
-      if (totalFleet > 0) {
-        deptTotals["Flota"] = { "Koszty floty": totalFleet };
-      }
+      if (totalSalaries > 0) bump("Kadry i place", "Wynagrodzenia i ZUS", totalSalaries);
+      if (totalCosts > 0) bump("Biuro i administracja", "Koszty operacyjne", totalCosts);
+      if (totalFleet > 0) bump("Flota", "Koszty floty", totalFleet);
     }
 
     const departments = Object.entries(deptTotals)
@@ -1807,16 +1851,23 @@ export class DatabaseStorage implements IStorage {
       }))
       .sort((a, b) => b.total - a.total);
 
-    const grandTotal = hasVat
-      ? Math.round(vatTotal)
-      : departments.reduce((s, d) => s + d.total, 0);
+    const grandTotal = departments.reduce((s, d) => s + d.total, 0);
+    const fixedTotal = Math.max(0, grandTotal - Math.round(ksefTotal) - (hasKsef ? 0 : Math.round(vatTotal)));
+
+    const source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs" =
+      hasKsef
+        ? fixedTotal > 0 ? "ksef+fixed" : "ksef"
+        : hasVat
+          ? "vat_import"
+          : "fixed_costs";
 
     return {
       departments,
       vatTotal: Math.round(vatTotal),
-      fixedTotal: departments.reduce((s, d) => s + d.total, 0),
+      fixedTotal,
+      ksefTotal: Math.round(ksefTotal),
       grandTotal,
-      source: hasVat ? "vat_import" : "fixed_costs",
+      source,
     };
   }
 

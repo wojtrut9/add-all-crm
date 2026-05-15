@@ -340,6 +340,66 @@ export async function migrateDatabase() {
     CREATE INDEX IF NOT EXISTS idx_deliveries_data ON deliveries(data_dostawy);
     CREATE INDEX IF NOT EXISTS idx_daily_analysis_rok_mies ON daily_analysis(rok, miesiac);
     CREATE INDEX IF NOT EXISTS idx_sales_targets_rok_mies ON sales_targets(rok, miesiac);
+
+    -- KSeF: faktury kosztowe pobierane z Krajowego Systemu e-Faktur.
+    -- ksef_number jest unikalnym identyfikatorem nadanym przez KSeF i służy
+    -- jako klucz idempotency (sync nigdy nie wstawi dwa razy tej samej FV).
+    CREATE TABLE IF NOT EXISTS ksef_invoices (
+      id SERIAL PRIMARY KEY,
+      ksef_number TEXT NOT NULL UNIQUE,
+      invoice_number TEXT NOT NULL,
+      issue_date TEXT NOT NULL,
+      rok INTEGER NOT NULL,
+      miesiac INTEGER NOT NULL,
+      seller_nip TEXT NOT NULL,
+      seller_name TEXT,
+      buyer_nip TEXT,
+      buyer_name TEXT,
+      net_amount DECIMAL(14,2) NOT NULL,
+      vat_amount DECIMAL(14,2),
+      gross_amount DECIMAL(14,2),
+      currency TEXT NOT NULL DEFAULT 'PLN',
+      kategoria TEXT,
+      kategoria_manual BOOLEAN NOT NULL DEFAULT FALSE,
+      invoice_hash TEXT,
+      synced_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_ksef_invoices_rok_mies ON ksef_invoices(rok, miesiac);
+    CREATE INDEX IF NOT EXISTS idx_ksef_invoices_seller_nip ON ksef_invoices(seller_nip);
+    CREATE INDEX IF NOT EXISTS idx_ksef_invoices_kategoria ON ksef_invoices(kategoria);
+
+    -- Mapowanie NIP dostawcy → kategoria (ręczne nadpisanie auto-kategoryzacji).
+    CREATE TABLE IF NOT EXISTS ksef_supplier_categories (
+      id SERIAL PRIMARY KEY,
+      nip TEXT NOT NULL UNIQUE,
+      nazwa TEXT,
+      kategoria TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS ksef_sync_log (
+      id SERIAL PRIMARY KEY,
+      started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      finished_at TIMESTAMP,
+      status TEXT NOT NULL DEFAULT 'running',
+      message TEXT,
+      invoices_synced INTEGER DEFAULT 0,
+      invoices_new INTEGER DEFAULT 0,
+      trigger TEXT DEFAULT 'cron'
+    );
+
+    -- Cache sesji KSeF — jeden wiersz na NIP, trzyma accessToken/refreshToken
+    -- żeby uniknąć pełnej procedury auth przy każdym żądaniu.
+    CREATE TABLE IF NOT EXISTS ksef_token_cache (
+      id SERIAL PRIMARY KEY,
+      nip TEXT NOT NULL UNIQUE,
+      environment TEXT NOT NULL,
+      access_token TEXT,
+      access_valid_until TIMESTAMP,
+      refresh_token TEXT,
+      refresh_valid_until TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
   `);
 
   console.log("Database schema ensured.");

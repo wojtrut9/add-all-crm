@@ -29,6 +29,7 @@ import {
   Target,
   Calculator,
   Database,
+  FileText,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -67,6 +68,7 @@ export function AppSidebar() {
     { title: "Analiza dzienna", url: "/analiza-dzienna", icon: Calculator },
     { title: "Panel finansowy", url: "/finanse", icon: DollarSign },
     { title: "Sync iBiznes", url: "/ibiznes", icon: Database },
+    { title: "Sync KSeF", url: "/ksef", icon: FileText },
     { title: "Notatki", url: "/notatki", icon: StickyNote },
   ];
 
