@@ -1077,6 +1077,19 @@ export async function registerRoutes(
     }
   });
 
+  // Import KSeF "koszty stałe" template (xls z Pauliny). Wszystko z Rej.ZAK.=KOSZTOWA
+  // ląduje w `costs` z firma='KSEF_TEMPLATE' i aktywnyMiesiace=wszystkie 12.
+  app.post("/api/finance/import-ksef-template", authMiddleware, adminOnly, upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "Brak pliku" });
+      const replace = String(req.body?.replace || "") === "true";
+      const result = await storage.importKsefTemplate(req.file.buffer, { replace });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/daily-analysis", authMiddleware, adminOnly, async (req, res) => {
     try {
       const rok = Number(req.query.rok) || new Date().getFullYear();

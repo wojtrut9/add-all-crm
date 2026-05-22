@@ -117,6 +117,13 @@ export interface IStorage {
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
   importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}>;
+  importKsefTemplate(fileBuffer: Buffer, opts: { replace: boolean }): Promise<{
+    imported: number;
+    skipped: number;
+    total: number;
+    byKategoria: Record<string, { count: number; sum: number }>;
+    skippedDetails: Array<{ reason: string; klient: string; nrFaktury: string; akcja: string }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2500,6 +2507,50 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { imported };
+  }
+
+  async importKsefTemplate(
+    fileBuffer: Buffer,
+    opts: { replace: boolean }
+  ): Promise<{
+    imported: number;
+    skipped: number;
+    total: number;
+    byKategoria: Record<string, { count: number; sum: number }>;
+    skippedDetails: Array<{ reason: string; klient: string; nrFaktury: string; akcja: string }>;
+  }> {
+    const { parseKsefKosztoweRows, ALL_MONTHS_TRUE, KSEF_TEMPLATE_FIRMA } = await import("./ksefTemplate");
+    const parsed = parseKsefKosztoweRows(fileBuffer);
+
+    if (opts.replace) {
+      await db.delete(costs).where(eq(costs.firma, KSEF_TEMPLATE_FIRMA));
+    }
+
+    const byKategoria: Record<string, { count: number; sum: number }> = {};
+    for (const e of parsed.entries) {
+      await db.insert(costs).values({
+        nazwa: e.nazwa,
+        firma: KSEF_TEMPLATE_FIRMA,
+        dzial: e.kategoria,
+        rodzaj: null,
+        kategoria: e.kategoria,
+        netto: String(e.netto),
+        koszt: String(e.brutto),
+        notatka: `KSeF template: ${e.nrFaktury}${e.nip ? ` / NIP ${e.nip}` : ""}`,
+        aktywnyMiesiace: ALL_MONTHS_TRUE,
+      });
+      if (!byKategoria[e.kategoria]) byKategoria[e.kategoria] = { count: 0, sum: 0 };
+      byKategoria[e.kategoria].count++;
+      byKategoria[e.kategoria].sum += e.brutto;
+    }
+
+    return {
+      imported: parsed.entries.length,
+      skipped: parsed.skipped.length,
+      total: parsed.entries.reduce((s, e) => s + e.brutto, 0),
+      byKategoria,
+      skippedDetails: parsed.skipped,
+    };
   }
 }
 

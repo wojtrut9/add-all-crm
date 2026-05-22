@@ -134,8 +134,10 @@ export default function FinancePage() {
   const [miesiac, setMiesiac] = useState(now.getMonth() + 1);
   const [widok, setWidok] = useState<"rzeczywiste" | "budzet" | "porownanie" | "symulator">("rzeczywiste");
   const [importing, setImporting] = useState(false);
+  const [importingTemplate, setImportingTemplate] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
+  const templateFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const mKey = MONTH_KEYS[miesiac - 1];
@@ -151,7 +153,11 @@ export default function FinancePage() {
 
   const importedCosts: CostItem[] = useMemo(() => {
     if (!data?.costs) return [];
-    return data.costs.filter((c: CostItem) => c.firma === "IMPORT_VAT");
+    // Pokazujemy zarówno miesięczny IMPORT_VAT (per-miesiąc faktury z iBiznes),
+    // jak i KSEF_TEMPLATE (sztywny szablon kosztów stałych z xls Pauliny).
+    return data.costs.filter(
+      (c: CostItem) => c.firma === "IMPORT_VAT" || c.firma === "KSEF_TEMPLATE"
+    );
   }, [data]);
 
   const grouped = useMemo(() => {
@@ -224,6 +230,35 @@ export default function FinancePage() {
     });
   };
 
+  const handleImportTemplate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportingTemplate(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("replace", "true");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/finance/import-ksef-template", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData,
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+      toast({
+        title: "Import KSeF template",
+        description: `Zaimportowano ${result.imported} pozycji (${Math.round(result.total).toLocaleString("pl-PL")} zł). Aktywne dla wszystkich 12 miesięcy.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/finance", miesiac] });
+    } catch (err: any) {
+      toast({ title: "Blad importu", description: err.message, variant: "destructive" });
+    } finally {
+      setImportingTemplate(false);
+      if (templateFileRef.current) templateFileRef.current.value = "";
+    }
+  };
+
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -287,6 +322,11 @@ export default function FinancePage() {
             Import Excel
           </Button>
           <input ref={fileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleImport} />
+          <Button variant="outline" onClick={() => templateFileRef.current?.click()} disabled={importingTemplate} data-testid="button-import-ksef-template">
+            {importingTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+            Import KSeF (koszty stale)
+          </Button>
+          <input ref={templateFileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleImportTemplate} />
           <Select value={widok} onValueChange={(v: any) => setWidok(v)}>
             <SelectTrigger className="w-[160px]" data-testid="select-widok">
               <SelectValue />
