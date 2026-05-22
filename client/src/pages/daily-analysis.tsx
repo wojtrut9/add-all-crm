@@ -5,8 +5,6 @@ import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -30,8 +28,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  DollarSign, Calculator, TrendingUp, TrendingDown, CalendarDays, Download,
-  ChevronDown, ChevronRight, Target, ArrowUpRight, ArrowDownRight, Minus,
+  DollarSign, Calculator, TrendingUp, TrendingDown, CalendarDays,
+  ChevronDown, ChevronRight, Target, ArrowUpRight, ArrowDownRight, Upload, Loader2,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
@@ -43,6 +41,16 @@ const MONTHS = MONTHS_ASCII.map((label, i) => ({ value: String(i + 1), label }))
 
 function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
+}
+
+function countWeekdays(year: number, month: number): number {
+  const total = daysInMonth(year, month);
+  let n = 0;
+  for (let d = 1; d <= total; d++) {
+    const dow = new Date(year, month - 1, d).getDay();
+    if (dow >= 1 && dow <= 5) n++;
+  }
+  return n;
 }
 
 function fmt(n: number): string {
@@ -68,21 +76,19 @@ function sourceLabel(source: CostBreakdown["source"] | undefined): string {
   }
 }
 
+const MARZA = 0.354;
+
 export default function DailyAnalysisPage() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [selectedYear] = useState(now.getFullYear());
-  const [localDniRobocze, setLocalDniRobocze] = useState<number | null>(null);
-  const [editingValues, setEditingValues] = useState<Record<number, string>>({});
-  const [customMarza, setCustomMarza] = useState<number | null>(null);
   const [openDepts, setOpenDepts] = useState<Set<string>>(new Set());
+  const [importingTemplate, setImportingTemplate] = useState(false);
+  const templateFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const dniRoboczeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const rok = selectedYear;
   const miesiac = Number(selectedMonth);
-
-  const MARZA = customMarza ?? 0.354;
 
   const { data, isLoading } = useQuery({
     queryKey: ["/api/daily-analysis", rok, miesiac],
@@ -95,59 +101,35 @@ export default function DailyAnalysisPage() {
     staleTime: 30_000,
   });
 
-  const prevMonth = miesiac === 1 ? 12 : miesiac - 1;
-  const { data: prevData } = useQuery({
-    queryKey: ["/api/daily-analysis", rok, prevMonth, "prev"],
-    queryFn: async () => {
-      const prevRok = miesiac === 1 ? rok - 1 : rok;
-      const res = await authFetch(`/api/daily-analysis?rok=${prevRok}&miesiac=${prevMonth}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ dzien, sprzedaz }: { dzien: number; sprzedaz: string | null }) => {
-      const res = await authFetch("/api/daily-analysis", {
-        method: "PATCH",
-        body: JSON.stringify({ rok, miesiac, dzien, sprzedaz }),
-      });
-      if (!res.ok) throw new Error("Blad zapisu");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-analysis", rok, miesiac] });
-    },
-  });
-
-  const dniRoboczeMutation = useMutation({
-    mutationFn: async (dniRobocze: number) => {
-      const res = await authFetch("/api/daily-analysis/dni-robocze", {
-        method: "PATCH",
-        body: JSON.stringify({ rok, miesiac, dniRobocze }),
-      });
-      if (!res.ok) throw new Error("Blad zapisu");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-analysis", rok, miesiac] });
-    },
-  });
-
-  const importMutation = useMutation({
-    mutationFn: async () => {
-      const res = await authFetch("/api/daily-analysis/import", {
+  const handleImportTemplate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportingTemplate(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("replace", "true");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/finance/import-ksef-template", {
         method: "POST",
-        body: JSON.stringify({ rok, miesiac }),
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData,
       });
-      if (!res.ok) throw new Error("Blad importu");
-      return res.json();
-    },
-    onSuccess: (data) => {
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+      toast({
+        title: "Import KSeF template",
+        description: `Zaimportowano ${result.imported} pozycji (${Math.round(result.total).toLocaleString("pl-PL")} zl). Aktywne dla wszystkich 12 miesiecy.`,
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/daily-analysis", rok, miesiac] });
-      toast({ title: "Import zakonczony", description: `Zaciagnieto sprzedaz z ${data.daysImported} dni.` });
-    },
-  });
+      queryClient.invalidateQueries({ queryKey: ["/api/finance"] });
+    } catch (err: any) {
+      toast({ title: "Blad importu", description: err.message, variant: "destructive" });
+    } finally {
+      setImportingTemplate(false);
+      if (templateFileRef.current) templateFileRef.current.value = "";
+    }
+  };
 
   if (isLoading) {
     return (
@@ -162,12 +144,9 @@ export default function DailyAnalysisPage() {
   }
 
   const entries: any[] = data?.entries || [];
-  const serverDniRobocze: number = data?.dniRobocze || 21;
-  const dniRobocze = localDniRobocze ?? serverDniRobocze;
+  const dniRobocze = countWeekdays(rok, miesiac);
   const costBreakdown: CostBreakdown | null = data?.costBreakdown || null;
-
   const fixedCosts: number = costBreakdown?.grandTotal || data?.fixedCosts || 0;
-  const prevFixedCosts: number = prevData?.costBreakdown?.grandTotal || prevData?.fixedCosts || 0;
 
   const kosztDzienny = dniRobocze > 0 ? fixedCosts / dniRobocze : 0;
   const minObrotDzienny = MARZA > 0 ? kosztDzienny / MARZA : 0;
@@ -188,9 +167,7 @@ export default function DailyAnalysisPage() {
 
   let cumulative = 0;
   for (let d = 1; d <= totalDays; d++) {
-    const sprzedaz = editingValues[d] !== undefined
-      ? (editingValues[d] !== "" ? Number(editingValues[d]) : null)
-      : (entryMap[d] ?? null);
+    const sprzedaz = entryMap[d] ?? null;
     const zyskBrutto = sprzedaz != null ? sprzedaz * MARZA : 0;
     const minusKoszty = sprzedaz != null ? zyskBrutto - kosztDzienny : 0;
     if (sprzedaz != null) cumulative += minusKoszty;
@@ -209,24 +186,6 @@ export default function DailyAnalysisPage() {
     ? Math.ceil(fixedCosts / (sredniaSprzedaz * MARZA))
     : null;
 
-  function handleSave(dzien: number) {
-    const val = editingValues[dzien];
-    const sprzedaz = val !== undefined && val !== "" ? val : null;
-    updateMutation.mutate({ dzien, sprzedaz });
-    setEditingValues(prev => { const next = { ...prev }; delete next[dzien]; return next; });
-  }
-
-  function handleDniRobocze(value: string) {
-    const n = parseInt(value, 10);
-    if (isNaN(n) || n < 1 || n > 31) return;
-    setLocalDniRobocze(n);
-    if (dniRoboczeTimeout.current) clearTimeout(dniRoboczeTimeout.current);
-    dniRoboczeTimeout.current = setTimeout(() => {
-      dniRoboczeMutation.mutate(n);
-      setLocalDniRobocze(null);
-    }, 800);
-  }
-
   const monthLabel = MONTHS.find(m => m.value === selectedMonth)?.label || "";
 
   const chartData = rows
@@ -244,11 +203,10 @@ export default function DailyAnalysisPage() {
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-daily-analysis-title">Analiza dzienna</h1>
           <p className="text-sm text-muted-foreground">
-            Obroty vs koszty — {monthLabel} {rok}
+            Sprzedaz dzienna vs koszt dzienny — {monthLabel} {rok}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-sm text-muted-foreground">Miesiac:</Label>
+        <div className="flex items-center gap-2 flex-wrap">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-[160px]" data-testid="select-month">
               <SelectValue />
@@ -259,22 +217,32 @@ export default function DailyAnalysisPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            onClick={() => templateFileRef.current?.click()}
+            disabled={importingTemplate}
+            data-testid="button-import-ksef-template"
+          >
+            {importingTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+            Import KSeF (koszty stale)
+          </Button>
+          <input ref={templateFileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleImportTemplate} />
         </div>
       </div>
 
-      {/* WYNIK MIESIACA - hero */}
+      {/* WYNIK MIESIACA */}
       <Card className={`border-2 ${wynikMiesiaca >= 0 ? "border-green-500/30 bg-green-500/[0.02]" : "border-red-500/30 bg-red-500/[0.02]"}`}>
         <CardContent className="p-5">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Wynik miesiaca (obroty – koszty)</p>
+              <p className="text-sm text-muted-foreground">Wynik miesiaca (sprzedaz x marza – koszty stale)</p>
               <p className={`text-3xl font-bold tabular-nums ${wynikMiesiaca >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                 {wynikMiesiaca >= 0 ? "+" : ""}{formatPLN(wynikMiesiaca)}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {dniZSprzedaza > 0
                   ? `Na podstawie ${dniZSprzedaza} dni z ${dniRobocze} roboczych`
-                  : "Brak danych sprzedazy — wpisz lub zaimportuj"}
+                  : "Brak danych sprzedazy — zsynchronizuj iBiznes"}
               </p>
             </div>
             <div className="flex items-center gap-6">
@@ -313,16 +281,14 @@ export default function DailyAnalysisPage() {
       </Card>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Koszty miesieczne</p>
                 <p className="text-lg font-bold tabular-nums" data-testid="text-fixed-costs">{formatPLN(fixedCosts)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {sourceLabel(costBreakdown?.source)}
-                </p>
+                <p className="text-xs text-muted-foreground">{sourceLabel(costBreakdown?.source)}</p>
               </div>
               <DollarSign className="w-4 h-4 text-destructive" />
             </div>
@@ -334,7 +300,7 @@ export default function DailyAnalysisPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Koszt dzienny</p>
                 <p className="text-lg font-bold tabular-nums" data-testid="text-daily-cost">{formatPLN(kosztDzienny)}</p>
-                <p className="text-xs text-muted-foreground">{fixedCosts > 0 && dniRobocze > 0 ? `${formatPLN(fixedCosts)} / ${dniRobocze} dni` : ""}</p>
+                <p className="text-xs text-muted-foreground">{fixedCosts > 0 ? `${formatPLN(fixedCosts)} / ${dniRobocze} dni` : ""}</p>
               </div>
               <Calculator className="w-4 h-4 text-chart-2" />
             </div>
@@ -373,43 +339,22 @@ export default function DailyAnalysisPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Dni robocze</p>
-                <Input
-                  type="number"
-                  className="mt-1 w-16 font-bold text-lg h-8"
-                  value={dniRobocze}
-                  onChange={(e) => handleDniRobocze(e.target.value)}
-                  min={1} max={31}
-                  data-testid="input-dni-robocze"
-                />
+                <p className="text-lg font-bold tabular-nums">{dniRobocze}</p>
+                <p className="text-xs text-muted-foreground">pon-pt w {monthLabel.toLowerCase()}</p>
               </div>
               <CalendarDays className="w-4 h-4 text-primary" />
-            </div>
-            <div className="mt-2">
-              <p className="text-xs text-muted-foreground">Marza %</p>
-              <Input
-                type="number"
-                className="mt-0.5 w-16 font-bold text-sm h-7"
-                value={customMarza != null ? (customMarza * 100).toFixed(1) : (0.354 * 100).toFixed(1)}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value);
-                  if (!isNaN(v) && v > 0 && v < 100) setCustomMarza(v / 100);
-                }}
-                step="0.1"
-              />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Rozbicie kosztów na działy */}
+      {/* Rozbicie kosztow na dzialy */}
       {costBreakdown && costBreakdown.departments.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               Koszty wg dzialow
-              <Badge variant="outline" className="text-xs">
-                {sourceLabel(costBreakdown.source)}
-              </Badge>
+              <Badge variant="outline" className="text-xs">{sourceLabel(costBreakdown.source)}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
@@ -485,16 +430,11 @@ export default function DailyAnalysisPage() {
         </Card>
       )}
 
-      {/* Tabela dzienna */}
+      {/* Tabela dzienna — READ ONLY (dane z iBiznes sync) */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <CardTitle className="text-base">Tabela dzienna — {monthLabel} {rok}</CardTitle>
-            <Button onClick={() => importMutation.mutate()} disabled={importMutation.isPending} variant="outline" data-testid="button-import-sales">
-              <Download className="w-4 h-4 mr-1" />
-              {importMutation.isPending ? "Importowanie..." : "Pobierz sprzedaz z zamowien"}
-            </Button>
-          </div>
+          <CardTitle className="text-base">Tabela dzienna — {monthLabel} {rok}</CardTitle>
+          <p className="text-xs text-muted-foreground">Sprzedaz dzienna pobierana automatycznie z iBiznes (WZ z danego dnia).</p>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -502,9 +442,10 @@ export default function DailyAnalysisPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[60px]">Dzien</TableHead>
-                  <TableHead className="w-[140px]">Sprzedaz</TableHead>
+                  <TableHead className="text-right">Sprzedaz</TableHead>
+                  <TableHead className="text-right">Koszt dzienny</TableHead>
                   <TableHead className="text-right">Zysk brutto</TableHead>
-                  <TableHead className="text-right">Minus koszty</TableHead>
+                  <TableHead className="text-right">Plus / minus</TableHead>
                   <TableHead className="text-right">Narastajaco</TableHead>
                   <TableHead className="text-center w-[50px]">Status</TableHead>
                 </TableRow>
@@ -520,27 +461,11 @@ export default function DailyAnalysisPage() {
                   return (
                     <TableRow key={row.dzien} className={!hasValue ? "opacity-40" : narastColor} data-testid={`row-day-${row.dzien}`}>
                       <TableCell className="font-medium">{row.dzien}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          className="w-[120px] bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800"
-                          value={editingValues[row.dzien] !== undefined ? editingValues[row.dzien] : (row.sprzedaz != null ? String(row.sprzedaz) : "")}
-                          onChange={(e) => setEditingValues(prev => ({ ...prev, [row.dzien]: e.target.value }))}
-                          onBlur={() => { if (editingValues[row.dzien] !== undefined) handleSave(row.dzien); }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleSave(row.dzien);
-                              const nextInput = document.querySelector(`[data-testid="row-day-${row.dzien + 1}"] input`) as HTMLInputElement;
-                              if (nextInput) nextInput.focus();
-                            }
-                          }}
-                          placeholder="0"
-                          data-testid={`input-sprzedaz-${row.dzien}`}
-                        />
-                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{hasValue ? fmt(row.sprzedaz!) : "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(kosztDzienny)}</TableCell>
                       <TableCell className="text-right tabular-nums">{hasValue ? fmt(row.zyskBrutto) : "—"}</TableCell>
-                      <TableCell className={`text-right tabular-nums ${hasValue ? (row.minusKoszty >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400") : ""}`}>
-                        {hasValue ? fmt(row.minusKoszty) : "—"}
+                      <TableCell className={`text-right tabular-nums ${hasValue ? (row.minusKoszty >= 0 ? "text-green-600 dark:text-green-400 font-medium" : "text-red-600 dark:text-red-400 font-medium") : ""}`}>
+                        {hasValue ? `${row.minusKoszty >= 0 ? "+" : ""}${fmt(row.minusKoszty)}` : "—"}
                       </TableCell>
                       <TableCell className={`text-right font-medium tabular-nums ${hasValue ? (row.narastajaco >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400") : ""}`}>
                         {hasValue ? fmt(row.narastajaco) : "—"}
