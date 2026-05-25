@@ -105,7 +105,7 @@ export interface IStorage {
     fixedTotal: number;
     ksefTotal: number;
     grandTotal: number;
-    source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs";
+    source: "ksef_template" | "vat_import" | "fixed_costs";
   }>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 
@@ -1731,60 +1731,65 @@ export class DatabaseStorage implements IStorage {
     fixedTotal: number;
     ksefTotal: number;
     grandTotal: number;
-    source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs";
+    source: "ksef_template" | "vat_import" | "fixed_costs";
   }> {
     const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
     const mKey = MONTH_KEYS[miesiac - 1];
-    const targetRok = rok ?? new Date().getFullYear();
 
-    // Mapowanie kategoria → dział. Spójne z `finance.tsx` (CATEGORY_COLORS)
-    // i z auto-kategoryzacją z `ksefSync.ts`.
+    // Mapowanie kategoria → dział.
     const DEPT_MAP: Record<string, string> = {
       "Wynagrodzenia": "Kadry i place",
       "Wynagrodzenia zarząd (JDG)": "Kadry i place",
       "ZUS": "Kadry i place",
       "Podatki (US)": "Kadry i place",
       "Medycyna pracy": "Kadry i place",
+      "Auto": "Flota",
       "Leasing": "Flota",
       "Paliwo": "Flota",
       "Transport": "Logistyka",
+      "Najem": "Biuro i administracja",
+      "Usługi obce": "Biuro i administracja",
       "Ubezpieczenia": "Biuro i administracja",
       "Księgowość": "Biuro i administracja",
       "Media/Prąd": "Biuro i administracja",
+      "Wyposażenie": "Biuro i administracja",
+      "Refaktura": "Biuro i administracja",
       "Biuro": "Biuro i administracja",
       "Wysyłka/Poczta": "Biuro i administracja",
       "Płatności/Terminal": "Biuro i administracja",
       "IT/Serwis": "IT i serwis",
       "IT/Subskrypcje": "IT i serwis",
       "Serwis/Naprawa": "IT i serwis",
+      "Spożywcze": "Pozostale",
       "Towary/Produkty": "Pozostale",
       "Inne": "Pozostale",
     };
 
-    // ── 1. KSeF: pobierz faktury kosztowe dla danego (rok, miesiac) ─────
-    const ksefRows = await db
-      .select()
-      .from(ksefInvoices)
-      .where(and(eq(ksefInvoices.rok, targetRok), eq(ksefInvoices.miesiac, miesiac)));
-
-    const ksefTotal = ksefRows.reduce((s, r) => s + Number(r.netAmount || 0), 0);
-    const hasKsef = ksefRows.length > 0;
-
-    // ── 2. VAT_IMPORT (legacy CSV import) ───────────────────────────────
+    // Bazą kosztów stałych są wpisy w `costs` z firma='KSEF_TEMPLATE' (xls od
+    // Pauliny, importowany na /finance lub /daily-analysis). Auto-sync KSeF
+    // (`ksef_invoices`) jest ignorowany — za dużo nieokreślonych faktur.
     const allCosts = await db.select().from(costs);
+
+    const templateForMonth = allCosts.filter((c) => {
+      if (c.firma !== "KSEF_TEMPLATE") return false;
+      const am = c.aktywnyMiesiace as Record<string, boolean> | null;
+      return !!am && am[mKey] === true;
+    });
+    const hasTemplate = templateForMonth.length > 0;
+    const templateTotal = templateForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
+
+    // VAT_IMPORT (legacy) — fallback gdy nie ma jeszcze template.
     const vatForMonth = allCosts.filter((c) => {
       if (c.firma !== "IMPORT_VAT") return false;
       const am = c.aktywnyMiesiace as Record<string, boolean> | null;
-      if (!am) return false;
-      return am[mKey] === true;
+      return !!am && am[mKey] === true;
     });
     const hasVat = vatForMonth.length > 0;
     const vatTotal = vatForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
 
-    // ── 3. Koszty stałe (wynagrodzenia, ZUS, raty leasingowe wpisywane
-    //       ręcznie, ubezpieczenia, …) — czytane zawsze, doklejane do KSeF.
+    // Ręcznie wpisywane koszty (salaries/fleet/costs bez firmy) — najstarszy fallback.
     const salariesData = await db.select().from(salaries);
-    const nonVatCosts = allCosts.filter((c) => c.firma !== "IMPORT_VAT");
+    const manualCosts = allCosts.filter((c) => c.firma !== "IMPORT_VAT" && c.firma !== "KSEF_TEMPLATE");
     const fleetData = await db.select().from(fleet);
 
     const isActiveInMonth = (item: any) => {
@@ -1799,50 +1804,23 @@ export class DatabaseStorage implements IStorage {
       deptTotals[dept][cat] = (deptTotals[dept][cat] || 0) + value;
     };
 
-    if (hasKsef) {
-      // KSeF jako podstawowe źródło — pełna granularność per kategoria.
-      for (const inv of ksefRows) {
-        const cat = inv.kategoria || "Inne";
+    if (hasTemplate) {
+      for (const c of templateForMonth) {
+        const cat = c.kategoria || c.dzial || "Inne";
         const dept = DEPT_MAP[cat] || "Pozostale";
-        bump(dept, cat, Number(inv.netAmount || 0));
-      }
-      // Dokładaj koszty stałe (wynagrodzenia/ZUS/raty kredytów/ubezpieczenia)
-      // — to są pozycje, których KSeF z definicji nie obejmuje. Pomijamy
-      // kategorie pokryte przez KSeF, żeby nie liczyć podwójnie.
-      const ksefCategories = new Set(ksefRows.map((r) => r.kategoria || "Inne"));
-
-      for (const s of salariesData) {
-        if (!isActiveInMonth(s)) continue;
-        // Wynagrodzenia/ZUS NIGDY nie są w KSeF — zawsze doliczamy.
-        bump("Kadry i place", "Wynagrodzenia i ZUS", Number(s.kosztPracodawcy || 0));
-      }
-      for (const c of nonVatCosts) {
-        if (!isActiveInMonth(c)) continue;
-        const cat = c.dzial || c.kategoria || "Inne";
-        if (ksefCategories.has(cat)) continue;
-        bump(DEPT_MAP[cat] || "Pozostale", cat, Number(c.koszt || 0));
-      }
-      for (const f of fleetData) {
-        if (!isActiveInMonth(f)) continue;
-        const cat = f.dzial || f.rodzaj || "Inne";
-        if (ksefCategories.has(cat)) continue;
-        bump(DEPT_MAP[cat] || "Flota", cat, Number(f.koszt || 0));
+        bump(dept, cat, Number(c.netto || 0));
       }
     } else if (hasVat) {
-      // Legacy: import VAT z deklaracji (CSV).
       for (const c of vatForMonth) {
         const cat = c.dzial || c.kategoria || "Inne";
         bump(DEPT_MAP[cat] || "Pozostale", cat, Number(c.netto || 0));
       }
     } else {
-      // Pełny tryb kosztów stałych (stara ścieżka).
       const sumActive = (items: any[], costField: string) =>
         items.reduce((sum, item) => (isActiveInMonth(item) ? sum + Number(item[costField] || 0) : sum), 0);
-
       const totalSalaries = sumActive(salariesData, "kosztPracodawcy");
-      const totalCosts = sumActive(nonVatCosts, "koszt");
+      const totalCosts = sumActive(manualCosts, "koszt");
       const totalFleet = sumActive(fleetData, "koszt");
-
       if (totalSalaries > 0) bump("Kadry i place", "Wynagrodzenia i ZUS", totalSalaries);
       if (totalCosts > 0) bump("Biuro i administracja", "Koszty operacyjne", totalCosts);
       if (totalFleet > 0) bump("Flota", "Koszty floty", totalFleet);
@@ -1859,20 +1837,15 @@ export class DatabaseStorage implements IStorage {
       .sort((a, b) => b.total - a.total);
 
     const grandTotal = departments.reduce((s, d) => s + d.total, 0);
-    const fixedTotal = Math.max(0, grandTotal - Math.round(ksefTotal) - (hasKsef ? 0 : Math.round(vatTotal)));
 
-    const source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs" =
-      hasKsef
-        ? fixedTotal > 0 ? "ksef+fixed" : "ksef"
-        : hasVat
-          ? "vat_import"
-          : "fixed_costs";
+    const source: "ksef_template" | "vat_import" | "fixed_costs" =
+      hasTemplate ? "ksef_template" : hasVat ? "vat_import" : "fixed_costs";
 
     return {
       departments,
       vatTotal: Math.round(vatTotal),
-      fixedTotal,
-      ksefTotal: Math.round(ksefTotal),
+      fixedTotal: hasTemplate ? Math.round(templateTotal) : 0,
+      ksefTotal: 0,
       grandTotal,
       source,
     };

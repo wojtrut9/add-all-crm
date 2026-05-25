@@ -63,16 +63,15 @@ type CostBreakdown = {
   fixedTotal: number;
   ksefTotal: number;
   grandTotal: number;
-  source: "ksef" | "ksef+fixed" | "vat_import" | "fixed_costs";
+  source: "ksef_template" | "vat_import" | "fixed_costs";
 };
 
 function sourceLabel(source: CostBreakdown["source"] | undefined): string {
   switch (source) {
-    case "ksef": return "KSeF";
-    case "ksef+fixed": return "KSeF + koszty stale";
+    case "ksef_template": return "KSeF template (Paulina)";
     case "vat_import": return "Import VAT";
     case "fixed_costs":
-    default: return "Koszty stale";
+    default: return "Koszty stale (manualne)";
   }
 }
 
