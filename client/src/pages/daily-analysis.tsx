@@ -36,6 +36,7 @@ import {
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { MONTHS_ASCII, formatPLN } from "@/lib/constants";
+import { countPolishWorkdaysInMonth } from "@shared/polishHolidays";
 
 const MONTHS = MONTHS_ASCII.map((label, i) => ({ value: String(i + 1), label }));
 
@@ -44,13 +45,7 @@ function daysInMonth(year: number, month: number): number {
 }
 
 function countWeekdays(year: number, month: number): number {
-  const total = daysInMonth(year, month);
-  let n = 0;
-  for (let d = 1; d <= total; d++) {
-    const dow = new Date(year, month - 1, d).getDay();
-    if (dow >= 1 && dow <= 5) n++;
-  }
-  return n;
+  return countPolishWorkdaysInMonth(year, month);
 }
 
 function fmt(n: number): string {

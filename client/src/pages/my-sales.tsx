@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth, authFetch } from "@/lib/auth";
+import { countPolishWorkdays } from "@shared/polishHolidays";
 import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,17 +117,9 @@ export default function MySalesPage() {
   const now = new Date();
   const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
-  const countWorkdays = (year: number, month: number, upToDay: number) => {
-    let count = 0;
-    for (let d = 1; d <= upToDay; d++) {
-      const dow = new Date(year, month, d).getDay();
-      if (dow >= 1 && dow <= 5) count++;
-    }
-    return count;
-  };
-
-  const totalWorkdays = countWorkdays(now.getFullYear(), now.getMonth(), totalDaysInMonth);
-  const workdaysPassed = countWorkdays(now.getFullYear(), now.getMonth(), now.getDate());
+  // month z now.getMonth() jest 0-bazowy, helper oczekuje 1-bazowego
+  const totalWorkdays = countPolishWorkdays(now.getFullYear(), now.getMonth() + 1, totalDaysInMonth);
+  const workdaysPassed = countPolishWorkdays(now.getFullYear(), now.getMonth() + 1, now.getDate());
   const workdaysLeft = totalWorkdays - workdaysPassed;
 
   const tempo = workdaysPassed > 0 ? monthSales / workdaysPassed : 0;

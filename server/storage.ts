@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { eq, and, gte, lte, sql, like, or, desc, asc, inArray } from "drizzle-orm";
+import { countPolishWorkdays } from "../shared/polishHolidays";
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
@@ -424,23 +425,14 @@ export class DatabaseStorage implements IStorage {
     const nowMonth = now.getMonth() + 1;
     const isCurrentMonth = rok === nowYear && miesiac === nowMonth;
 
-    const countWorkdays = (y: number, m: number, upToDay: number) => {
-      let count = 0;
-      for (let d = 1; d <= upToDay; d++) {
-        const dow = new Date(y, m - 1, d).getDay();
-        if (dow >= 1 && dow <= 5) count++;
-      }
-      return count;
-    };
-
     const daysInMonth = new Date(rok, miesiac, 0).getDate();
-    const dniRoboczeMiesiac = countWorkdays(rok, miesiac, daysInMonth);
+    const dniRoboczeMiesiac = countPolishWorkdays(rok, miesiac, daysInMonth);
     const dniRoboczeMiniete = isCurrentMonth
-      ? countWorkdays(rok, miesiac, now.getDate())
+      ? countPolishWorkdays(rok, miesiac, now.getDate())
       : dniRoboczeMiesiac;
 
     const daysInPrevMonth = new Date(prevRok, prevMiesiac, 0).getDate();
-    const prevTotalWorkdays = countWorkdays(prevRok, prevMiesiac, daysInPrevMonth);
+    const prevTotalWorkdays = countPolishWorkdays(prevRok, prevMiesiac, daysInPrevMonth);
     // For current month: scale prev so we compare the same number of business days.
     // Cap at prev month's total workdays (e.g. if Feb only has 20 wd and April already passed 20).
     const prevCompareDays = isCurrentMonth
@@ -1470,17 +1462,10 @@ export class DatabaseStorage implements IStorage {
       .filter(c => c.status === "Zamowil")
       .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
-    const countWorkdays = (y: number, m: number, upToDay: number) => {
-      let count = 0;
-      for (let d = 1; d <= upToDay; d++) {
-        const dow = new Date(y, m, d).getDay();
-        if (dow >= 1 && dow <= 5) count++;
-      }
-      return count;
-    };
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const totalWorkdays = countWorkdays(year, month, daysInMonth);
-    const workingDaysPassed = countWorkdays(year, month, now.getDate());
+    // month w tym scope'ie jest 0-bazowy (z now.getMonth()), helper oczekuje 1-bazowego
+    const totalWorkdays = countPolishWorkdays(year, month + 1, daysInMonth);
+    const workingDaysPassed = countPolishWorkdays(year, month + 1, now.getDate());
     const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
 
     // Unmatched sales for current month (WZ without client in CRM).
@@ -1516,7 +1501,7 @@ export class DatabaseStorage implements IStorage {
 
     // Proportional prev-month comparison: scale prev total by same working-day ratio.
     const prevDaysInMonth = new Date(prevYearNum, prevMonthNum, 0).getDate();
-    const prevTotalWorkdays = countWorkdays(prevYearNum, prevMonthNum - 1, prevDaysInMonth);
+    const prevTotalWorkdays = countPolishWorkdays(prevYearNum, prevMonthNum, prevDaysInMonth);
     const prevCompareDays = Math.min(workingDaysPassed, prevTotalWorkdays);
     const prevScale = prevTotalWorkdays > 0 ? prevCompareDays / prevTotalWorkdays : 0;
     const prevTotalWithUnmatched = prevMonthSalesTotal + (isHandlowiecView ? 0 : unmatchedPrevTotal);
@@ -1905,20 +1890,11 @@ export class DatabaseStorage implements IStorage {
     const isCurrentMonth = now.getFullYear() === rok && (now.getMonth() + 1) === miesiac;
     const isPastMonth = rok < now.getFullYear() || (rok === now.getFullYear() && miesiac < (now.getMonth() + 1));
 
-    const countWorkdays = (y: number, m: number, upToDay: number) => {
-      let count = 0;
-      for (let d = 1; d <= upToDay; d++) {
-        const dow = new Date(y, m - 1, d).getDay();
-        if (dow >= 1 && dow <= 5) count++;
-      }
-      return count;
-    };
-
     const daysInMonth = new Date(rok, miesiac, 0).getDate();
-    const dniRoboczeMiesiac = countWorkdays(rok, miesiac, daysInMonth);
+    const dniRoboczeMiesiac = countPolishWorkdays(rok, miesiac, daysInMonth);
     let dniRoboczeMiniete: number;
     if (isCurrentMonth) {
-      dniRoboczeMiniete = countWorkdays(rok, miesiac, now.getDate());
+      dniRoboczeMiniete = countPolishWorkdays(rok, miesiac, now.getDate());
     } else if (isPastMonth) {
       dniRoboczeMiniete = dniRoboczeMiesiac;
     } else {
