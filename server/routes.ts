@@ -13,6 +13,7 @@ import {
   getTopUnclassifiedSuppliers,
 } from "./ksefSync";
 import { testKsefConnection, isKsefConfigured, getKsefEnv, getKsefNip } from "./ksef";
+import { insertManualExpenseSchema } from "@shared/schema";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -1128,6 +1129,58 @@ export async function registerRoutes(
       const { rok, miesiac } = req.body;
       const daysImported = await storage.importDailySalesFromContacts(rok, miesiac);
       res.json({ daysImported });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ── Ręczne wydatki per dział (Analiza dzienna) ──────────────────
+  app.get("/api/manual-expenses", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const rok = req.query.rok != null ? Number(req.query.rok) : undefined;
+      const miesiac = req.query.miesiac != null ? Number(req.query.miesiac) : undefined;
+      const expenses = await storage.getManualExpenses(rok, miesiac);
+      res.json(expenses);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/manual-expenses", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const data = insertManualExpenseSchema.parse(req.body);
+      if (data.typ === "zmienny" && (data.rok == null || data.miesiac == null)) {
+        return res.status(400).json({ message: "Wydatek zmienny wymaga roku i miesiąca." });
+      }
+      if (data.typ === "staly") {
+        data.rok = null;
+        data.miesiac = null;
+      }
+      const expense = await storage.createManualExpense(data);
+      res.json(expense);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/manual-expenses/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const data = insertManualExpenseSchema.partial().parse(req.body);
+      if (data.typ === "staly") {
+        data.rok = null;
+        data.miesiac = null;
+      }
+      const expense = await storage.updateManualExpense(Number(req.params.id), data);
+      res.json(expense);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/manual-expenses/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      await storage.deleteManualExpense(Number(req.params.id));
+      res.json({ ok: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

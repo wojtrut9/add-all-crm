@@ -180,6 +180,17 @@ export async function migrateDatabase() {
       wartosc DECIMAL NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS manual_expenses (
+      id SERIAL PRIMARY KEY,
+      nazwa TEXT NOT NULL,
+      dzial TEXT NOT NULL,
+      kwota DECIMAL NOT NULL,
+      typ TEXT NOT NULL DEFAULT 'staly',
+      rok INTEGER,
+      miesiac INTEGER,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS meetings (
       id SERIAL PRIMARY KEY,
       tytul TEXT NOT NULL,

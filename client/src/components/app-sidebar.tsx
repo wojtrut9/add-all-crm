@@ -66,7 +66,8 @@ export function AppSidebar() {
     { title: "Plan miesi\u0119czny", url: "/plan", icon: Target },
     { title: "Panel sprzeda\u017cowy", url: "/sprzedaz", icon: TrendingUp },
     { title: "Analiza dzienna", url: "/analiza-dzienna", icon: Calculator },
-    { title: "Panel finansowy", url: "/finanse", icon: DollarSign },
+    // { title: "Panel finansowy", url: "/finanse", icon: DollarSign }, // ukryte
+
     { title: "Sync iBiznes", url: "/ibiznes", icon: Database },
     { title: "Sync KSeF", url: "/ksef", icon: FileText },
     { title: "Notatki", url: "/notatki", icon: StickyNote },

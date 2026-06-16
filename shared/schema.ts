@@ -306,6 +306,24 @@ export const insertDailyAnalysisSchema = createInsertSchema(dailyAnalysis).omit(
 export type InsertDailyAnalysis = z.infer<typeof insertDailyAnalysisSchema>;
 export type DailyAnalysis = typeof dailyAnalysis.$inferSelect;
 
+// Ręcznie wpisywane wydatki per dział (Analiza dzienna).
+// typ='staly'  -> liczony w każdym miesiącu (core), rok/miesiac = null
+// typ='zmienny' -> liczony tylko w danym rok+miesiac
+export const manualExpenses = pgTable("manual_expenses", {
+  id: serial("id").primaryKey(),
+  nazwa: text("nazwa").notNull(),
+  dzial: text("dzial").notNull(),
+  kwota: decimal("kwota").notNull(),
+  typ: text("typ").notNull().default("staly"),
+  rok: integer("rok"),
+  miesiac: integer("miesiac"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertManualExpenseSchema = createInsertSchema(manualExpenses).omit({ id: true, createdAt: true });
+export type InsertManualExpense = z.infer<typeof insertManualExpenseSchema>;
+export type ManualExpense = typeof manualExpenses.$inferSelect;
+
 export const salesHistory = pgTable("sales_history", {
   id: serial("id").primaryKey(),
   rok: integer("rok").notNull(),

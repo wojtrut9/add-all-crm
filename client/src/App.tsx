@@ -41,7 +41,8 @@ function AppRoutes() {
       {(isAdmin || isHandlowiec) && <Route path="/plan" component={PlanPage} />}
       {isAdmin && <Route path="/sprzedaz" component={SalesDashboard} />}
       {isAdmin && <Route path="/analiza-dzienna" component={DailyAnalysisPage} />}
-      {isAdmin && <Route path="/finanse" component={FinancePage} />}
+      {/* Panel finansowy ukryty — edycja kosztów przeniesiona do Analizy dziennej */}
+      {/* {isAdmin && <Route path="/finanse" component={FinancePage} />} */}
       {isAdmin && <Route path="/ibiznes" component={IbizneSyncPage} />}
       {isAdmin && <Route path="/ksef" component={KsefSyncPage} />}
       {(isAdmin || isHandlowiec) && <Route path="/notatki" component={NotesPage} />}

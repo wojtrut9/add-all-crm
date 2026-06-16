@@ -1,12 +1,22 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { authFetch } from "@/lib/auth";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -29,7 +39,8 @@ import {
 } from "@/components/ui/collapsible";
 import {
   DollarSign, Calculator, TrendingUp, TrendingDown, CalendarDays,
-  ChevronDown, ChevronRight, Target, ArrowUpRight, ArrowDownRight, Upload, Loader2,
+  ChevronDown, ChevronRight, Target, ArrowUpRight, ArrowDownRight,
+  Plus, Pencil, Trash2,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
@@ -52,23 +63,17 @@ function fmt(n: number): string {
   return n.toLocaleString("pl-PL", { maximumFractionDigits: 0 });
 }
 
+type ExpenseItem = { id: number; name: string; total: number; typ: string };
 type CostBreakdown = {
-  departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+  departments: Array<{ name: string; total: number; categories: ExpenseItem[] }>;
   vatTotal: number;
   fixedTotal: number;
   ksefTotal: number;
   grandTotal: number;
-  source: "ksef_template" | "vat_import" | "fixed_costs";
+  source: "manual";
 };
 
-function sourceLabel(source: CostBreakdown["source"] | undefined): string {
-  switch (source) {
-    case "ksef_template": return "KSeF template (Paulina)";
-    case "vat_import": return "Import VAT";
-    case "fixed_costs":
-    default: return "Koszty stale (manualne)";
-  }
-}
+const STANDARD_DEPTS = ["Kadry i place", "Biuro i administracja", "Flota"];
 
 const MARZA = 0.354;
 
@@ -77,12 +82,70 @@ export default function DailyAnalysisPage() {
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [selectedYear] = useState(now.getFullYear());
   const [openDepts, setOpenDepts] = useState<Set<string>>(new Set());
-  const [importingTemplate, setImportingTemplate] = useState(false);
-  const templateFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const rok = selectedYear;
   const miesiac = Number(selectedMonth);
+
+  // Formularz wydatku (dodawanie/edycja)
+  const emptyForm = { id: null as number | null, dzial: STANDARD_DEPTS[0], dzialCustom: "", nazwa: "", kwota: "", typ: "staly" };
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+
+  const openAddExpense = (dzial?: string) => {
+    setForm({ ...emptyForm, dzial: dzial && STANDARD_DEPTS.includes(dzial) ? dzial : (dzial ? "__custom__" : STANDARD_DEPTS[0]), dzialCustom: dzial && !STANDARD_DEPTS.includes(dzial) ? dzial : "" });
+    setExpenseOpen(true);
+  };
+  const openEditExpense = (dzial: string, item: ExpenseItem) => {
+    setForm({
+      id: item.id,
+      dzial: STANDARD_DEPTS.includes(dzial) ? dzial : "__custom__",
+      dzialCustom: STANDARD_DEPTS.includes(dzial) ? "" : dzial,
+      nazwa: item.name,
+      kwota: String(item.total),
+      typ: item.typ,
+    });
+    setExpenseOpen(true);
+  };
+
+  const invalidateAnalysis = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/daily-analysis", rok, miesiac] });
+  };
+
+  const saveExpense = useMutation({
+    mutationFn: async () => {
+      const dzial = form.dzial === "__custom__" ? form.dzialCustom.trim() : form.dzial;
+      if (!dzial) throw new Error("Podaj nazwe dzialu");
+      if (!form.nazwa.trim()) throw new Error("Podaj nazwe wydatku");
+      const kwota = Number(form.kwota);
+      if (!kwota || kwota <= 0) throw new Error("Podaj poprawna kwote");
+      const payload: any = {
+        nazwa: form.nazwa.trim(),
+        dzial,
+        kwota: String(kwota),
+        typ: form.typ,
+        rok: form.typ === "zmienny" ? rok : null,
+        miesiac: form.typ === "zmienny" ? miesiac : null,
+      };
+      if (form.id != null) {
+        await apiRequest("PATCH", `/api/manual-expenses/${form.id}`, payload);
+      } else {
+        await apiRequest("POST", "/api/manual-expenses", payload);
+      }
+    },
+    onSuccess: () => {
+      setExpenseOpen(false);
+      invalidateAnalysis();
+      toast({ title: form.id != null ? "Wydatek zaktualizowany" : "Wydatek dodany" });
+    },
+    onError: (err: any) => toast({ title: "Blad", description: err.message, variant: "destructive" }),
+  });
+
+  const deleteExpense = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/manual-expenses/${id}`); },
+    onSuccess: () => { invalidateAnalysis(); toast({ title: "Wydatek usuniety" }); },
+    onError: (err: any) => toast({ title: "Blad", description: err.message, variant: "destructive" }),
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["/api/daily-analysis", rok, miesiac],
@@ -94,36 +157,6 @@ export default function DailyAnalysisPage() {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
-
-  const handleImportTemplate = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImportingTemplate(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("replace", "true");
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/finance/import-ksef-template", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}` },
-        body: formData,
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message);
-      toast({
-        title: "Import KSeF template",
-        description: `Zaimportowano ${result.imported} pozycji (${Math.round(result.total).toLocaleString("pl-PL")} zl). Aktywne dla wszystkich 12 miesiecy.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/daily-analysis", rok, miesiac] });
-      queryClient.invalidateQueries({ queryKey: ["/api/finance"] });
-    } catch (err: any) {
-      toast({ title: "Blad importu", description: err.message, variant: "destructive" });
-    } finally {
-      setImportingTemplate(false);
-      if (templateFileRef.current) templateFileRef.current.value = "";
-    }
-  };
 
   if (isLoading) {
     return (
@@ -211,16 +244,10 @@ export default function DailyAnalysisPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            onClick={() => templateFileRef.current?.click()}
-            disabled={importingTemplate}
-            data-testid="button-import-ksef-template"
-          >
-            {importingTemplate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-            Import KSeF (koszty stale)
+          <Button onClick={() => openAddExpense()} data-testid="button-add-expense">
+            <Plus className="w-4 h-4 mr-2" />
+            Dodaj wydatek
           </Button>
-          <input ref={templateFileRef} type="file" accept=".xls,.xlsx" className="hidden" onChange={handleImportTemplate} />
         </div>
       </div>
 
@@ -282,7 +309,7 @@ export default function DailyAnalysisPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Koszty miesieczne</p>
                 <p className="text-lg font-bold tabular-nums" data-testid="text-fixed-costs">{formatPLN(fixedCosts)}</p>
-                <p className="text-xs text-muted-foreground">{sourceLabel(costBreakdown?.source)}</p>
+                <p className="text-xs text-muted-foreground">Reczne wpisy</p>
               </div>
               <DollarSign className="w-4 h-4 text-destructive" />
             </div>
@@ -342,29 +369,37 @@ export default function DailyAnalysisPage() {
         </Card>
       </div>
 
-      {/* Rozbicie kosztow na dzialy */}
-      {costBreakdown && costBreakdown.departments.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              Koszty wg dzialow
-              <Badge variant="outline" className="text-xs">{sourceLabel(costBreakdown.source)}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {costBreakdown.departments.map(dept => {
-              const pct = fixedCosts > 0 ? (dept.total / fixedCosts) * 100 : 0;
-              const isOpen = openDepts.has(dept.name);
-              return (
-                <Collapsible key={dept.name} open={isOpen} onOpenChange={() => {
-                  setOpenDepts(prev => {
-                    const next = new Set(prev);
-                    if (next.has(dept.name)) next.delete(dept.name); else next.add(dept.name);
-                    return next;
-                  });
-                }}>
+      {/* Rozbicie kosztow na dzialy — reczne wpisy */}
+      <Card>
+        <CardHeader className="pb-3 flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            Koszty wg dzialow
+            <Badge variant="outline" className="text-xs">Reczne wpisy</Badge>
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => openAddExpense()}>
+            <Plus className="w-4 h-4 mr-1" /> Dodaj
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {(!costBreakdown || costBreakdown.departments.length === 0) && (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Brak wydatkow w tym miesiacu. Kliknij „Dodaj wydatek", aby zaczac.
+            </p>
+          )}
+          {costBreakdown?.departments.map(dept => {
+            const pct = fixedCosts > 0 ? (dept.total / fixedCosts) * 100 : 0;
+            const isOpen = openDepts.has(dept.name);
+            return (
+              <Collapsible key={dept.name} open={isOpen} onOpenChange={() => {
+                setOpenDepts(prev => {
+                  const next = new Set(prev);
+                  if (next.has(dept.name)) next.delete(dept.name); else next.add(dept.name);
+                  return next;
+                });
+              }}>
+                <div className="flex items-center gap-1">
                   <CollapsibleTrigger asChild>
-                    <button className="w-full flex items-center justify-between p-3 rounded-md hover:bg-muted/50 text-left">
+                    <button className="flex-1 flex items-center justify-between p-3 rounded-md hover:bg-muted/50 text-left">
                       <div className="flex items-center gap-3">
                         {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                         <span className="font-medium">{dept.name}</span>
@@ -377,26 +412,42 @@ export default function DailyAnalysisPage() {
                       </div>
                     </button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="ml-8 mr-2 mb-2 space-y-1">
-                      {dept.categories.map(cat => (
-                        <div key={cat.name} className="flex items-center justify-between py-1.5 px-2 text-sm rounded hover:bg-muted/30">
-                          <span className="text-muted-foreground">{cat.name}</span>
-                          <span className="font-mono tabular-nums">{formatPLN(cat.total)}</span>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" title="Dodaj wydatek do dzialu" onClick={() => openAddExpense(dept.name)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <CollapsibleContent>
+                  <div className="ml-8 mr-2 mb-2 space-y-1">
+                    {dept.categories.map(cat => (
+                      <div key={cat.id} className="flex items-center justify-between gap-2 py-1.5 px-2 text-sm rounded hover:bg-muted/30 group">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-muted-foreground truncate">{cat.name}</span>
+                          <Badge variant={cat.typ === "staly" ? "secondary" : "outline"} className="text-[10px] shrink-0">
+                            {cat.typ === "staly" ? "Staly" : "Zmienny"}
+                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })}
-            <div className="mt-3 pt-3 border-t flex items-center justify-between font-bold">
-              <span>RAZEM KOSZTY</span>
-              <span className="tabular-nums">{formatPLN(fixedCosts)}</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-mono tabular-nums">{formatPLN(cat.total)}</span>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100" title="Edytuj" onClick={() => openEditExpense(dept.name, cat)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-destructive" title="Usun" onClick={() => deleteExpense.mutate(cat.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
+          <div className="mt-3 pt-3 border-t flex items-center justify-between font-bold">
+            <span>RAZEM KOSZTY</span>
+            <span className="tabular-nums">{formatPLN(fixedCosts)}</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Wykres */}
       {chartData.length > 0 && (
@@ -516,6 +567,75 @@ export default function DailyAnalysisPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog: dodaj / edytuj wydatek */}
+      <Dialog open={expenseOpen} onOpenChange={setExpenseOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{form.id != null ? "Edytuj wydatek" : "Dodaj wydatek"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Dzial</Label>
+              <Select value={form.dzial} onValueChange={(v) => setForm(f => ({ ...f, dzial: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STANDARD_DEPTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  <SelectItem value="__custom__">Inny (wpisz)…</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.dzial === "__custom__" && (
+                <Input
+                  placeholder="Nazwa dzialu"
+                  value={form.dzialCustom}
+                  onChange={(e) => setForm(f => ({ ...f, dzialCustom: e.target.value }))}
+                />
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nazwa wydatku</Label>
+              <Input
+                placeholder="np. Wynagrodzenia, Najem, Paliwo"
+                value={form.nazwa}
+                onChange={(e) => setForm(f => ({ ...f, nazwa: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Kwota (zl, netto/mies.)</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                placeholder="0"
+                value={form.kwota}
+                onChange={(e) => setForm(f => ({ ...f, kwota: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Typ kosztu</Label>
+              <RadioGroup
+                value={form.typ}
+                onValueChange={(v) => setForm(f => ({ ...f, typ: v }))}
+                className="flex flex-col gap-2"
+              >
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <RadioGroupItem value="staly" className="mt-0.5" />
+                  <span className="text-sm"><span className="font-medium">Staly</span> — liczony w kazdym miesiacu (core)</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <RadioGroupItem value="zmienny" className="mt-0.5" />
+                  <span className="text-sm"><span className="font-medium">Zmienny</span> — tylko w tym miesiacu ({monthLabel} {rok})</span>
+                </label>
+              </RadioGroup>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExpenseOpen(false)}>Anuluj</Button>
+            <Button onClick={() => saveExpense.mutate()} disabled={saveExpense.isPending}>
+              {saveExpense.isPending ? "Zapisywanie…" : "Zapisz"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

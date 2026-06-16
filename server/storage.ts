@@ -5,7 +5,8 @@ import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
   fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts, clientProducts,
-  clientNips, ksefInvoices,
+  clientNips, ksefInvoices, manualExpenses,
+  type InsertManualExpense, type ManualExpense,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -66,6 +67,10 @@ export interface IStorage {
   createCost(data: InsertCost): Promise<Cost>;
   updateCost(id: number, data: Partial<InsertCost>): Promise<Cost>;
   deleteCost(id: number): Promise<void>;
+  getManualExpenses(rok?: number, miesiac?: number): Promise<ManualExpense[]>;
+  createManualExpense(data: InsertManualExpense): Promise<ManualExpense>;
+  updateManualExpense(id: number, data: Partial<InsertManualExpense>): Promise<ManualExpense>;
+  deleteManualExpense(id: number): Promise<void>;
   getMySales(opiekun: string): Promise<any>;
   getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any>;
   getAvailablePlanMonths(): Promise<Array<{rok: number; miesiac: number}>>;
@@ -101,12 +106,12 @@ export interface IStorage {
   updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void>;
   getMonthlyFixedCosts(miesiac: number): Promise<number>;
   getCostBreakdownForMonth(miesiac: number, rok?: number): Promise<{
-    departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+    departments: Array<{ name: string; total: number; categories: Array<{ id: number; name: string; total: number; typ: string }> }>;
     vatTotal: number;
     fixedTotal: number;
     ksefTotal: number;
     grandTotal: number;
-    source: "ksef_template" | "vat_import" | "fixed_costs";
+    source: "manual";
   }>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 
@@ -1711,129 +1716,75 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCostBreakdownForMonth(miesiac: number, rok?: number): Promise<{
-    departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+    departments: Array<{ name: string; total: number; categories: Array<{ id: number; name: string; total: number; typ: string }> }>;
     vatTotal: number;
     fixedTotal: number;
     ksefTotal: number;
     grandTotal: number;
-    source: "ksef_template" | "vat_import" | "fixed_costs";
+    source: "manual";
   }> {
-    const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
-    const mKey = MONTH_KEYS[miesiac - 1];
+    // Koszty liczone WYŁĄCZNIE z ręcznych wpisów (manual_expenses).
+    // typ='staly'  -> liczony w każdym miesiącu (core).
+    // typ='zmienny' -> liczony tylko w danym rok+miesiac.
+    const expenses = await this.getManualExpenses(rok, miesiac);
 
-    // Mapowanie kategoria → dział.
-    const DEPT_MAP: Record<string, string> = {
-      "Wynagrodzenia": "Kadry i place",
-      "Wynagrodzenia zarząd (JDG)": "Kadry i place",
-      "ZUS": "Kadry i place",
-      "Podatki (US)": "Kadry i place",
-      "Medycyna pracy": "Kadry i place",
-      "Auto": "Flota",
-      "Leasing": "Flota",
-      "Paliwo": "Flota",
-      "Transport": "Logistyka",
-      "Najem": "Biuro i administracja",
-      "Usługi obce": "Biuro i administracja",
-      "Ubezpieczenia": "Biuro i administracja",
-      "Księgowość": "Biuro i administracja",
-      "Media/Prąd": "Biuro i administracja",
-      "Wyposażenie": "Biuro i administracja",
-      "Refaktura": "Biuro i administracja",
-      "Biuro": "Biuro i administracja",
-      "Wysyłka/Poczta": "Biuro i administracja",
-      "Płatności/Terminal": "Biuro i administracja",
-      "IT/Serwis": "IT i serwis",
-      "IT/Subskrypcje": "IT i serwis",
-      "Serwis/Naprawa": "IT i serwis",
-      "Spożywcze": "Pozostale",
-      "Towary/Produkty": "Pozostale",
-      "Inne": "Pozostale",
-    };
-
-    // Bazą kosztów stałych są wpisy w `costs` z firma='KSEF_TEMPLATE' (xls od
-    // Pauliny, importowany na /finance lub /daily-analysis). Auto-sync KSeF
-    // (`ksef_invoices`) jest ignorowany — za dużo nieokreślonych faktur.
-    const allCosts = await db.select().from(costs);
-
-    const templateForMonth = allCosts.filter((c) => {
-      if (c.firma !== "KSEF_TEMPLATE") return false;
-      const am = c.aktywnyMiesiace as Record<string, boolean> | null;
-      return !!am && am[mKey] === true;
-    });
-    const hasTemplate = templateForMonth.length > 0;
-    const templateTotal = templateForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
-
-    // VAT_IMPORT (legacy) — fallback gdy nie ma jeszcze template.
-    const vatForMonth = allCosts.filter((c) => {
-      if (c.firma !== "IMPORT_VAT") return false;
-      const am = c.aktywnyMiesiace as Record<string, boolean> | null;
-      return !!am && am[mKey] === true;
-    });
-    const hasVat = vatForMonth.length > 0;
-    const vatTotal = vatForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
-
-    // Ręcznie wpisywane koszty (salaries/fleet/costs bez firmy) — najstarszy fallback.
-    const salariesData = await db.select().from(salaries);
-    const manualCosts = allCosts.filter((c) => c.firma !== "IMPORT_VAT" && c.firma !== "KSEF_TEMPLATE");
-    const fleetData = await db.select().from(fleet);
-
-    const isActiveInMonth = (item: any) => {
-      const am = item.aktywnyMiesiace as Record<string, boolean> | null;
-      return !am || am[mKey] !== false;
-    };
-
-    const deptTotals: Record<string, Record<string, number>> = {};
-    const bump = (dept: string, cat: string, value: number) => {
-      if (!value) return;
-      if (!deptTotals[dept]) deptTotals[dept] = {};
-      deptTotals[dept][cat] = (deptTotals[dept][cat] || 0) + value;
-    };
-
-    if (hasTemplate) {
-      for (const c of templateForMonth) {
-        const cat = c.kategoria || c.dzial || "Inne";
-        const dept = DEPT_MAP[cat] || "Pozostale";
-        bump(dept, cat, Number(c.netto || 0));
-      }
-    } else if (hasVat) {
-      for (const c of vatForMonth) {
-        const cat = c.dzial || c.kategoria || "Inne";
-        bump(DEPT_MAP[cat] || "Pozostale", cat, Number(c.netto || 0));
-      }
-    } else {
-      const sumActive = (items: any[], costField: string) =>
-        items.reduce((sum, item) => (isActiveInMonth(item) ? sum + Number(item[costField] || 0) : sum), 0);
-      const totalSalaries = sumActive(salariesData, "kosztPracodawcy");
-      const totalCosts = sumActive(manualCosts, "koszt");
-      const totalFleet = sumActive(fleetData, "koszt");
-      if (totalSalaries > 0) bump("Kadry i place", "Wynagrodzenia i ZUS", totalSalaries);
-      if (totalCosts > 0) bump("Biuro i administracja", "Koszty operacyjne", totalCosts);
-      if (totalFleet > 0) bump("Flota", "Koszty floty", totalFleet);
+    const deptTotals: Record<string, Array<{ id: number; name: string; total: number; typ: string }>> = {};
+    for (const e of expenses) {
+      const dept = e.dzial || "Pozostale";
+      if (!deptTotals[dept]) deptTotals[dept] = [];
+      deptTotals[dept].push({
+        id: e.id,
+        name: e.nazwa,
+        total: Math.round(Number(e.kwota || 0)),
+        typ: e.typ,
+      });
     }
 
     const departments = Object.entries(deptTotals)
-      .map(([name, cats]) => ({
+      .map(([name, categories]) => ({
         name,
-        categories: Object.entries(cats)
-          .map(([catName, total]) => ({ name: catName, total: Math.round(total) }))
-          .sort((a, b) => b.total - a.total),
-        total: Math.round(Object.values(cats).reduce((s, v) => s + v, 0)),
+        categories: categories.sort((a, b) => b.total - a.total),
+        total: Math.round(categories.reduce((s, c) => s + c.total, 0)),
       }))
       .sort((a, b) => b.total - a.total);
 
     const grandTotal = departments.reduce((s, d) => s + d.total, 0);
-
-    const source: "ksef_template" | "vat_import" | "fixed_costs" =
-      hasTemplate ? "ksef_template" : hasVat ? "vat_import" : "fixed_costs";
+    const fixedTotal = Math.round(
+      expenses.filter((e) => e.typ === "staly").reduce((s, e) => s + Number(e.kwota || 0), 0)
+    );
 
     return {
       departments,
-      vatTotal: Math.round(vatTotal),
-      fixedTotal: hasTemplate ? Math.round(templateTotal) : 0,
+      vatTotal: 0,
+      fixedTotal,
       ksefTotal: 0,
       grandTotal,
-      source,
+      source: "manual",
     };
+  }
+
+  // ── Ręczne wydatki (manual_expenses) ──────────────────────────────
+  async getManualExpenses(rok?: number, miesiac?: number): Promise<ManualExpense[]> {
+    const all = await db.select().from(manualExpenses);
+    if (rok == null || miesiac == null) return all;
+    // Obowiązują: wszystkie stałe + zmienne z danego rok+miesiac.
+    return all.filter(
+      (e) => e.typ === "staly" || (e.typ === "zmienny" && e.rok === rok && e.miesiac === miesiac)
+    );
+  }
+
+  async createManualExpense(data: InsertManualExpense): Promise<ManualExpense> {
+    const [row] = await db.insert(manualExpenses).values(data).returning();
+    return row;
+  }
+
+  async updateManualExpense(id: number, data: Partial<InsertManualExpense>): Promise<ManualExpense> {
+    const [row] = await db.update(manualExpenses).set(data).where(eq(manualExpenses.id, id)).returning();
+    return row;
+  }
+
+  async deleteManualExpense(id: number): Promise<void> {
+    await db.delete(manualExpenses).where(eq(manualExpenses.id, id));
   }
 
   async importDailySalesFromContacts(rok: number, miesiac: number): Promise<number> {
