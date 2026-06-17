@@ -318,7 +318,7 @@ function ImportSalesModal({ open, onClose, defaultRok, defaultMiesiac }: {
 
 export default function SalesAnalysisPage() {
   const [rok, setRok] = useState(new Date().getFullYear());
-  const [miesiac, setMiesiac] = useState(1);
+  const [miesiac, setMiesiac] = useState(new Date().getMonth() + 1);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [importOpen, setImportOpen] = useState(false);
   const { user } = useAuth();

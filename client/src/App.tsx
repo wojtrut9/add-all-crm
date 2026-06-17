@@ -22,6 +22,7 @@ import MySalesPage from "@/pages/my-sales";
 import PlanPage from "@/pages/plan";
 import DailyAnalysisPage from "@/pages/daily-analysis";
 import IbizneSyncPage from "@/pages/ibiznes-sync";
+import KsefSyncPage from "@/pages/ksef-sync";
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -40,8 +41,10 @@ function AppRoutes() {
       {(isAdmin || isHandlowiec) && <Route path="/plan" component={PlanPage} />}
       {isAdmin && <Route path="/sprzedaz" component={SalesDashboard} />}
       {isAdmin && <Route path="/analiza-dzienna" component={DailyAnalysisPage} />}
-      {isAdmin && <Route path="/finanse" component={FinancePage} />}
+      {/* Panel finansowy ukryty — edycja kosztów przeniesiona do Analizy dziennej */}
+      {/* {isAdmin && <Route path="/finanse" component={FinancePage} />} */}
       {isAdmin && <Route path="/ibiznes" component={IbizneSyncPage} />}
+      {isAdmin && <Route path="/ksef" component={KsefSyncPage} />}
       {(isAdmin || isHandlowiec) && <Route path="/notatki" component={NotesPage} />}
       {isHandlowiec && <Route path="/moja-sprzedaz" component={MySalesPage} />}
       <Route component={NotFound} />

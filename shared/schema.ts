@@ -306,6 +306,24 @@ export const insertDailyAnalysisSchema = createInsertSchema(dailyAnalysis).omit(
 export type InsertDailyAnalysis = z.infer<typeof insertDailyAnalysisSchema>;
 export type DailyAnalysis = typeof dailyAnalysis.$inferSelect;
 
+// Ręcznie wpisywane wydatki per dział (Analiza dzienna).
+// typ='staly'  -> liczony w każdym miesiącu (core), rok/miesiac = null
+// typ='zmienny' -> liczony tylko w danym rok+miesiac
+export const manualExpenses = pgTable("manual_expenses", {
+  id: serial("id").primaryKey(),
+  nazwa: text("nazwa").notNull(),
+  dzial: text("dzial").notNull(),
+  kwota: decimal("kwota").notNull(),
+  typ: text("typ").notNull().default("staly"),
+  rok: integer("rok"),
+  miesiac: integer("miesiac"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertManualExpenseSchema = createInsertSchema(manualExpenses).omit({ id: true, createdAt: true });
+export type InsertManualExpense = z.infer<typeof insertManualExpenseSchema>;
+export type ManualExpense = typeof manualExpenses.$inferSelect;
+
 export const salesHistory = pgTable("sales_history", {
   id: serial("id").primaryKey(),
   rok: integer("rok").notNull(),
@@ -354,3 +372,89 @@ export const ibizneSyncLog = pgTable("ibiznes_sync_log", {
 export const insertIbizneSyncLogSchema = createInsertSchema(ibizneSyncLog).omit({ id: true });
 export type InsertIbizneSyncLog = z.infer<typeof insertIbizneSyncLogSchema>;
 export type IbizneSyncLog = typeof ibizneSyncLog.$inferSelect;
+
+// ── KSeF (Krajowy System e-Faktur) ───────────────────────────────────────────
+// Faktury kosztowe (subjectType=Subject2 — ADD ALL jako nabywca) pobierane
+// codziennie z KSeF API 2.0 endpoint /invoices/query/metadata.
+export const ksefInvoices = pgTable("ksef_invoices", {
+  id: serial("id").primaryKey(),
+  // Numer KSeF (unikalny w skali kraju) — używamy jako klucz idempotency syncu.
+  ksefNumber: text("ksef_number").notNull().unique(),
+  // Numer faktury nadany przez sprzedawcę (np. "FV/123/2026").
+  invoiceNumber: text("invoice_number").notNull(),
+  // Data wystawienia w formacie yyyy-MM-dd — używana do grupowania miesięcznego.
+  issueDate: text("issue_date").notNull(),
+  rok: integer("rok").notNull(),
+  miesiac: integer("miesiac").notNull(),
+  // Sprzedawca (dostawca) — to po nim mapujemy kategorię.
+  sellerNip: text("seller_nip").notNull(),
+  sellerName: text("seller_name"),
+  // Nabywca — dla sanity-check że to faktycznie nasza faktura.
+  buyerNip: text("buyer_nip"),
+  buyerName: text("buyer_name"),
+  netAmount: decimal("net_amount", { precision: 14, scale: 2 }).notNull(),
+  vatAmount: decimal("vat_amount", { precision: 14, scale: 2 }),
+  grossAmount: decimal("gross_amount", { precision: 14, scale: 2 }),
+  currency: text("currency").notNull().default("PLN"),
+  // Kategoria kosztowa rozpoznana automatycznie (po słowach kluczowych w
+  // nazwie sprzedawcy) lub ustawiona ręcznie. Mapuje 1-1 z kategoriami z UI.
+  kategoria: text("kategoria"),
+  // TRUE jeśli użytkownik nadpisał ręcznie kategorię — sync nie zmieni jej
+  // przy kolejnych przebiegach.
+  kategoriaManual: boolean("kategoria_manual").notNull().default(false),
+  // Surowy hash (z metadata API) — w razie potrzeby integralności / re-pobrania.
+  invoiceHash: text("invoice_hash"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+});
+
+export const insertKsefInvoiceSchema = createInsertSchema(ksefInvoices).omit({ id: true, syncedAt: true });
+export type InsertKsefInvoice = z.infer<typeof insertKsefInvoiceSchema>;
+export type KsefInvoice = typeof ksefInvoices.$inferSelect;
+
+// Mapowanie NIP dostawcy → wymuszona kategoria. Ma priorytet nad
+// rozpoznaniem po słowach kluczowych. Pozwala "nauczyć" system w 1 kliknięciu:
+// po pierwszym ręcznym przypisaniu wszystkie kolejne faktury od tego NIP-u
+// trafią w tę samą kategorię.
+export const ksefSupplierCategories = pgTable("ksef_supplier_categories", {
+  id: serial("id").primaryKey(),
+  nip: text("nip").notNull().unique(),
+  nazwa: text("nazwa"),
+  kategoria: text("kategoria").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertKsefSupplierCategorySchema = createInsertSchema(ksefSupplierCategories).omit({ id: true, createdAt: true });
+export type InsertKsefSupplierCategory = z.infer<typeof insertKsefSupplierCategorySchema>;
+export type KsefSupplierCategory = typeof ksefSupplierCategories.$inferSelect;
+
+export const ksefSyncLog = pgTable("ksef_sync_log", {
+  id: serial("id").primaryKey(),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  status: text("status").notNull().default("running"), // 'running' | 'success' | 'error'
+  message: text("message"),
+  invoicesSynced: integer("invoices_synced").default(0),
+  invoicesNew: integer("invoices_new").default(0),
+  trigger: text("trigger").default("cron"), // 'cron' | 'manual'
+});
+
+export const insertKsefSyncLogSchema = createInsertSchema(ksefSyncLog).omit({ id: true });
+export type InsertKsefSyncLog = z.infer<typeof insertKsefSyncLogSchema>;
+export type KsefSyncLog = typeof ksefSyncLog.$inferSelect;
+
+// Cache accessTokena/refreshTokena KSeF — żeby nie przechodzić pełnej
+// procedury auth (challenge + RSA + redeem) przy każdym wywołaniu API.
+// Trzymamy jedną aktywną sesję na NIP. accessToken ważny ~15min,
+// refreshToken ~7 dni.
+export const ksefTokenCache = pgTable("ksef_token_cache", {
+  id: serial("id").primaryKey(),
+  nip: text("nip").notNull().unique(),
+  environment: text("environment").notNull(),
+  accessToken: text("access_token"),
+  accessValidUntil: timestamp("access_valid_until"),
+  refreshToken: text("refresh_token"),
+  refreshValidUntil: timestamp("refresh_valid_until"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type KsefTokenCache = typeof ksefTokenCache.$inferSelect;

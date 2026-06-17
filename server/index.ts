@@ -95,6 +95,26 @@ app.use((req, res, next) => {
     log("iBiznes sync scheduled (13:00 & 16:00 Europe/Warsaw)", "ibiznes-cron");
   }
 
+  // KSeF sync raz dziennie o 06:00 (Europe/Warsaw) — faktury kosztowe pojawiają
+  // się w KSeF w ciągu doby od wystawienia, ranny sync wyciąga wczorajsze FV.
+  if (process.env.KSEF_TOKEN && process.env.KSEF_NIP) {
+    cron.schedule(
+      "0 6 * * *",
+      async () => {
+        log("Starting scheduled KSeF sync", "ksef-cron");
+        try {
+          const { runKsefSync } = await import("./ksefSync");
+          await runKsefSync("cron");
+          log("Scheduled KSeF sync completed", "ksef-cron");
+        } catch (err: any) {
+          log(`Scheduled KSeF sync failed: ${err.message}`, "ksef-cron");
+        }
+      },
+      { timezone: "Europe/Warsaw" }
+    );
+    log("KSeF sync scheduled (06:00 Europe/Warsaw)", "ksef-cron");
+  }
+
   } catch (err) {
     console.error("FATAL: Failed to start server:", err);
     process.exit(1);

@@ -1,10 +1,12 @@
 import { db } from "./db";
 import { eq, and, gte, lte, sql, like, or, desc, asc, inArray } from "drizzle-orm";
+import { countPolishWorkdays } from "../shared/polishHolidays";
 import {
   users, clients, contacts, deliveries, drivers, vehicles,
   clientSales, clientSalesWeekly, salesTargets, salaries, costs,
   fleet, notes, meetings, salesHistory, dailyAnalysis, clientContacts, clientProducts,
-  clientNips,
+  clientNips, ksefInvoices, manualExpenses,
+  type InsertManualExpense, type ManualExpense,
   type InsertUser, type User,
   type InsertClient, type Client,
   type InsertContact, type Contact,
@@ -65,6 +67,10 @@ export interface IStorage {
   createCost(data: InsertCost): Promise<Cost>;
   updateCost(id: number, data: Partial<InsertCost>): Promise<Cost>;
   deleteCost(id: number): Promise<void>;
+  getManualExpenses(rok?: number, miesiac?: number): Promise<ManualExpense[]>;
+  createManualExpense(data: InsertManualExpense): Promise<ManualExpense>;
+  updateManualExpense(id: number, data: Partial<InsertManualExpense>): Promise<ManualExpense>;
+  deleteManualExpense(id: number): Promise<void>;
   getMySales(opiekun: string): Promise<any>;
   getPlanData(rok: number, miesiac: number, opiekun?: string): Promise<any>;
   getAvailablePlanMonths(): Promise<Array<{rok: number; miesiac: number}>>;
@@ -99,12 +105,13 @@ export interface IStorage {
   upsertDailyAnalysis(rok: number, miesiac: number, dzien: number, sprzedaz: string | null): Promise<DailyAnalysis>;
   updateDniRobocze(rok: number, miesiac: number, dniRobocze: number): Promise<void>;
   getMonthlyFixedCosts(miesiac: number): Promise<number>;
-  getCostBreakdownForMonth(miesiac: number): Promise<{
-    departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+  getCostBreakdownForMonth(miesiac: number, rok?: number): Promise<{
+    departments: Array<{ name: string; total: number; categories: Array<{ id: number; name: string; total: number; typ: string }> }>;
     vatTotal: number;
     fixedTotal: number;
+    ksefTotal: number;
     grandTotal: number;
-    source: "vat_import" | "fixed_costs" | "both";
+    source: "manual";
   }>;
   importDailySalesFromContacts(rok: number, miesiac: number): Promise<number>;
 
@@ -116,6 +123,13 @@ export interface IStorage {
 
   importFinanceData(miesiac: number, salariesData: Array<any>, costsData: Array<any>, fleetData: Array<any>, replaceMonth: boolean): Promise<{salaries: number; costs: number; fleet: number}>;
   importVATCosts(miesiac: number, mKey: string, costsData: Array<any>): Promise<{imported: number}>;
+  importKsefTemplate(fileBuffer: Buffer, opts: { replace: boolean }): Promise<{
+    imported: number;
+    skipped: number;
+    total: number;
+    byKategoria: Record<string, { count: number; sum: number }>;
+    skippedDetails: Array<{ reason: string; klient: string; nrFaktury: string; akcja: string }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -416,23 +430,14 @@ export class DatabaseStorage implements IStorage {
     const nowMonth = now.getMonth() + 1;
     const isCurrentMonth = rok === nowYear && miesiac === nowMonth;
 
-    const countWorkdays = (y: number, m: number, upToDay: number) => {
-      let count = 0;
-      for (let d = 1; d <= upToDay; d++) {
-        const dow = new Date(y, m - 1, d).getDay();
-        if (dow >= 1 && dow <= 5) count++;
-      }
-      return count;
-    };
-
     const daysInMonth = new Date(rok, miesiac, 0).getDate();
-    const dniRoboczeMiesiac = countWorkdays(rok, miesiac, daysInMonth);
+    const dniRoboczeMiesiac = countPolishWorkdays(rok, miesiac, daysInMonth);
     const dniRoboczeMiniete = isCurrentMonth
-      ? countWorkdays(rok, miesiac, now.getDate())
+      ? countPolishWorkdays(rok, miesiac, now.getDate())
       : dniRoboczeMiesiac;
 
     const daysInPrevMonth = new Date(prevRok, prevMiesiac, 0).getDate();
-    const prevTotalWorkdays = countWorkdays(prevRok, prevMiesiac, daysInPrevMonth);
+    const prevTotalWorkdays = countPolishWorkdays(prevRok, prevMiesiac, daysInPrevMonth);
     // For current month: scale prev so we compare the same number of business days.
     // Cap at prev month's total workdays (e.g. if Feb only has 20 wd and April already passed 20).
     const prevCompareDays = isCurrentMonth
@@ -1462,17 +1467,10 @@ export class DatabaseStorage implements IStorage {
       .filter(c => c.status === "Zamowil")
       .reduce((sum, c) => sum + Number(c.kwota || 0), 0);
 
-    const countWorkdays = (y: number, m: number, upToDay: number) => {
-      let count = 0;
-      for (let d = 1; d <= upToDay; d++) {
-        const dow = new Date(y, m, d).getDay();
-        if (dow >= 1 && dow <= 5) count++;
-      }
-      return count;
-    };
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const totalWorkdays = countWorkdays(year, month, daysInMonth);
-    const workingDaysPassed = countWorkdays(year, month, now.getDate());
+    // month w tym scope'ie jest 0-bazowy (z now.getMonth()), helper oczekuje 1-bazowego
+    const totalWorkdays = countPolishWorkdays(year, month + 1, daysInMonth);
+    const workingDaysPassed = countPolishWorkdays(year, month + 1, now.getDate());
     const dailyTarget = totalWorkdays > 0 ? monthPlan / totalWorkdays : 0;
 
     // Unmatched sales for current month (WZ without client in CRM).
@@ -1508,7 +1506,7 @@ export class DatabaseStorage implements IStorage {
 
     // Proportional prev-month comparison: scale prev total by same working-day ratio.
     const prevDaysInMonth = new Date(prevYearNum, prevMonthNum, 0).getDate();
-    const prevTotalWorkdays = countWorkdays(prevYearNum, prevMonthNum - 1, prevDaysInMonth);
+    const prevTotalWorkdays = countPolishWorkdays(prevYearNum, prevMonthNum, prevDaysInMonth);
     const prevCompareDays = Math.min(workingDaysPassed, prevTotalWorkdays);
     const prevScale = prevTotalWorkdays > 0 ? prevCompareDays / prevTotalWorkdays : 0;
     const prevTotalWithUnmatched = prevMonthSalesTotal + (isHandlowiecView ? 0 : unmatchedPrevTotal);
@@ -1717,107 +1715,76 @@ export class DatabaseStorage implements IStorage {
     return totalSalaries + totalCosts + totalFleet;
   }
 
-  async getCostBreakdownForMonth(miesiac: number): Promise<{
-    departments: Array<{ name: string; total: number; categories: Array<{ name: string; total: number }> }>;
+  async getCostBreakdownForMonth(miesiac: number, rok?: number): Promise<{
+    departments: Array<{ name: string; total: number; categories: Array<{ id: number; name: string; total: number; typ: string }> }>;
     vatTotal: number;
     fixedTotal: number;
+    ksefTotal: number;
     grandTotal: number;
-    source: "vat_import" | "fixed_costs";
+    source: "manual";
   }> {
-    const MONTH_KEYS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
-    const mKey = MONTH_KEYS[miesiac - 1];
+    // Koszty liczone WYŁĄCZNIE z ręcznych wpisów (manual_expenses).
+    // typ='staly'  -> liczony w każdym miesiącu (core).
+    // typ='zmienny' -> liczony tylko w danym rok+miesiac.
+    const expenses = await this.getManualExpenses(rok, miesiac);
 
-    const DEPT_MAP: Record<string, string> = {
-      "Wynagrodzenia": "Kadry i place",
-      "Wynagrodzenia zarząd (JDG)": "Kadry i place",
-      "ZUS": "Kadry i place",
-      "Podatki (US)": "Kadry i place",
-      "Medycyna pracy": "Kadry i place",
-      "Leasing": "Flota",
-      "Paliwo": "Flota",
-      "Transport": "Logistyka",
-      "Ubezpieczenia": "Biuro i administracja",
-      "Księgowość": "Biuro i administracja",
-      "Media/Prąd": "Biuro i administracja",
-      "Biuro": "Biuro i administracja",
-      "Wysyłka/Poczta": "Biuro i administracja",
-      "Płatności/Terminal": "Biuro i administracja",
-      "IT/Serwis": "IT i serwis",
-      "IT/Subskrypcje": "IT i serwis",
-      "Serwis/Naprawa": "IT i serwis",
-      "Towary/Produkty": "Pozostale",
-      "Inne": "Pozostale",
-    };
-
-    const allCosts = await db.select().from(costs);
-    const vatForMonth = allCosts.filter((c) => {
-      if (c.firma !== "IMPORT_VAT") return false;
-      const am = c.aktywnyMiesiace as Record<string, boolean> | null;
-      if (!am) return false;
-      return am[mKey] === true;
-    });
-
-    const hasVat = vatForMonth.length > 0;
-    const vatTotal = vatForMonth.reduce((s, c) => s + Number(c.netto || 0), 0);
-
-    const deptTotals: Record<string, Record<string, number>> = {};
-
-    if (hasVat) {
-      for (const c of vatForMonth) {
-        const cat = c.dzial || c.kategoria || "Inne";
-        const dept = DEPT_MAP[cat] || "Pozostale";
-        if (!deptTotals[dept]) deptTotals[dept] = {};
-        deptTotals[dept][cat] = (deptTotals[dept][cat] || 0) + Number(c.netto || 0);
-      }
-    } else {
-      const salariesData = await db.select().from(salaries);
-      const nonVatCosts = allCosts.filter(c => c.firma !== "IMPORT_VAT");
-      const fleetData = await db.select().from(fleet);
-
-      const sumActive = (items: any[], costField: string) => {
-        return items.reduce((sum: number, item: any) => {
-          const am = item.aktywnyMiesiace as Record<string, boolean> | null;
-          if (am && am[mKey] === false) return sum;
-          return sum + Number(item[costField] || 0);
-        }, 0);
-      };
-
-      const totalSalaries = sumActive(salariesData, "kosztPracodawcy");
-      const totalCosts = sumActive(nonVatCosts, "koszt");
-      const totalFleet = sumActive(fleetData, "koszt");
-
-      if (totalSalaries > 0) {
-        deptTotals["Kadry i place"] = { "Wynagrodzenia i ZUS": totalSalaries };
-      }
-      if (totalCosts > 0) {
-        deptTotals["Biuro i administracja"] = { "Koszty operacyjne": totalCosts };
-      }
-      if (totalFleet > 0) {
-        deptTotals["Flota"] = { "Koszty floty": totalFleet };
-      }
+    const deptTotals: Record<string, Array<{ id: number; name: string; total: number; typ: string }>> = {};
+    for (const e of expenses) {
+      const dept = e.dzial || "Pozostale";
+      if (!deptTotals[dept]) deptTotals[dept] = [];
+      deptTotals[dept].push({
+        id: e.id,
+        name: e.nazwa,
+        total: Math.round(Number(e.kwota || 0)),
+        typ: e.typ,
+      });
     }
 
     const departments = Object.entries(deptTotals)
-      .map(([name, cats]) => ({
+      .map(([name, categories]) => ({
         name,
-        categories: Object.entries(cats)
-          .map(([catName, total]) => ({ name: catName, total: Math.round(total) }))
-          .sort((a, b) => b.total - a.total),
-        total: Math.round(Object.values(cats).reduce((s, v) => s + v, 0)),
+        categories: categories.sort((a, b) => b.total - a.total),
+        total: Math.round(categories.reduce((s, c) => s + c.total, 0)),
       }))
       .sort((a, b) => b.total - a.total);
 
-    const grandTotal = hasVat
-      ? Math.round(vatTotal)
-      : departments.reduce((s, d) => s + d.total, 0);
+    const grandTotal = departments.reduce((s, d) => s + d.total, 0);
+    const fixedTotal = Math.round(
+      expenses.filter((e) => e.typ === "staly").reduce((s, e) => s + Number(e.kwota || 0), 0)
+    );
 
     return {
       departments,
-      vatTotal: Math.round(vatTotal),
-      fixedTotal: departments.reduce((s, d) => s + d.total, 0),
+      vatTotal: 0,
+      fixedTotal,
+      ksefTotal: 0,
       grandTotal,
-      source: hasVat ? "vat_import" : "fixed_costs",
+      source: "manual",
     };
+  }
+
+  // ── Ręczne wydatki (manual_expenses) ──────────────────────────────
+  async getManualExpenses(rok?: number, miesiac?: number): Promise<ManualExpense[]> {
+    const all = await db.select().from(manualExpenses);
+    if (rok == null || miesiac == null) return all;
+    // Obowiązują: wszystkie stałe + zmienne z danego rok+miesiac.
+    return all.filter(
+      (e) => e.typ === "staly" || (e.typ === "zmienny" && e.rok === rok && e.miesiac === miesiac)
+    );
+  }
+
+  async createManualExpense(data: InsertManualExpense): Promise<ManualExpense> {
+    const [row] = await db.insert(manualExpenses).values(data).returning();
+    return row;
+  }
+
+  async updateManualExpense(id: number, data: Partial<InsertManualExpense>): Promise<ManualExpense> {
+    const [row] = await db.update(manualExpenses).set(data).where(eq(manualExpenses.id, id)).returning();
+    return row;
+  }
+
+  async deleteManualExpense(id: number): Promise<void> {
+    await db.delete(manualExpenses).where(eq(manualExpenses.id, id));
   }
 
   async importDailySalesFromContacts(rok: number, miesiac: number): Promise<number> {
@@ -1874,20 +1841,11 @@ export class DatabaseStorage implements IStorage {
     const isCurrentMonth = now.getFullYear() === rok && (now.getMonth() + 1) === miesiac;
     const isPastMonth = rok < now.getFullYear() || (rok === now.getFullYear() && miesiac < (now.getMonth() + 1));
 
-    const countWorkdays = (y: number, m: number, upToDay: number) => {
-      let count = 0;
-      for (let d = 1; d <= upToDay; d++) {
-        const dow = new Date(y, m - 1, d).getDay();
-        if (dow >= 1 && dow <= 5) count++;
-      }
-      return count;
-    };
-
     const daysInMonth = new Date(rok, miesiac, 0).getDate();
-    const dniRoboczeMiesiac = countWorkdays(rok, miesiac, daysInMonth);
+    const dniRoboczeMiesiac = countPolishWorkdays(rok, miesiac, daysInMonth);
     let dniRoboczeMiniete: number;
     if (isCurrentMonth) {
-      dniRoboczeMiniete = countWorkdays(rok, miesiac, now.getDate());
+      dniRoboczeMiniete = countPolishWorkdays(rok, miesiac, now.getDate());
     } else if (isPastMonth) {
       dniRoboczeMiniete = dniRoboczeMiesiac;
     } else {
@@ -2449,6 +2407,50 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { imported };
+  }
+
+  async importKsefTemplate(
+    fileBuffer: Buffer,
+    opts: { replace: boolean }
+  ): Promise<{
+    imported: number;
+    skipped: number;
+    total: number;
+    byKategoria: Record<string, { count: number; sum: number }>;
+    skippedDetails: Array<{ reason: string; klient: string; nrFaktury: string; akcja: string }>;
+  }> {
+    const { parseKsefKosztoweRows, ALL_MONTHS_TRUE, KSEF_TEMPLATE_FIRMA } = await import("./ksefTemplate");
+    const parsed = parseKsefKosztoweRows(fileBuffer);
+
+    if (opts.replace) {
+      await db.delete(costs).where(eq(costs.firma, KSEF_TEMPLATE_FIRMA));
+    }
+
+    const byKategoria: Record<string, { count: number; sum: number }> = {};
+    for (const e of parsed.entries) {
+      await db.insert(costs).values({
+        nazwa: e.nazwa,
+        firma: KSEF_TEMPLATE_FIRMA,
+        dzial: e.kategoria,
+        rodzaj: null,
+        kategoria: e.kategoria,
+        netto: String(e.netto),
+        koszt: String(e.brutto),
+        notatka: `KSeF template: ${e.nrFaktury}${e.nip ? ` / NIP ${e.nip}` : ""}`,
+        aktywnyMiesiace: ALL_MONTHS_TRUE,
+      });
+      if (!byKategoria[e.kategoria]) byKategoria[e.kategoria] = { count: 0, sum: 0 };
+      byKategoria[e.kategoria].count++;
+      byKategoria[e.kategoria].sum += e.brutto;
+    }
+
+    return {
+      imported: parsed.entries.length,
+      skipped: parsed.skipped.length,
+      total: parsed.entries.reduce((s, e) => s + e.brutto, 0),
+      byKategoria,
+      skippedDetails: parsed.skipped,
+    };
   }
 }
 
