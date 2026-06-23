@@ -129,6 +129,13 @@ export default function SalesDashboard() {
   const years = (history || []).map((h: any) => h.rok);
   const lineColors = ["hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)", "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 50%)"];
 
+  // Podsumowanie roczne — finalny wynik (suma sprzedazy) na koniec kazdego roku.
+  const yearTotals = (history || []).map((h: any) => ({
+    rok: h.rok,
+    total: (h.months || []).reduce((s: number, md: any) => s + Number(md.wartosc || 0), 0),
+    miesiace: (h.months || []).filter((md: any) => Number(md.wartosc || 0) > 0).length,
+  }));
+
   const currentMonth = new Date().getMonth();
   const currentMonthData = plan2026[currentMonth];
   const monthPlan = Number(currentMonthData?.planObrotu || 0);
@@ -264,6 +271,27 @@ export default function SalesDashboard() {
                 ))}
               </LineChart>
             </ResponsiveContainer>
+
+            {/* Podsumowanie roczne — finalny wynik na koniec roku */}
+            {yearTotals.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2">Podsumowanie roczne (suma sprzedazy)</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {yearTotals.map((yt: any, i: number) => (
+                    <div key={yt.rok} className="flex items-center gap-2 rounded-md border p-2">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: lineColors[i % lineColors.length] }} />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground leading-tight">
+                          {yt.rok}
+                          {yt.miesiace > 0 && yt.miesiace < 12 ? ` (${yt.miesiace} mies.)` : ""}
+                        </p>
+                        <p className="text-sm font-bold tabular-nums leading-tight">{Math.round(yt.total).toLocaleString("pl-PL")} PLN</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
