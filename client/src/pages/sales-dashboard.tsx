@@ -209,6 +209,17 @@ export default function SalesDashboard() {
     bazaLancucha = wartosc;
   }
 
+  // Sygnal ostrzegawczy: prognoza ponizej KAZDEGO z dwoch ostatnich pelnych
+  // lat. Lata niepelne odpadaja, bo ich suma nie jest porownywalna z rocznym
+  // wynikiem.
+  const ostatniePelneLata = yearTotals
+    .filter((t: { rok: number; suma: number; miesiecy: number }) => t.rok < biezacyRok && t.miesiecy >= 12)
+    .sort((a: { rok: number; suma: number; miesiecy: number }, b: { rok: number; suma: number; miesiecy: number }) => b.rok - a.rok)
+    .slice(0, 2);
+  const prognozaPonizejLat =
+    ostatniePelneLata.length > 0 &&
+    ostatniePelneLata.every((t: { rok: number; suma: number; miesiecy: number }) => prognozaRoku < t.suma);
+
   // Etykiety sum stoja na wysokosci styczniowego punktu swojej linii, wiec
   // lata o zblizonym styczniu nachodzilyby na siebie. Kolizje wykrywamy w
   // wartosciach, a rozsuwamy w pikselach: wyzsza etykieta idzie w gore,
@@ -405,8 +416,16 @@ export default function SalesDashboard() {
                         {y.suma.toLocaleString("pl-PL")} PLN
                         {y.rok === biezacyRok && prognozaRoku > 0 && (
                           <span
-                            className="ml-1 text-xs font-normal text-muted-foreground"
-                            title="Miesiace zamkniete wg rzeczywistej sprzedazy, kolejne wyliczane lancuchowo: poprzedni miesiac + 5%"
+                            className={`ml-1 text-xs ${
+                              prognozaPonizejLat
+                                ? "text-destructive font-medium"
+                                : "font-normal text-muted-foreground"
+                            }`}
+                            title={
+                              prognozaPonizejLat
+                                ? `Prognoza ponizej lat ${ostatniePelneLata.map((t: { rok: number; suma: number; miesiecy: number }) => t.rok).join(" i ")}`
+                                : "Miesiace zamkniete wg rzeczywistej sprzedazy, kolejne wyliczane lancuchowo: poprzedni miesiac + 5%"
+                            }
                           >
                             (prognoza {Math.round(prognozaRoku).toLocaleString("pl-PL")} PLN)
                           </span>
