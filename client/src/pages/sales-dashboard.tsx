@@ -424,7 +424,7 @@ export default function SalesDashboard() {
                 {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }, i: number) => {
                   const kolor = kolorRoku(y.rok, i);
                   return (
-                    <div key={y.rok} className={`rounded-md p-2 ${y.rok === biezacyRok ? "border-2" : "border"}`} data-testid={`card-year-total-${y.rok}`}>
+                    <div key={y.rok} className={`rounded-md p-2 ${y.rok === biezacyRok ? "border-2 border-muted-foreground" : "border"}`} data-testid={`card-year-total-${y.rok}`}>
                       <p className="text-xs font-semibold" style={{ color: kolor }}>
                         {y.rok}
                         {y.miesiecy < 12 && (
