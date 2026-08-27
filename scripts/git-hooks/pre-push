@@ -1,0 +1,29 @@
+#!/bin/sh
+# Blokada wypychania na gałęzie inne niż "emilia".
+# Instalacja (raz, w katalogu repo):
+#   git config core.hooksPath scripts/git-hooks
+#
+# Hook czyta ze stdin linie: <local ref> <local sha> <remote ref> <remote sha>
+
+DOZWOLONA="refs/heads/emilia"
+STATUS=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -z "$remote_ref" ] && continue
+    if [ "$remote_ref" != "$DOZWOLONA" ]; then
+        echo ""
+        echo "  ⛔  PUSH ZABLOKOWANY"
+        echo ""
+        echo "  Próbujesz wypchnąć na: $remote_ref"
+        echo "  Dozwolona jest wyłącznie gałąź: emilia"
+        echo ""
+        echo "  Poprawna komenda:  git push origin emilia"
+        echo ""
+        echo "  Jeśli zmiana ma trafić na beta lub produkcję —"
+        echo "  to jest decyzja Wojtka, nie obchodź tej blokady."
+        echo ""
+        STATUS=1
+    fi
+done
+
+exit $STATUS
