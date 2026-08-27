@@ -22,6 +22,7 @@ import {
 } from "recharts";
 
 import { MONTHS_SHORT as MONTHS } from "@/lib/constants";
+import { countPolishWorkdays, countPolishWorkdaysInMonth } from "@shared/polishHolidays";
 
 function EditablePlanCell({ value, onChange, onSave, editing }: { value: number; onChange: (v: number) => void; onSave: () => void; editing: boolean }) {
   if (!editing) {
@@ -175,6 +176,20 @@ export default function SalesDashboard() {
     return t?.planObrotuCustom && Number(t.planObrotu) > 0 ? Number(t.planObrotu) : 0;
   };
 
+  // Trwajacy miesiac ma juz czesciowe dane — zamiast zgadywac go regula +5%,
+  // przeliczamy sprzedaz dotychczasowa na caly miesiac proporcja dni
+  // roboczych (z polskimi swietami). Zwraca 0, gdy ostatni miesiac z danymi
+  // nie jest miesiacem, w ktorym faktycznie jestesmy — wtedy nie ma czego
+  // ekstrapolowac i zostaje regula +5%.
+  const dzisiaj = new Date();
+  const ekstrapolacjaTrwajacego = (): number => {
+    if (ostatniZDanymi !== dzisiaj.getMonth() + 1) return 0;
+    const doDzis = countPolishWorkdays(biezacyRok, ostatniZDanymi, dzisiaj.getDate());
+    const wCalymMiesiacu = countPolishWorkdaysInMonth(biezacyRok, ostatniZDanymi);
+    if (doDzis <= 0 || wCalymMiesiacu <= 0) return 0;
+    return (biezacy[ostatniZDanymi - 1] * wCalymMiesiacu) / doDzis;
+  };
+
   // Na poczatku roku nie ma jeszcze zamknietego miesiaca — wtedy baza jest
   // grudzien roku poprzedniego, tak samo jak w regule stosowanej przez API.
   let bazaLancucha = zamkniete > 0 ? biezacy[zamkniete - 1] : poprzedni[11];
@@ -182,8 +197,14 @@ export default function SalesDashboard() {
   for (let m = zamkniete + 1; m <= 12; m++) {
     const reczny = planReczny(m);
     let wartosc = reczny > 0 ? reczny : bazaLancucha * WSPOLCZYNNIK;
-    // Trwajacy miesiac moze juz przekroczyc wyliczenie — bierzemy wieksza.
-    if (m === ostatniZDanymi) wartosc = Math.max(wartosc, biezacy[m - 1]);
+    if (m === ostatniZDanymi) {
+      const zDniRoboczych = ekstrapolacjaTrwajacego();
+      // Ekstrapolacja opiera sie na realnych danych z tego miesiaca, wiec ma
+      // pierwszenstwo przed regula +5%. Reczny plan bije jedno i drugie.
+      if (reczny === 0 && zDniRoboczych > 0) wartosc = zDniRoboczych;
+      // Nigdy ponizej tego, co juz zostalo sprzedane.
+      wartosc = Math.max(wartosc, biezacy[m - 1]);
+    }
     prognozaRoku += wartosc;
     bazaLancucha = wartosc;
   }
