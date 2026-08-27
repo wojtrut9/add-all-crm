@@ -226,7 +226,7 @@ export default function SalesDashboard() {
   // lata o zblizonym styczniu nachodzilyby na siebie. Kolizje wykrywamy w
   // wartosciach, a rozsuwamy w pikselach: wyzsza etykieta idzie w gore,
   // nizsza w dol.
-  const ODSTEP_PX = 17;
+  const ODSTEP_PX = 26;
   const WYS_WYKRESU_PX = 230;
   const maxWartosc = Math.max(
     1,
@@ -406,9 +406,27 @@ export default function SalesDashboard() {
                       <LabelList
                         content={(props: any) =>
                           props.index === 0 ? (
-                            <text x={2} y={props.y + 4 + (odsunieciaEtykiet[y] || 0)} fontSize={12} fontWeight={700} fill={kolor} textAnchor="start">
-                              {formatSkrot(suma)}
-                            </text>
+                            <g>
+                              <text
+                                x={2}
+                                y={props.y + (odsunieciaEtykiet[y] || 0)}
+                                fontSize={12}
+                                fontWeight={700}
+                                fill={kolor}
+                                textAnchor="start"
+                              >
+                                {formatSkrot(suma)}
+                              </text>
+                              <text
+                                x={2}
+                                y={props.y + 11 + (odsunieciaEtykiet[y] || 0)}
+                                fontSize={9}
+                                className="fill-muted-foreground"
+                                textAnchor="start"
+                              >
+                                {y}
+                              </text>
+                            </g>
                           ) : null
                         }
                       />
