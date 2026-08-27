@@ -249,7 +249,18 @@ export default function SalesDashboard() {
       }
     });
 
-  const lineColors = ["hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)", "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 50%)"];
+  // Paleta lat minionych. ZASADA: zaden odcien nie moze wpadac w czerwien
+  // (barwa 330-360 i 0-20), bo czerwien jest zarezerwowana dla biezacego
+  // roku i myliloby sie jedno z drugim. Kolory sa przydzielane cyklicznie,
+  // wiec kazdy kolejny rok tez trafi wylacznie na te bezpieczne odcienie.
+  const lineColors = [
+    "hsl(210, 92%, 45%)", // niebieski
+    "hsl(30, 95%, 42%)",  // pomaranczowy
+    "hsl(45, 90%, 42%)",  // zolty — wczesniej malinowy, zbyt bliski czerwieni
+    "hsl(160, 65%, 35%)", // zielony
+    "hsl(280, 75%, 40%)", // fioletowy
+    "hsl(95, 50%, 33%)",  // oliwkowy
+  ];
   // Biezacy rok jest tym, ktory sie sledzi — dostaje czerwien i grubsza
   // linie, reszta lat sluzy za tlo porownawcze. Jedno zrodlo koloru dla
   // wykresu, etykiet i kafelkow, zeby nie moglo sie rozjechac.
