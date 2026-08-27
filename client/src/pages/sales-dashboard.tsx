@@ -127,6 +127,11 @@ export default function SalesDashboard() {
   });
 
   const years = (history || []).map((h: any) => h.rok);
+  const yearTotals = (history || []).map((h: any) => ({
+    rok: h.rok,
+    suma: Math.round((h.months || []).reduce((sum: number, m: any) => sum + Number(m.wartosc || 0), 0)),
+    miesiecy: (h.months || []).length,
+  }));
   const lineColors = ["hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)", "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 50%)"];
 
   const currentMonth = new Date().getMonth();
@@ -264,6 +269,21 @@ export default function SalesDashboard() {
                 ))}
               </LineChart>
             </ResponsiveContainer>
+
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-2">Suma sprzedazy w latach</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }) => (
+                  <div key={y.rok} className="rounded-md border p-2" data-testid={`card-year-total-${y.rok}`}>
+                    <p className="text-xs text-muted-foreground">
+                      {y.rok}
+                      {y.miesiecy < 12 && <span className="ml-1">({y.miesiecy} mies.)</span>}
+                    </p>
+                    <p className="text-sm font-bold">{y.suma.toLocaleString("pl-PL")} PLN</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
