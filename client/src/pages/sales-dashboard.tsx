@@ -129,7 +129,9 @@ export default function SalesDashboard() {
     const entry: any = { name: m };
     (history || []).forEach((h: any) => {
       const monthData = h.months.find((md: any) => md.miesiac === i + 1);
-      entry[`rok_${h.rok}`] = monthData?.wartosc || 0;
+      // Brak wpisu dla miesiaca znaczy, ze jeszcze sie nie wydarzyl. Zero
+      // ciagneloby linie biezacego roku po dole wykresu — null ja urywa.
+      entry[`rok_${h.rok}`] = monthData ? Number(monthData.wartosc || 0) : null;
     });
     return entry;
   });
