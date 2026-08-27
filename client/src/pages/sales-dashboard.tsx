@@ -140,15 +140,14 @@ export default function SalesDashboard() {
     miesiecy: (h.months || []).length,
   }));
   // --- Prognoza na koniec biezacego roku ----------------------------------
-  // Nie da sie jej oprzec wprost na planie miesiecznym: plan liczony
-  // automatycznie ("poprzedni miesiac x 1,05") wychodzi zerowy dla miesiecy,
-  // ktorych poprzednik jeszcze sie nie wydarzyl — dla listopada i grudnia
-  // zawsze bylo by 0. Dlatego trzy zrodla, w tej kolejnosci:
-  //   1. miesiac zamkniety            -> rzeczywista sprzedaz
-  //   2. miesiac z recznym planem     -> ten plan
-  //   3. pozostale                    -> ten sam miesiac rok temu x tempo wzrostu
-  // Liczby biora sie z `history`, czyli z tego samego zrodla co suma
-  // pokazana w kafelku — obie wartosci musza byc porownywalne.
+  // Firmowa regula planu ("poprzedni miesiac x 1,05") stosowana rekurencyjnie:
+  // ostatni zamkniety miesiac jest baza, kazdy nastepny liczy sie z miesiaca
+  // policzonego przed chwila. Sam plan z API sie do tego nie nadaje, bo dla
+  // miesiecy bez zrealizowanego poprzednika zwraca 0.
+  //
+  // Pierwszenstwo ma reczny plan, jesli ktos go wpisal — wtedy on wchodzi do
+  // sumy i to on staje sie baza dla kolejnego miesiaca.
+  const WSPOLCZYNNIK = 1.05;
   const biezacyRok = new Date().getFullYear();
 
   const miesiaceRoku = (rok: number): number[] => {
@@ -162,33 +161,31 @@ export default function SalesDashboard() {
   const biezacy = miesiaceRoku(biezacyRok);
   const poprzedni = miesiaceRoku(biezacyRok - 1);
 
-  // Ostatni miesiac z danymi jest zwykle niepelny (trwa), wiec nie liczymy
-  // go jako zamknietego ani nie wliczamy do tempa wzrostu.
+  // Ostatni miesiac z danymi zwykle trwa, wiec jest niepelny — nie moze byc
+  // baza lancucha, bo zanizylby wszystkie kolejne miesiace.
   let ostatniZDanymi = 0;
   biezacy.forEach((v, i) => {
     if (v > 0) ostatniZDanymi = i + 1;
   });
   const zamkniete = Math.max(0, ostatniZDanymi - 1);
-
   const sumaZamknietych = biezacy.slice(0, zamkniete).reduce((a, b) => a + b, 0);
-  const sumaRokTemu = poprzedni.slice(0, zamkniete).reduce((a, b) => a + b, 0);
-  const tempoWzrostu = sumaRokTemu > 0 ? sumaZamknietych / sumaRokTemu : 1;
-  const sredniaZamknietych = zamkniete > 0 ? sumaZamknietych / zamkniete : 0;
 
   const planReczny = (m: number): number => {
     const t = plan2026[m - 1];
     return t?.planObrotuCustom && Number(t.planObrotu) > 0 ? Number(t.planObrotu) : 0;
   };
-  // Gdy rok temu brak danych dla tego miesiaca — srednia z miesiecy zamknietych.
-  const szacunek = (m: number): number =>
-    poprzedni[m - 1] > 0 ? poprzedni[m - 1] * tempoWzrostu : sredniaZamknietych;
 
+  // Na poczatku roku nie ma jeszcze zamknietego miesiaca — wtedy baza jest
+  // grudzien roku poprzedniego, tak samo jak w regule stosowanej przez API.
+  let bazaLancucha = zamkniete > 0 ? biezacy[zamkniete - 1] : poprzedni[11];
   let prognozaRoku = sumaZamknietych;
   for (let m = zamkniete + 1; m <= 12; m++) {
     const reczny = planReczny(m);
-    const oczekiwane = reczny > 0 ? reczny : szacunek(m);
-    // Trwajacy miesiac moze juz przekroczyc oczekiwania — bierzemy wieksza.
-    prognozaRoku += m === ostatniZDanymi ? Math.max(oczekiwane, biezacy[m - 1]) : oczekiwane;
+    let wartosc = reczny > 0 ? reczny : bazaLancucha * WSPOLCZYNNIK;
+    // Trwajacy miesiac moze juz przekroczyc wyliczenie — bierzemy wieksza.
+    if (m === ostatniZDanymi) wartosc = Math.max(wartosc, biezacy[m - 1]);
+    prognozaRoku += wartosc;
+    bazaLancucha = wartosc;
   }
 
   // Etykiety sum stoja na wysokosci styczniowego punktu swojej linii, wiec
@@ -388,7 +385,7 @@ export default function SalesDashboard() {
                         {y.rok === biezacyRok && prognozaRoku > 0 && (
                           <span
                             className="ml-1 text-xs font-normal text-muted-foreground"
-                            title="Miesiace zamkniete wg sprzedazy, miesiace z recznym planem wg planu, pozostale: ten sam miesiac rok temu przeskalowany tempem wzrostu"
+                            title="Miesiace zamkniete wg rzeczywistej sprzedazy, kolejne wyliczane lancuchowo: poprzedni miesiac + 5%"
                           >
                             (prognoza {Math.round(prognozaRoku).toLocaleString("pl-PL")} PLN)
                           </span>
