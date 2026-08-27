@@ -268,7 +268,7 @@ export default function SalesDashboard() {
               <LineChart data={historyChartData}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <YAxis width={96} tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => `${Number(v).toLocaleString("pl-PL")} PLN`} />
                 <Legend />
                 {years.map((y: number, i: number) => {
@@ -279,7 +279,7 @@ export default function SalesDashboard() {
                       <LabelList
                         content={(props: any) =>
                           props.index === 0 ? (
-                            <text x={props.x + 4} y={props.y - 6} fontSize={9} fontWeight={600} fill={kolor} textAnchor="start">
+                            <text x={2} y={props.y + 3} fontSize={10} fontWeight={700} fill={kolor} textAnchor="start">
                               {formatSkrot(suma)}
                             </text>
                           ) : null
