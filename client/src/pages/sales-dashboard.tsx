@@ -223,31 +223,41 @@ export default function SalesDashboard() {
     ostatniePelneLata.some((t: { rok: number; suma: number; miesiecy: number }) => prognozaRoku < t.suma);
 
   // Etykiety sum stoja na wysokosci styczniowego punktu swojej linii, wiec
-  // lata o zblizonym styczniu nachodzilyby na siebie. Kolizje wykrywamy w
-  // wartosciach, a rozsuwamy w pikselach: wyzsza etykieta idzie w gore,
-  // nizsza w dol.
+  // lata o zblizonym styczniu nachodzilyby na siebie. Ukladamy je jak
+  // kolumne tekstu: od gornej do dolnej, pilnujac minimalnego odstepu od
+  // poprzedniej. Rozsuwanie samych par nie wystarcza — etykieta odsunieta
+  // od sasiada potrafi wejsc na kolejna, ktorej para juz nie sprawdzala.
   const ODSTEP_PX = 26;
   const WYS_WYKRESU_PX = 230;
   const maxWartosc = Math.max(
     1,
     ...historyChartData.flatMap((d: any) => years.map((y: number) => Number(d[`rok_${y}`] || 0)))
   );
-  const progKolizji = (ODSTEP_PX * maxWartosc) / WYS_WYKRESU_PX;
-  const odsunieciaEtykiet: Record<number, number> = {};
   const startyLinii: Array<{ rok: number; styczen: number }> = years.map((y: number) => ({
     rok: y,
     styczen: Number(historyChartData[0]?.[`rok_${y}`] || 0),
   }));
-  startyLinii
-    .sort((a, b) => b.styczen - a.styczen)
-    .forEach((biezacy, idx, posortowane) => {
-      if (idx === 0) return;
-      const poprzedni = posortowane[idx - 1];
-      if (poprzedni.styczen - biezacy.styczen < progKolizji) {
-        odsunieciaEtykiet[poprzedni.rok] = (odsunieciaEtykiet[poprzedni.rok] || 0) - ODSTEP_PX / 2;
-        odsunieciaEtykiet[biezacy.rok] = (odsunieciaEtykiet[biezacy.rok] || 0) + ODSTEP_PX / 2;
-      }
-    });
+
+  // Przyblizona pozycja pionowa etykiety: 0 = gora wykresu.
+  const naturalnaPozycja = (styczen: number) =>
+    ((maxWartosc - styczen) * WYS_WYKRESU_PX) / maxWartosc;
+
+  const odGory = [...startyLinii].sort((a, b) => b.styczen - a.styczen);
+  const pozycje: number[] = [];
+  odGory.forEach((wpis, idx) => {
+    const naturalna = naturalnaPozycja(wpis.styczen);
+    pozycje.push(idx === 0 ? naturalna : Math.max(naturalna, pozycje[idx - 1] + ODSTEP_PX));
+  });
+
+  // Jesli kolumna wyszla ponizej dolu wykresu, przesuwamy ja w gore o nadmiar.
+  const nadmiar = pozycje.length
+    ? Math.max(0, pozycje[pozycje.length - 1] - WYS_WYKRESU_PX)
+    : 0;
+
+  const odsunieciaEtykiet: Record<number, number> = {};
+  odGory.forEach((wpis, idx) => {
+    odsunieciaEtykiet[wpis.rok] = pozycje[idx] - nadmiar - naturalnaPozycja(wpis.styczen);
+  });
 
   // Paleta lat minionych. ZASADA: zaden odcien nie moze wpadac w czerwien
   // (barwa 330-360 i 0-20), bo czerwien jest zarezerwowana dla biezacego
