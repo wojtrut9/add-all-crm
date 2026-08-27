@@ -321,15 +321,25 @@ export default function SalesDashboard() {
             <div className="mt-4 pt-4 border-t">
               <p className="text-sm text-muted-foreground mb-2">Suma sprzedazy w latach</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }) => (
-                  <div key={y.rok} className="rounded-md border p-2" data-testid={`card-year-total-${y.rok}`}>
-                    <p className="text-xs text-muted-foreground">
-                      {y.rok}
-                      {y.miesiecy < 12 && <span className="ml-1">({y.miesiecy} mies.)</span>}
-                    </p>
-                    <p className="text-sm font-bold">{y.suma.toLocaleString("pl-PL")} PLN</p>
-                  </div>
-                ))}
+                {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }, i: number) => {
+                  const kolor = lineColors[i % lineColors.length];
+                  return (
+                    <div
+                      key={y.rok}
+                      className="rounded-md border-2 p-2"
+                      style={{ borderColor: kolor }}
+                      data-testid={`card-year-total-${y.rok}`}
+                    >
+                      <p className="text-xs font-semibold" style={{ color: kolor }}>
+                        {y.rok}
+                        {y.miesiecy < 12 && (
+                          <span className="ml-1 font-normal text-muted-foreground">({y.miesiecy} mies.)</span>
+                        )}
+                      </p>
+                      <p className="text-sm font-bold">{y.suma.toLocaleString("pl-PL")} PLN</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
