@@ -18,7 +18,7 @@ import { TrendingUp, TrendingDown, Target, DollarSign, RefreshCw, Save, Pencil }
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line,
+  LineChart, Line, LabelList,
 } from "recharts";
 
 import { MONTHS_SHORT as MONTHS } from "@/lib/constants";
@@ -38,6 +38,13 @@ function EditablePlanCell({ value, onChange, onSave, editing }: { value: number;
       data-testid="input-plan-value"
     />
   );
+}
+
+// Skrocona kwota do etykiet na wykresie — pelna liczba nie miesci sie
+// przy poczatku linii i zaslaniala by sasiednie lata.
+function formatSkrot(v: number): string {
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(2).replace(".", ",") + " mln";
+  return Math.round(v / 1000).toLocaleString("pl-PL") + "k";
 }
 
 export default function SalesDashboard() {
@@ -264,9 +271,23 @@ export default function SalesDashboard() {
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => `${Number(v).toLocaleString("pl-PL")} PLN`} />
                 <Legend />
-                {years.map((y: number, i: number) => (
-                  <Line key={y} type="monotone" dataKey={`rok_${y}`} name={String(y)} stroke={lineColors[i % lineColors.length]} strokeWidth={y === 2026 ? 3 : 1.5} dot={false} />
-                ))}
+                {years.map((y: number, i: number) => {
+                  const kolor = lineColors[i % lineColors.length];
+                  const suma = yearTotals.find((t: { rok: number }) => t.rok === y)?.suma || 0;
+                  return (
+                    <Line key={y} type="monotone" dataKey={`rok_${y}`} name={String(y)} stroke={kolor} strokeWidth={y === 2026 ? 3 : 1.5} dot={false}>
+                      <LabelList
+                        content={(props: any) =>
+                          props.index === 0 ? (
+                            <text x={props.x + 4} y={props.y - 6} fontSize={9} fontWeight={600} fill={kolor} textAnchor="start">
+                              {formatSkrot(suma)}
+                            </text>
+                          ) : null
+                        }
+                      />
+                    </Line>
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
 
