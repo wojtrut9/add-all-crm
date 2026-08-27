@@ -250,6 +250,12 @@ export default function SalesDashboard() {
     });
 
   const lineColors = ["hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)", "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 50%)"];
+  // Biezacy rok jest tym, ktory sie sledzi — dostaje czerwien i grubsza
+  // linie, reszta lat sluzy za tlo porownawcze. Jedno zrodlo koloru dla
+  // wykresu, etykiet i kafelkow, zeby nie moglo sie rozjechac.
+  const KOLOR_BIEZACEGO = "hsl(0, 84%, 45%)";
+  const kolorRoku = (rok: number, i: number): string =>
+    rok === biezacyRok ? KOLOR_BIEZACEGO : lineColors[i % lineColors.length];
 
   const currentMonth = new Date().getMonth();
   const currentMonthData = plan2026[currentMonth];
@@ -382,10 +388,10 @@ export default function SalesDashboard() {
                 <Tooltip formatter={(v: number) => `${Number(v).toLocaleString("pl-PL")} PLN`} />
                 <Legend />
                 {years.map((y: number, i: number) => {
-                  const kolor = lineColors[i % lineColors.length];
+                  const kolor = kolorRoku(y, i);
                   const suma = yearTotals.find((t: { rok: number }) => t.rok === y)?.suma || 0;
                   return (
-                    <Line key={y} type="monotone" dataKey={`rok_${y}`} name={String(y)} stroke={kolor} strokeWidth={y === 2026 ? 3 : 1.5} dot={false}>
+                    <Line key={y} type="monotone" dataKey={`rok_${y}`} name={String(y)} stroke={kolor} strokeWidth={y === biezacyRok ? 4 : 1.5} dot={false}>
                       <LabelList
                         content={(props: any) =>
                           props.index === 0 ? (
@@ -405,7 +411,7 @@ export default function SalesDashboard() {
               <p className="text-sm text-muted-foreground mb-2">Suma sprzedazy w latach</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }, i: number) => {
-                  const kolor = lineColors[i % lineColors.length];
+                  const kolor = kolorRoku(y.rok, i);
                   return (
                     <div key={y.rok} className="rounded-md border p-2" data-testid={`card-year-total-${y.rok}`}>
                       <p className="text-xs font-semibold" style={{ color: kolor }}>
