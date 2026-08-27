@@ -435,7 +435,7 @@ export default function SalesDashboard() {
                         {y.suma.toLocaleString("pl-PL")} PLN
                         {y.rok === biezacyRok && prognozaRoku > 0 && (
                           <span
-                            className={`ml-1 text-xs ${
+                            className={`block text-xs ${
                               prognozaPonizejLat
                                 ? "text-destructive font-medium"
                                 : "font-normal text-muted-foreground"
