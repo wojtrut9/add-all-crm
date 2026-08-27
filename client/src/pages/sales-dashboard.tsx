@@ -139,6 +139,20 @@ export default function SalesDashboard() {
     suma: Math.round((h.months || []).reduce((sum: number, m: any) => sum + Number(m.wartosc || 0), 0)),
     miesiecy: (h.months || []).length,
   }));
+  // Prognoza na koniec biezacego roku liczona z planu: miesiace zamkniete
+  // wchodza po wykonaniu, przyszle po planie. Dla miesiaca trwajacego
+  // bierzemy wieksza z dwoch wartosci, zeby prognoza nie spadla ponizej
+  // tego, co juz zostalo sprzedane.
+  const biezacyRok = new Date().getFullYear();
+  const biezacyMiesiac = new Date().getMonth() + 1;
+  const prognozaRoku = plan2026.reduce((sum: number, p: any) => {
+    const plan = Number(p.planObrotu || 0);
+    const wykonanie = Number(p.wykonanieObrotu || 0);
+    if (p.miesiac < biezacyMiesiac) return sum + wykonanie;
+    if (p.miesiac === biezacyMiesiac) return sum + Math.max(plan, wykonanie);
+    return sum + plan;
+  }, 0);
+
   // Etykiety sum stoja na wysokosci styczniowego punktu swojej linii, wiec
   // lata o zblizonym styczniu nachodzilyby na siebie. Kolizje wykrywamy w
   // wartosciach, a rozsuwamy w pikselach: wyzsza etykieta idzie w gore,
@@ -331,7 +345,17 @@ export default function SalesDashboard() {
                           <span className="ml-1 font-normal text-muted-foreground">({y.miesiecy} mies.)</span>
                         )}
                       </p>
-                      <p className="text-sm font-bold">{y.suma.toLocaleString("pl-PL")} PLN</p>
+                      <p className="text-sm font-bold">
+                        {y.suma.toLocaleString("pl-PL")} PLN
+                        {y.rok === biezacyRok && prognozaRoku > 0 && (
+                          <span
+                            className="ml-1 text-xs font-normal text-muted-foreground"
+                            title="Miesiace zamkniete wg wykonania, pozostale wg planu sprzedazowego"
+                          >
+                            (prognoza {Math.round(prognozaRoku).toLocaleString("pl-PL")} PLN)
+                          </span>
+                        )}
+                      </p>
                     </div>
                   );
                 })}
