@@ -139,19 +139,57 @@ export default function SalesDashboard() {
     suma: Math.round((h.months || []).reduce((sum: number, m: any) => sum + Number(m.wartosc || 0), 0)),
     miesiecy: (h.months || []).length,
   }));
-  // Prognoza na koniec biezacego roku liczona z planu: miesiace zamkniete
-  // wchodza po wykonaniu, przyszle po planie. Dla miesiaca trwajacego
-  // bierzemy wieksza z dwoch wartosci, zeby prognoza nie spadla ponizej
-  // tego, co juz zostalo sprzedane.
+  // --- Prognoza na koniec biezacego roku ----------------------------------
+  // Nie da sie jej oprzec wprost na planie miesiecznym: plan liczony
+  // automatycznie ("poprzedni miesiac x 1,05") wychodzi zerowy dla miesiecy,
+  // ktorych poprzednik jeszcze sie nie wydarzyl — dla listopada i grudnia
+  // zawsze bylo by 0. Dlatego trzy zrodla, w tej kolejnosci:
+  //   1. miesiac zamkniety            -> rzeczywista sprzedaz
+  //   2. miesiac z recznym planem     -> ten plan
+  //   3. pozostale                    -> ten sam miesiac rok temu x tempo wzrostu
+  // Liczby biora sie z `history`, czyli z tego samego zrodla co suma
+  // pokazana w kafelku — obie wartosci musza byc porownywalne.
   const biezacyRok = new Date().getFullYear();
-  const biezacyMiesiac = new Date().getMonth() + 1;
-  const prognozaRoku = plan2026.reduce((sum: number, p: any) => {
-    const plan = Number(p.planObrotu || 0);
-    const wykonanie = Number(p.wykonanieObrotu || 0);
-    if (p.miesiac < biezacyMiesiac) return sum + wykonanie;
-    if (p.miesiac === biezacyMiesiac) return sum + Math.max(plan, wykonanie);
-    return sum + plan;
-  }, 0);
+
+  const miesiaceRoku = (rok: number): number[] => {
+    const wpis = (history || []).find((h: any) => h.rok === rok);
+    const out: number[] = new Array(12).fill(0);
+    (wpis?.months || []).forEach((m: any) => {
+      out[m.miesiac - 1] = Number(m.wartosc || 0);
+    });
+    return out;
+  };
+  const biezacy = miesiaceRoku(biezacyRok);
+  const poprzedni = miesiaceRoku(biezacyRok - 1);
+
+  // Ostatni miesiac z danymi jest zwykle niepelny (trwa), wiec nie liczymy
+  // go jako zamknietego ani nie wliczamy do tempa wzrostu.
+  let ostatniZDanymi = 0;
+  biezacy.forEach((v, i) => {
+    if (v > 0) ostatniZDanymi = i + 1;
+  });
+  const zamkniete = Math.max(0, ostatniZDanymi - 1);
+
+  const sumaZamknietych = biezacy.slice(0, zamkniete).reduce((a, b) => a + b, 0);
+  const sumaRokTemu = poprzedni.slice(0, zamkniete).reduce((a, b) => a + b, 0);
+  const tempoWzrostu = sumaRokTemu > 0 ? sumaZamknietych / sumaRokTemu : 1;
+  const sredniaZamknietych = zamkniete > 0 ? sumaZamknietych / zamkniete : 0;
+
+  const planReczny = (m: number): number => {
+    const t = plan2026[m - 1];
+    return t?.planObrotuCustom && Number(t.planObrotu) > 0 ? Number(t.planObrotu) : 0;
+  };
+  // Gdy rok temu brak danych dla tego miesiaca — srednia z miesiecy zamknietych.
+  const szacunek = (m: number): number =>
+    poprzedni[m - 1] > 0 ? poprzedni[m - 1] * tempoWzrostu : sredniaZamknietych;
+
+  let prognozaRoku = sumaZamknietych;
+  for (let m = zamkniete + 1; m <= 12; m++) {
+    const reczny = planReczny(m);
+    const oczekiwane = reczny > 0 ? reczny : szacunek(m);
+    // Trwajacy miesiac moze juz przekroczyc oczekiwania — bierzemy wieksza.
+    prognozaRoku += m === ostatniZDanymi ? Math.max(oczekiwane, biezacy[m - 1]) : oczekiwane;
+  }
 
   // Etykiety sum stoja na wysokosci styczniowego punktu swojej linii, wiec
   // lata o zblizonym styczniu nachodzilyby na siebie. Kolizje wykrywamy w
@@ -350,7 +388,7 @@ export default function SalesDashboard() {
                         {y.rok === biezacyRok && prognozaRoku > 0 && (
                           <span
                             className="ml-1 text-xs font-normal text-muted-foreground"
-                            title="Miesiace zamkniete wg wykonania, pozostale wg planu sprzedazowego"
+                            title="Miesiace zamkniete wg sprzedazy, miesiace z recznym planem wg planu, pozostale: ten sam miesiac rok temu przeskalowany tempem wzrostu"
                           >
                             (prognoza {Math.round(prognozaRoku).toLocaleString("pl-PL")} PLN)
                           </span>
