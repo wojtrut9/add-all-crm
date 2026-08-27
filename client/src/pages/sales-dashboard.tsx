@@ -139,6 +139,33 @@ export default function SalesDashboard() {
     suma: Math.round((h.months || []).reduce((sum: number, m: any) => sum + Number(m.wartosc || 0), 0)),
     miesiecy: (h.months || []).length,
   }));
+  // Etykiety sum stoja na wysokosci styczniowego punktu swojej linii, wiec
+  // lata o zblizonym styczniu nachodzilyby na siebie. Kolizje wykrywamy w
+  // wartosciach, a rozsuwamy w pikselach: wyzsza etykieta idzie w gore,
+  // nizsza w dol.
+  const ODSTEP_PX = 14;
+  const WYS_WYKRESU_PX = 230;
+  const maxWartosc = Math.max(
+    1,
+    ...historyChartData.flatMap((d: any) => years.map((y: number) => Number(d[`rok_${y}`] || 0)))
+  );
+  const progKolizji = (ODSTEP_PX * maxWartosc) / WYS_WYKRESU_PX;
+  const odsunieciaEtykiet: Record<number, number> = {};
+  const startyLinii: Array<{ rok: number; styczen: number }> = years.map((y: number) => ({
+    rok: y,
+    styczen: Number(historyChartData[0]?.[`rok_${y}`] || 0),
+  }));
+  startyLinii
+    .sort((a, b) => b.styczen - a.styczen)
+    .forEach((biezacy, idx, posortowane) => {
+      if (idx === 0) return;
+      const poprzedni = posortowane[idx - 1];
+      if (poprzedni.styczen - biezacy.styczen < progKolizji) {
+        odsunieciaEtykiet[poprzedni.rok] = (odsunieciaEtykiet[poprzedni.rok] || 0) - ODSTEP_PX / 2;
+        odsunieciaEtykiet[biezacy.rok] = (odsunieciaEtykiet[biezacy.rok] || 0) + ODSTEP_PX / 2;
+      }
+    });
+
   const lineColors = ["hsl(210, 92%, 45%)", "hsl(25, 95%, 42%)", "hsl(340, 82%, 38%)", "hsl(160, 65%, 35%)", "hsl(280, 75%, 40%)", "hsl(45, 85%, 50%)"];
 
   const currentMonth = new Date().getMonth();
@@ -279,7 +306,7 @@ export default function SalesDashboard() {
                       <LabelList
                         content={(props: any) =>
                           props.index === 0 ? (
-                            <text x={2} y={props.y + 3} fontSize={10} fontWeight={700} fill={kolor} textAnchor="start">
+                            <text x={2} y={props.y + 3 + (odsunieciaEtykiet[y] || 0)} fontSize={10} fontWeight={700} fill={kolor} textAnchor="start">
                               {formatSkrot(suma)}
                             </text>
                           ) : null
