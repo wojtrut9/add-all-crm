@@ -324,12 +324,7 @@ export default function SalesDashboard() {
                 {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }, i: number) => {
                   const kolor = lineColors[i % lineColors.length];
                   return (
-                    <div
-                      key={y.rok}
-                      className="rounded-md border-2 p-2"
-                      style={{ borderColor: kolor }}
-                      data-testid={`card-year-total-${y.rok}`}
-                    >
+                    <div key={y.rok} className="rounded-md border p-2" data-testid={`card-year-total-${y.rok}`}>
                       <p className="text-xs font-semibold" style={{ color: kolor }}>
                         {y.rok}
                         {y.miesiecy < 12 && (
