@@ -228,7 +228,7 @@ export default function SalesDashboard() {
   // poprzedniej. Rozsuwanie samych par nie wystarcza — etykieta odsunieta
   // od sasiada potrafi wejsc na kolejna, ktorej para juz nie sprawdzala.
   const ODSTEP_PX = 26;
-  const WYS_WYKRESU_PX = 260;
+  const WYS_WYKRESU_PX = 290;
   const maxWartosc = Math.max(
     1,
     ...historyChartData.flatMap((d: any) => years.map((y: number) => Number(d[`rok_${y}`] || 0)))
@@ -401,7 +401,7 @@ export default function SalesDashboard() {
             <CardTitle className="text-base">Historia sprzedazy</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={330}>
               <LineChart data={historyChartData}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -447,11 +447,11 @@ export default function SalesDashboard() {
 
             <div className="mt-4 pt-4 border-t">
               <p className="text-sm text-muted-foreground mb-2">Suma sprzedazy w latach</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {yearTotals.map((y: { rok: number; suma: number; miesiecy: number }, i: number) => {
                   const kolor = kolorRoku(y.rok, i);
                   return (
-                    <div key={y.rok} className={`rounded-md p-2 ${y.rok === biezacyRok ? "border-2 border-muted-foreground" : "border"}`} data-testid={`card-year-total-${y.rok}`}>
+                    <div key={y.rok} className={`rounded-md px-2 py-1.5 ${y.rok === biezacyRok ? "border-2 border-muted-foreground" : "border"}`} data-testid={`card-year-total-${y.rok}`}>
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-semibold" style={{ color: kolor }}>
                           {y.rok}
@@ -461,7 +461,7 @@ export default function SalesDashboard() {
                         </p>
                         {/* Symbol z legendy wykresu — linia z punktem, grubsza dla
                             roku biezacego, tak jak jego linia na wykresie. */}
-                        <svg width="24" height="10" viewBox="0 0 24 10" className="shrink-0" aria-hidden="true">
+                        <svg width="20" height="8" viewBox="0 0 24 10" className="shrink-0" aria-hidden="true">
                           <line
                             x1="0"
                             y1="5"
@@ -473,11 +473,11 @@ export default function SalesDashboard() {
                           <circle cx="12" cy="5" r="3" fill={kolor} />
                         </svg>
                       </div>
-                      <p className="text-sm font-bold">
+                      <p className="text-xs font-bold">
                         {y.suma.toLocaleString("pl-PL")} PLN
                         {y.rok === biezacyRok && prognozaRoku > 0 && (
                           <span
-                            className={`block text-xs ${
+                            className={`block text-[11px] leading-tight ${
                               prognozaPonizejLat
                                 ? "text-destructive font-medium"
                                 : "font-normal text-muted-foreground"
