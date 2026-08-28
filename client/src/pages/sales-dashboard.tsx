@@ -228,7 +228,7 @@ export default function SalesDashboard() {
   // poprzedniej. Rozsuwanie samych par nie wystarcza — etykieta odsunieta
   // od sasiada potrafi wejsc na kolejna, ktorej para juz nie sprawdzala.
   const ODSTEP_PX = 26;
-  const WYS_WYKRESU_PX = 230;
+  const WYS_WYKRESU_PX = 260;
   const maxWartosc = Math.max(
     1,
     ...historyChartData.flatMap((d: any) => years.map((y: number) => Number(d[`rok_${y}`] || 0)))
@@ -407,15 +407,6 @@ export default function SalesDashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis width={96} tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => `${Number(v).toLocaleString("pl-PL")} PLN`} />
-                {/* Wykres jest przesuniety w prawo o szerokosc osi Y, a legenda
-                    centruje sie wzgledem calego kontenera — bez tego stalaby
-                    wyraznie na lewo od wykresu. Padding rowny szerokosci osi
-                    przesuwa jej srodek dokladnie nad srodek obszaru danych. */}
-                <Legend
-                  align="center"
-                  verticalAlign="bottom"
-                  wrapperStyle={{ fontSize: 12, paddingLeft: 96 }}
-                />
                 {years.map((y: number, i: number) => {
                   const kolor = kolorRoku(y, i);
                   const suma = yearTotals.find((t: { rok: number }) => t.rok === y)?.suma || 0;
@@ -461,12 +452,27 @@ export default function SalesDashboard() {
                   const kolor = kolorRoku(y.rok, i);
                   return (
                     <div key={y.rok} className={`rounded-md p-2 ${y.rok === biezacyRok ? "border-2 border-muted-foreground" : "border"}`} data-testid={`card-year-total-${y.rok}`}>
-                      <p className="text-xs font-semibold" style={{ color: kolor }}>
-                        {y.rok}
-                        {y.miesiecy < 12 && (
-                          <span className="ml-1 font-normal text-muted-foreground">({y.miesiecy} mies.)</span>
-                        )}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold" style={{ color: kolor }}>
+                          {y.rok}
+                          {y.miesiecy < 12 && (
+                            <span className="ml-1 font-normal text-muted-foreground">({y.miesiecy} mies.)</span>
+                          )}
+                        </p>
+                        {/* Symbol z legendy wykresu — linia z punktem, grubsza dla
+                            roku biezacego, tak jak jego linia na wykresie. */}
+                        <svg width="24" height="10" viewBox="0 0 24 10" className="shrink-0" aria-hidden="true">
+                          <line
+                            x1="0"
+                            y1="5"
+                            x2="24"
+                            y2="5"
+                            stroke={kolor}
+                            strokeWidth={y.rok === biezacyRok ? 3 : 2}
+                          />
+                          <circle cx="12" cy="5" r="3" fill={kolor} />
+                        </svg>
+                      </div>
                       <p className="text-sm font-bold">
                         {y.suma.toLocaleString("pl-PL")} PLN
                         {y.rok === biezacyRok && prognozaRoku > 0 && (
