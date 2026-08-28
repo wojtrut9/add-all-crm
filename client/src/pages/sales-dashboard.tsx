@@ -428,8 +428,8 @@ export default function SalesDashboard() {
                               </text>
                               <text
                                 x={2}
-                                y={props.y + 11 + (odsunieciaEtykiet[y] || 0)}
-                                fontSize={9}
+                                y={props.y + 12 + (odsunieciaEtykiet[y] || 0)}
+                                fontSize={10}
                                 className="fill-muted-foreground"
                                 textAnchor="start"
                               >
