@@ -407,7 +407,15 @@ export default function SalesDashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis width={96} tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => `${Number(v).toLocaleString("pl-PL")} PLN`} />
-                <Legend />
+                {/* Wykres jest przesuniety w prawo o szerokosc osi Y, a legenda
+                    centruje sie wzgledem calego kontenera — bez tego stalaby
+                    wyraznie na lewo od wykresu. Padding rowny szerokosci osi
+                    przesuwa jej srodek dokladnie nad srodek obszaru danych. */}
+                <Legend
+                  align="center"
+                  verticalAlign="bottom"
+                  wrapperStyle={{ fontSize: 12, paddingLeft: 96 }}
+                />
                 {years.map((y: number, i: number) => {
                   const kolor = kolorRoku(y, i);
                   const suma = yearTotals.find((t: { rok: number }) => t.rok === y)?.suma || 0;
